@@ -8,7 +8,7 @@
 MeasurementLab data ingestion pipeline.
 
 To create e.g., NDT table (should rarely be required!!!):
-bq mk --time_partitioning_type=DAY --schema=schema/repeated.json mlab-sandbox:mlab_sandbox.ndt
+bq mk --time_partitioning_type=DAY --schema=schema/ndt_delta.json mlab-sandbox:batch.ndt
 
 Also see schema/README.md.
 
