@@ -1,13 +1,11 @@
-# Travis configuration for etl-worker.
+# Travis configuration for etl-schema.
 #
-# etl-worker is a Go project supporting release automation to mlab-sandbox
-# for a single branch in the m-lab/etl repository. The steps it takes are:
+# The steps it takes are:
 #
 #  * decrypt service account credentials
 #  * install the Google Cloud SDK command line tools (gcloud)
 #  * cache the gcloud installation and setup
-#  * test and build the go code
-#  * on success, deploy the result when the origin branch matches a supported
+#  * deploy the bigquery views when the branch/tag matches a supported
 #    deployment target.
 #
 # NOTE: Cloud functions only support primitive IAM roles: Owner, Editor, Viewer.
@@ -15,13 +13,7 @@
 # TODO(soltesz): Add deployment automation when fine-grained permissions are
 # possible.
 
-language: go
-
 before_install:
-# Coverage tools
-- go get github.com/mattn/goveralls
-- go get github.com/wadey/gocovmerge
-
 - echo Branch is ${TRAVIS_BRANCH} and Tag is $TRAVIS_TAG
 
 # Install gcloud, for integration tests.
