@@ -81,7 +81,7 @@ deploy:
     && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
   skip_cleanup: true
   on:
-    repo: m-lab/etl
+    repo: m-lab/etl-schema
     all_branches: true
     condition: $TRAVIS_BRANCH == sandbox-*
 
@@ -101,8 +101,8 @@ deploy:
     && ./make_views.sh mlab-staging intermediate_v3_1_1 rc_v3_1 "rc release"
   skip_cleanup: true
   on:
-    repo: m-lab/etl
-    branch: integration
+    repo: m-lab/etl-schema
+    branch: master
 
 ######################################################################
 #  Prod deployments
@@ -122,6 +122,6 @@ deploy:
     && ./make_views.sh measurement-lab intermediate_v3_1_1 rc_v3_1 "rc release"
   skip_cleanup: true
   on:
-    repo: m-lab/etl
+    repo: m-lab/etl-schema
     all_branches: true
     condition: $TRAVIS_TAG == prod-*
