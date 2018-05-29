@@ -1,0 +1,13 @@
+{
+  "access": [
+    {
+      "role": "WRITER", 
+      "specialGroup": "projectWriters"
+    }, 
+    {
+      "role": "OWNER", 
+      "specialGroup": "projectOwners"
+    }
+  ],
+  "kind": "bigquery#dataset"
+}

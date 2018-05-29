@@ -10,5 +10,15 @@ MeasurementLab data ingestion pipeline.
 To create e.g., NDT table (should rarely be required!!!):
 bq mk --time_partitioning_type=DAY --schema=schema/ndt_delta.json mlab-sandbox:batch.ndt
 
+To create the private dataset:
+bq mk mlab-oti:private
+bq update --source acl/private.acl.json mlab-oti:private
+
+To create the private production NDT table (should rarely be required!!!):
+bq mk --time_partitioning_type=DAY --schema=schema/ss.json mlab-oti:private.ss
+
+To update a table's schema in place:
+bq update mlab-sandbox:private.ss schema/ss.json
+
 Also see schema/README.md.
 
