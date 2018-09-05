@@ -144,6 +144,9 @@ create_view ${PUBLIC} ndt_uploads \
   SELECT * FROM `'${INTERMEDIATE/:/.}'.ndt_uploads`'
 
 
+create_view ${PUBLIC} sidestream \
+  'View across the all unembargoed Sidestream data, including legacy'
+
 #############################################################################
 # Redirect release, rc, etc
 #############################################################################
@@ -172,5 +175,10 @@ for ALIAS in $ALIASES; do
       'All good quality upload tests' \
       '#standardSQL
       SELECT * FROM `'${INTERMEDIATE/:/.}'.ndt_uploads`'
+
+    create_view ${PROJECT}:${ALIAS} sidestream \
+      'View across the all unembargoed Sidestream data, including legacy'
+      '#standardSQL
+      SELECT * FROM `'${PUBLIC/:/.}'.sidestream`'
   fi
 done
