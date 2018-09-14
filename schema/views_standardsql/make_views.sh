@@ -79,8 +79,6 @@ create_view() {
 #                        The standardSQL views                            #
 ###########################################################################
 
-# TODO - if running in travis, set -x
-
 # Create datasets, e.g. for new versions.
 # These lines may fail if they already exist, so we run them before set -e.
 bq mk ${PUBLIC}
@@ -96,6 +94,11 @@ done
 set -e
 # If executing in travis, be verbose.
 if [[ -v TRAVIS ]];then set -x; fi
+
+##################################################################################
+# These are the various intermediate NDT views, the combine underlying tables,
+# and apply different levels of filtering.
+##################################################################################
 
 create_view ${LEGACY} ndt_plx \
   'All plx data, with DATE(_PARTITIONTIME) mapped to partition_date for proper
