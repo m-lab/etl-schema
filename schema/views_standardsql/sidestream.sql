@@ -7,4 +7,7 @@ WHERE (task_filename NOT LIKE "%-e.tgz%"
 OR TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), log_time, HOUR) > 365*24)
 UNION ALL
 SELECT *
-FROM `${PROJECT}.legacy.sidestream`
+FROM `${PROJECT}.legacy.sidestream_2015_2017`
+UNION ALL
+SELECT *
+FROM `${PROJECT}.legacy.sidestream_pre2015`
