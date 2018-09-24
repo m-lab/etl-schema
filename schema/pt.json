@@ -1,5 +1,8 @@
 [
       { "name": "test_id", "type": "STRING"},
+      { "name": "task_filename", "type": "STRING"},
+      { "name": "parse_time", "type": "TIMESTAMP"},
+      { "name": "parser_version", "type": "STRING"},
       { "name": "project", "type": "INTEGER"},
       { "name": "log_time", "type": "TIMESTAMP"},
       { "name": "type", "type": "INTEGER"},
