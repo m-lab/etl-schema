@@ -2,6 +2,7 @@
       { "name": "test_id", "type": "STRING"},
       { "name": "task_filename", "type": "STRING"},
       { "name": "parse_time", "type": "TIMESTAMP"},
+      { "name": "parser_version", "type": "STRING"},
       { "name": "log_time", "type": "TIMESTAMP"},
       { "name": "blacklist_flags", "type": "INTEGER", "description": "Deprecated.  Use flag in anomalies record instead."},
       {
