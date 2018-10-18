@@ -5,13 +5,17 @@
 # different than the local schema, the difference is printed before being
 # updated.
 #
+# By default, sync_tables_with_schema.sh run in dryrun mode, making no
+# permanent changes. To commit changes, provide the final argument 'nodryrun'.
+#
 # Example:
-#   ./sync_tables_with_schema.sh mlab-sandbox batch
+#   ./sync_tables_with_schema.sh mlab-sandbox batch [nodryrun]
 
 
 USAGE="$0 <project> <dataset>"
 PROJECT=${1:?Please specify the project name, e.g. "mlab-sandbox": $USAGE}
 DATASET=${2:?Please specify the dataset name, e.g. "base_tables": $USAGE}
+NODRYRUN=${3:-dryrun} # Run in dryrun mode by default.
 
 set -eu
 
@@ -35,9 +39,11 @@ for schema_file in `ls "${BASEDIR}"/*.json`; do
        --schema ${DATASET}.$table > ${TEMPDIR}/${table}.json ; then
 
         echo "Creating: ${PROJECT}:${DATASET}.${table}"
-        bq --project_id ${PROJECT} mk \
-          --time_partitioning_type=DAY \
-          --schema ${schema_file} -t "${DATASET}.${table}"
+        if [[ "${NODRYRUN}" == "nodryrun" ]] ; then
+            bq --project_id ${PROJECT} mk \
+              --time_partitioning_type=DAY \
+              --schema ${schema_file} -t "${DATASET}.${table}"
+        fi
 
         # We have just created the table, so the schema is guaranteed to match.
         continue
@@ -62,11 +68,14 @@ for schema_file in `ls "${BASEDIR}"/*.json`; do
              <( python -m json.tool "${BASEDIR}/${table}.json" ) || :
 
         echo "Updating: ${PROJECT}:${DATASET}.${table}"
-        bq --project_id ${PROJECT} update "${DATASET}.${table}" ${schema_file}
+        if [[ "${NODRYRUN}" == "nodryrun" ]] ; then
+            bq --project_id ${PROJECT} update \
+                "${DATASET}.${table}" ${schema_file}
+        fi
 
     else
 
-		# Both match so nothing to do.
+        # Both match so nothing to do.
         echo "Success: ${PROJECT}:${DATASET}.$table matches ${table}.json"
     fi
 done
