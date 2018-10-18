@@ -87,6 +87,6 @@
                   { "name": "postal_code", "type": "STRING"},
                   { "name": "region", "type": "STRING"}
                 ], "name": "dest_geolocation", "type": "RECORD"},
-              { "name": "rtt", "type": "FLOAT", "mode": "repeated"}
+              { "name": "rtt", "type": "FLOAT", "mode": "REPEATED"}
         ], "name": "paris_traceroute_hop", "type": "RECORD"}
 ]
