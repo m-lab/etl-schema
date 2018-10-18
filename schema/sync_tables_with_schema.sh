@@ -38,7 +38,7 @@ for schema_file in `ls "${BASEDIR}"/*.json`; do
     if ! bq --project ${PROJECT} show --format=prettyjson \
        --schema ${DATASET}.$table > ${TEMPDIR}/${table}.json ; then
 
-        echo "Creating: ${PROJECT}:${DATASET}.${table}"
+        echo "Creating(${NODRYRUN}): ${PROJECT}:${DATASET}.${table}"
         if [[ "${NODRYRUN}" == "nodryrun" ]] ; then
             bq --project_id ${PROJECT} mk \
               --time_partitioning_type=DAY \
@@ -67,7 +67,7 @@ for schema_file in `ls "${BASEDIR}"/*.json`; do
         diff <( python -m json.tool "${TEMPDIR}/${table}.json" ) \
              <( python -m json.tool "${BASEDIR}/${table}.json" ) || :
 
-        echo "Updating: ${PROJECT}:${DATASET}.${table}"
+        echo "Updating(${NODRYRUN}): ${PROJECT}:${DATASET}.${table}"
         if [[ "${NODRYRUN}" == "nodryrun" ]] ; then
             bq --project_id ${PROJECT} update \
                 "${DATASET}.${table}" ${schema_file}
@@ -76,6 +76,6 @@ for schema_file in `ls "${BASEDIR}"/*.json`; do
     else
 
         # Both match so nothing to do.
-        echo "Success: ${PROJECT}:${DATASET}.$table matches ${table}.json"
+        echo "Success(${NODRYRUN}): ${PROJECT}:${DATASET}.$table matches ${table}.json"
     fi
 done
