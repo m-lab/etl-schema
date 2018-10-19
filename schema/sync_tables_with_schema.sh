@@ -30,6 +30,12 @@ function cleanup() {
 }
 trap "cleanup" INT TERM EXIT
 
+# NOTE: the bq cli leverages the gcloud auth, however still must perform an
+# authentication initialization on the first run. This initialization also
+# generates an unconditional "Welcome to BigQuery!" preamble message, which
+# corrupts the remaining json output. The following command attempts to list a
+# fake dataset which runs through the auth initialization and welcome message.
+bq --project ${PROJECT} ls fake-dataset &> /dev/null || :
 
 for schema_file in `ls "${BASEDIR}"/*.json`; do
     table="$( basename ${schema_file%%.json} )"
