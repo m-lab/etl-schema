@@ -72,7 +72,7 @@ deploy:
     && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
     && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
-    && ./create_target_views.sh mlab-sandbox mlab-sandbox "ndt sidestream switch traceroute"
+    && ./create_base_views.sh mlab-sandbox mlab-sandbox "ndt sidestream switch traceroute"
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
@@ -93,7 +93,7 @@ deploy:
     && ./make_views.sh mlab-staging intermediate_v3_1_1 rc_v3_1 "rc release"
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
     && ./make_views.sh mlab-staging intermediate_v3_1_1 rc_v3_1 "rc release"
-    && ./create_target_views.sh mlab-staging mlab-staging "ndt sidestream switch traceroute"
+    && ./create_base_views.sh mlab-staging mlab-staging "ndt sidestream switch traceroute"
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
@@ -115,8 +115,8 @@ deploy:
     && ./make_views.sh measurement-lab intermediate_v3_1_1 rc_v3_1 "rc release"
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
     && ./make_views.sh measurement-lab intermediate_v3_1_1 rc_v3_1 "rc release"
-    && ./create_target_views.sh mlab-oti mlab-oti "ndt sidestream switch traceroute"
-    && ./create_target_views.sh mlab-oti measurement-lab "ndt sidestream switch traceroute"
+    && ./create_base_views.sh mlab-oti mlab-oti "ndt sidestream switch traceroute"
+    && ./create_base_views.sh mlab-oti measurement-lab "ndt sidestream switch traceroute"
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
