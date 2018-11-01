@@ -31,25 +31,25 @@ function create_target_view() {
   local sql='#standardSQL
     SELECT * FROM `'${src_table/:/.}'`'
 
-  echo ${dst_view}
-  bq rm --force ${dst_view}
-  bq mk --description="${description}" --view="$sql" ${dst_view}
+  echo "${dst_view}"
+  bq rm --force "${dst_view}"
+  bq mk --description="${description}" --view="$sql" "${dst_view}"
 
   # This fetches the new table description as json.
   mkdir -p json
-  bq show --format=prettyjson ${dst_view} > json/${dst_view}.json
+  bq show --format=prettyjson "${dst_view}" > json/"${dst_view}".json
 }
 
 
 for experiment in ${EXPERIMENTS} ; do
 
   # Make dataset for base views.
-  bq mk ${DST_PROJECT}:${experiment} || :
+  bq mk "${DST_PROJECT}:${experiment}" || :
 
   # Make base view referring to the source table.
   create_target_view \
-      ${SRC_PROJECT}:base_tables.${experiment} \
-      ${DST_PROJECT}:${experiment}.base \
-      'View of all '${experiment}' data processed by the ETL Gardener'
+      "${SRC_PROJECT}:base_tables.${experiment}" \
+      "${DST_PROJECT}:${experiment}.base" \
+      'View of all '"${experiment}"' data processed by the ETL Gardener'
 
 done
