@@ -1,12 +1,12 @@
 #!/bin/bash
 #
-# create_target_views.sh creates "base" views that reference all data from
+# create_base_views.sh creates "base" views that reference all data from
 # source tables managed by gardener.
 #
 # Example usage:
 #
-#  ./create_target_views.sh mlab-sandbox mlab-sandbox "ndt sidestream"
-#  ./create_target_views.sh mlab-oti measurement-lab "ndt sidestream"
+#  ./create_base_views.sh mlab-sandbox mlab-sandbox "ndt sidestream"
+#  ./create_base_views.sh mlab-oti measurement-lab "ndt sidestream"
 
 
 set -eu
@@ -16,7 +16,7 @@ DST_PROJECT=${2:?Please provide destination project: $USAGE}
 EXPERIMENTS=${3:?Please provide set of experiment names: $USAGE}
 
 
-# create_target_view creates a view at dst_view that selects all content from
+# create_passthrough_view creates a view at dst_view that selects all content from
 # the given src_table.
 #
 # Args:
@@ -24,7 +24,7 @@ EXPERIMENTS=${3:?Please provide set of experiment names: $USAGE}
 #   dst_view: view destination in the form "<project>:<dataset>.<view>". Dataset
 #     should already exist.
 #   description: text description of this view.
-function create_target_view() {
+function create_passthrough_view() {
   local src_table=$1
   local dst_view=$2
   local description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"$'\n'$3
@@ -47,7 +47,7 @@ for experiment in ${EXPERIMENTS} ; do
   bq mk "${DST_PROJECT}:${experiment}" || :
 
   # Make base view referring to the source table.
-  create_target_view \
+  create_passthrough_view \
       "${SRC_PROJECT}:base_tables.${experiment}" \
       "${DST_PROJECT}:${experiment}.base" \
       'View of all '"${experiment}"' data processed by the ETL Gardener'
