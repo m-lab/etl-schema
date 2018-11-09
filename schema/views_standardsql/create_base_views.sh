@@ -10,12 +10,13 @@
 
 
 set -eu
-USAGE="$0 <source-project> <dest-project> <experiment1 experiment2 [...]>"
-SRC_PROJECT=${1:?Please provide source project: $USAGE}
-DST_PROJECT=${2:?Please provide destination project: $USAGE}
-EXPERIMENTS=${3:?Please provide set of experiment names: $USAGE}
+USAGE="$0 <env-name> <source-project> <dest-project> <experiment1 experiment2 [...]>"
+KEYNAME=${1:?Please provide a key name}
+SRC_PROJECT=${2:?Please provide source project: $USAGE}
+DST_PROJECT=${3:?Please provide destination project: $USAGE}
+EXPERIMENTS=${4:?Please provide set of experiment names: $USAGE}
 
-(set +x ; echo "${SERVICE_ACCOUNT_mlab_sandbox}" > /tmp/sa.json)
+echo "${!KEYNAME}" > /tmp/sa.json
 export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
 
 for experiment in ${EXPERIMENTS} ; do
