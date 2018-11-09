@@ -12,10 +12,15 @@
 # See: https://cloud.google.com/functions/docs/concepts/iam
 # TODO(soltesz): Add deployment automation when fine-grained permissions are
 # possible.
-language: ruby
+language: go
+
+go:
+- '1.11'
+go_import_path: github.com/m-lab/etl-schema
 
 before_install:
 - echo Branch is ${TRAVIS_BRANCH} and Tag is $TRAVIS_TAG
+- go get github.com/m-lab/etl-schema/cmd/bq_create_view
 
 # Install gcloud, for integration tests.
 - $TRAVIS_BUILD_DIR/travis/install_gcloud.sh
