@@ -14,7 +14,6 @@ import (
 
 	"cloud.google.com/go/bigquery"
 	"github.com/m-lab/go/rtx"
-	"google.golang.org/api/googleapi"
 )
 
 var (
@@ -88,13 +87,14 @@ func main() {
 		Description: *description,
 	}
 	tmd, err := tb.Metadata(ctx)
-	if _, ok := err.(*googleapi.Error); !ok && err != nil {
-		rtx.Must(err, "Failed to get view metadata")
-	} else if apiErr, ok := err.(*googleapi.Error); ok && err != nil {
-		if apiErr.Code != 404 {
-			// Error making request, this is fatal.
-			rtx.Must(err, "Failed to get table metadata")
-		}
+	//if _, ok := err.(*googleapi.Error); !ok && err != nil {
+	//	rtx.Must(err, "Failed to get view metadata")
+	//} else if apiErr, ok := err.(*googleapi.Error); ok && err != nil {
+	if err != nil {
+		//if apiErr.Code != 404 {
+		//// Error making request, this is fatal.
+		//rtx.Must(err, "Failed to get table metadata")
+		//}
 		// Error because view does not exist, so create it.
 		log.Info("Creating view: ", id(view))
 		err := tb.Create(ctx, meta)
