@@ -73,7 +73,7 @@ deploy:
     # Update these version numbers when making changes to the views.
     # TODO - add feature to allow making aliases from existing intermediate.
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_sandbox
-    && (echo "${SERVICE_ACCOUNT_mlab_sandbox}" > /tmp/sa.json)
+    && (set +x ; echo "${SERVICE_ACCOUNT_mlab_sandbox}" > /tmp/sa.json)
     && export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
     && ./create_base_views.sh mlab-sandbox mlab-sandbox "ndt sidestream switch traceroute"
