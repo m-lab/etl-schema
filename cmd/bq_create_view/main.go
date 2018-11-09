@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/stephen-soltesz/pretty"
-
 	log "github.com/sirupsen/logrus"
 
 	"strings"
@@ -102,7 +100,7 @@ func main() {
 	} else {
 		log.Info("Updating view: ", id(view))
 		log.Info("err: ", err)
-		pretty.Print(tmd)
+		// pretty.Print(tmd)
 		_, err := tb.Update(ctx, bigquery.TableMetadataToUpdate{
 			ViewQuery: meta.ViewQuery, Description: meta.Description}, tmd.ETag)
 		rtx.Must(err, "Failed to update view")
