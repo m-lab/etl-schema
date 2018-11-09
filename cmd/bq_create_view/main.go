@@ -88,7 +88,9 @@ func main() {
 		Description: *description,
 	}
 	tmd, err := tb.Metadata(ctx)
-	if apiErr, ok := err.(*googleapi.Error); ok {
+	if _, ok := err.(*googleapi.Error); !ok && err != nil {
+		rtx.Must(err, "Failed to get view metadata")
+	} else if apiErr, ok := err.(*googleapi.Error); ok && err != nil {
 		if apiErr.Code != 404 {
 			// Error making request, this is fatal.
 			rtx.Must(err, "Failed to get table metadata")
