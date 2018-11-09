@@ -74,7 +74,7 @@ deploy:
     # TODO - add feature to allow making aliases from existing intermediate.
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_sandbox
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
-    && ./create_base_views.sh mlab-sandbox mlab-sandbox "ndt sidestream switch traceroute"
+    && ./create_base_views.sh SERVICE_ACCOUNT_mlab_sandbox mlab-sandbox mlab-sandbox "ndt sidestream switch traceroute"
     && cd $TRAVIS_BUILD_DIR/schema/views_legacysql
     && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
