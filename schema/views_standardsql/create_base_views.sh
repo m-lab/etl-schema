@@ -15,41 +15,17 @@ SRC_PROJECT=${1:?Please provide source project: $USAGE}
 DST_PROJECT=${2:?Please provide destination project: $USAGE}
 EXPERIMENTS=${3:?Please provide set of experiment names: $USAGE}
 
-
-# create_passthrough_view creates a view at dst_view that selects all content from
-# the given src_table.
-#
-# Args:
-#   src_table: source table in the form of "<project>:<dataset>.<table>".
-#   dst_view: view destination in the form "<project>:<dataset>.<view>". Dataset
-#     should already exist.
-#   description: text description of this view.
-function create_passthrough_view() {
-  local src_table=$1
-  local dst_view=$2
-  local description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"$'\n'$3
-  local sql='#standardSQL
-    SELECT * FROM `'${src_table/:/.}'`'
-
-  echo "${dst_view}"
-  bq rm --force "${dst_view}"
-  bq mk --description="${description}" --view="$sql" "${dst_view}"
-
-  # This fetches the new table description as json.
-  mkdir -p json
-  bq show --format=prettyjson "${dst_view}" > json/"${dst_view}".json
-}
-
-
 for experiment in ${EXPERIMENTS} ; do
 
   # Make dataset for base views.
   bq mk "${DST_PROJECT}:${experiment}" || :
 
   # Make base view referring to the source table.
-  create_passthrough_view \
-      "${SRC_PROJECT}:base_tables.${experiment}" \
-      "${DST_PROJECT}:${experiment}.base" \
-      'View of all '"${experiment}"' data processed by the ETL Gardener'
+  description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT\n"
+  description+="View of all '${experiment}' data processed by the ETL Gardener"
 
+  bq_create_view \
+      -create-view "${DST_PROJECT}.${experiment}.base" \
+      -description "${description}" \
+      -to-access "${SRC_PROJECT}.base_tables.${experiment}"
 done
