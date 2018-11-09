@@ -15,6 +15,9 @@ SRC_PROJECT=${1:?Please provide source project: $USAGE}
 DST_PROJECT=${2:?Please provide destination project: $USAGE}
 EXPERIMENTS=${3:?Please provide set of experiment names: $USAGE}
 
+(set +x ; echo "${SERVICE_ACCOUNT_mlab_sandbox}" > /tmp/sa.json)
+export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+
 for experiment in ${EXPERIMENTS} ; do
 
   # Make dataset for base views.
