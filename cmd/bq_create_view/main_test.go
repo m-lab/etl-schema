@@ -92,7 +92,12 @@ func Test_syncDatasetAccess(t *testing.T) {
 			name: "success-already-found",
 			ds: &fakeDataset{
 				md: &bigquery.DatasetMetadata{
-					Access: []*bigquery.AccessEntry{{EntityType: bigquery.ViewEntity, View: parseTableID("mlab-testing.sidestream.base")}},
+					Access: []*bigquery.AccessEntry{
+						{
+							EntityType: bigquery.ViewEntity,
+							View:       parseTableID("mlab-testing.sidestream.base"),
+						},
+					},
 				},
 			},
 			view:   parseTableID("mlab-testing.sidestream.base"),
@@ -102,10 +107,20 @@ func Test_syncDatasetAccess(t *testing.T) {
 			name: "success-update",
 			ds: &fakeDataset{
 				md: &bigquery.DatasetMetadata{
-					Access: []*bigquery.AccessEntry{{EntityType: bigquery.ViewEntity, View: parseTableID("this.isnot.therightone")}},
+					Access: []*bigquery.AccessEntry{
+						{
+							EntityType: bigquery.ViewEntity,
+							View:       parseTableID("this.isnot.therightone"),
+						},
+					},
 				},
 				update: &bigquery.DatasetMetadata{
-					Access: []*bigquery.AccessEntry{{EntityType: bigquery.ViewEntity, View: parseTableID("mlab-testing.sidestream.base")}},
+					Access: []*bigquery.AccessEntry{
+						{
+							EntityType: bigquery.ViewEntity,
+							View:       parseTableID("mlab-testing.sidestream.base"),
+						},
+					},
 				},
 			},
 			view:   parseTableID("mlab-testing.sidestream.base"),
@@ -120,7 +135,12 @@ func Test_syncDatasetAccess(t *testing.T) {
 			name: "error-update-fails",
 			ds: &fakeDataset{
 				md: &bigquery.DatasetMetadata{
-					Access: []*bigquery.AccessEntry{{EntityType: bigquery.ViewEntity, View: parseTableID("this.isnot.therightone")}},
+					Access: []*bigquery.AccessEntry{
+						{
+							EntityType: bigquery.ViewEntity,
+							View:       parseTableID("this.isnot.therightone"),
+						},
+					},
 				},
 				upErr: fmt.Errorf("This is an error"),
 			},
@@ -132,10 +152,20 @@ func Test_syncDatasetAccess(t *testing.T) {
 			name: "error-update-missing-access-entry",
 			ds: &fakeDataset{
 				md: &bigquery.DatasetMetadata{
-					Access: []*bigquery.AccessEntry{{EntityType: bigquery.ViewEntity, View: parseTableID("this.isnot.therightone")}},
+					Access: []*bigquery.AccessEntry{
+						{
+							EntityType: bigquery.ViewEntity,
+							View:       parseTableID("this.isnot.therightone"),
+						},
+					},
 				},
 				update: &bigquery.DatasetMetadata{
-					Access: []*bigquery.AccessEntry{{EntityType: bigquery.ViewEntity, View: parseTableID("this-is.still-not.the-right-one")}},
+					Access: []*bigquery.AccessEntry{
+						{
+							EntityType: bigquery.ViewEntity,
+							View:       parseTableID("this-is.still-not.the-right-one"),
+						},
+					},
 				},
 			},
 			view:    parseTableID("mlab-testing.sidestream.base"),
