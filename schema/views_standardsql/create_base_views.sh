@@ -25,7 +25,7 @@ for experiment in ${EXPERIMENTS} ; do
   bq mk "${DST_PROJECT}:${experiment}" || :
 
   # Make base view referring to the source table.
-  description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT\n"
+  description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"$'\n'
   description+="View of all '${experiment}' data processed by the ETL Gardener"
 
   bq_create_view \
