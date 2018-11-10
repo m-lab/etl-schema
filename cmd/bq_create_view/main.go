@@ -22,15 +22,23 @@ var (
 	logLevel     = flag.Int("log.level", 4, "Log level")
 )
 
-func parseTableID(id string) (*bigquery.Table, error) {
+func init() {
+	log.SetFormatter(&log.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+}
+
+func parseTableID(id string) *bigquery.Table {
 	fields := strings.Split(id, ".")
 	if len(fields) != 3 {
-		return nil, fmt.Errorf("Failed to parse: %q - found %d fields", id, len(fields))
+		log.Errorf("Failed to parse table id: %q - found %d fields", id, len(fields))
+		return &bigquery.Table{}
 	}
 	return &bigquery.Table{
 		ProjectID: fields[0],
 		DatasetID: fields[1],
-		TableID:   fields[2]}, nil
+		TableID:   fields[2]}
 }
 
 func canAccess(table *bigquery.Table, access []*bigquery.AccessEntry) bool {
@@ -52,73 +60,55 @@ func id(a *bigquery.Table) string {
 	return fmt.Sprintf("%s.%s.%s", a.ProjectID, a.DatasetID, a.TableID)
 }
 
-func init() {
-	log.SetFormatter(&log.TextFormatter{
-		DisableColors: true,
-		FullTimestamp: true,
-	})
+// tableInterface wraps methods provied by the bigquery.Table for unit tests.
+type tableInterface interface {
+	Metadata(ctx context.Context) (*bigquery.TableMetadata, error)
+	Create(ctx context.Context, tm *bigquery.TableMetadata) error
+	Update(ctx context.Context, tm bigquery.TableMetadataToUpdate, etag string) (*bigquery.TableMetadata, error)
 }
 
-func main() {
-	flag.Parse()
-
-	log.SetLevel(log.Level(*logLevel))
-
-	view, err := parseTableID(*viewSource)
-	rtx.Must(err, "Failed to parse source view id")
-
-	target, err := parseTableID(*accessTarget)
-	rtx.Must(err, "Failed to parse target table id")
-
-	log.Info("Creating bigquery clients")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	targetClient, err := bigquery.NewClient(ctx, target.ProjectID)
-	rtx.Must(err, "Failed to create bigquery.Client")
-
-	viewClient, err := bigquery.NewClient(ctx, view.ProjectID)
-	rtx.Must(err, "Failed to create bigquery.Client")
-	tb := viewClient.Dataset(view.DatasetID).Table(view.TableID)
-
-	// Create or Update view query and description.
-	meta := &bigquery.TableMetadata{
-		ViewQuery:   "#standardSQL\nSELECT * FROM `" + id(target) + "`",
-		Description: *description,
-	}
-	tmd, err := tb.Metadata(ctx)
-	if _, ok := err.(*googleapi.Error); !ok && err != nil {
-		rtx.Must(err, "Failed to get view metadata")
-	} else if apiErr, ok := err.(*googleapi.Error); ok && err != nil {
-		if apiErr.Code != 404 {
-			// Error making request, this is fatal.
-			rtx.Must(err, "Failed to get table metadata")
+func syncView(ctx context.Context, tb tableInterface, view *bigquery.Table, sql, description string) error {
+	md, err := tb.Metadata(ctx)
+	if err != nil {
+		apiErr, ok := err.(*googleapi.Error)
+		if !ok {
+			// This is not a googleapi.Error, so treat it as fatal.
+			return err
 		}
-		// Error because view does not exist, so create it.
+		// We can only handle 404 errors caused by the view not existing.
+		if apiErr.Code != 404 {
+			return err
+		}
 		log.Info("Creating view: ", id(view))
-		err := tb.Create(ctx, meta)
-		rtx.Must(err, "Failed to create view")
-	} else {
-		log.Info("Updating view: ", id(view))
-		log.Info("err: ", err)
-		// pretty.Print(tmd)
-		_, err := tb.Update(ctx, bigquery.TableMetadataToUpdate{
-			ViewQuery: meta.ViewQuery, Description: meta.Description}, tmd.ETag)
-		rtx.Must(err, "Failed to update view")
+		return tb.Create(ctx, &bigquery.TableMetadata{
+			ViewQuery: sql, Description: description})
 	}
+	log.Info("Updating view: ", id(view))
+	_, err = tb.Update(ctx, bigquery.TableMetadataToUpdate{
+		ViewQuery: sql, Description: description}, md.ETag)
+	return err
+}
 
-	// Verify for Add view access to target table.
-	log.Info("Reading target table metadata: ", id(target))
-	ds := targetClient.Dataset(target.DatasetID)
+type datasetInterface interface {
+	Metadata(ctx context.Context) (*bigquery.DatasetMetadata, error)
+	Update(ctx context.Context, tm bigquery.DatasetMetadataToUpdate, etag string) (*bigquery.DatasetMetadata, error)
+}
+
+func syncDatasetAccess(ctx context.Context, ds datasetInterface, view, target *bigquery.Table) error {
 	md, err := ds.Metadata(ctx)
-	rtx.Must(err, "Failed to get dataset metadata")
+	if err != nil {
+		return err
+	}
 
 	log.Info("Checking whether view can access target table")
 	if canAccess(view, md.Access) {
 		log.Info("Confirmed: view access is enabled")
-		return
+		return nil
 	}
 
-	log.Infof("Adding access: %q can access %q", id(view), id(target))
+	log.Infof("Adding access: %s can access %s", id(view), id(target))
+	// Note: it's possible for md.Access to include AccessEntries for views that no
+	// longer exist. If that's the case, then the Update below will fail.
 	acl := append(md.Access, &bigquery.AccessEntry{
 		// Role & Entity fields are not used for view access.
 		EntityType: bigquery.ViewEntity,
@@ -131,9 +121,45 @@ func main() {
 
 	// Apply the updated Access ACL.
 	md2, err := ds.Update(ctx, bigquery.DatasetMetadataToUpdate{Access: acl}, md.ETag)
-	rtx.Must(err, "Failed to update dataset access")
-	if !canAccess(view, md2.Access) {
-		log.Fatalf("Failed to update access to %q", id(target))
+	if err != nil {
+		return err
 	}
+	if !canAccess(view, md2.Access) {
+		return fmt.Errorf("Failed to update access to %q", id(target))
+	}
+	return nil
+}
+
+func main() {
+	flag.Parse()
+	log.SetLevel(log.Level(*logLevel))
+
+	// Parsing flags.
+	view := parseTableID(*viewSource)
+	target := parseTableID(*accessTarget)
+	sql := fmt.Sprintf("#standardSQL\nSELECT * FROM `%s`", id(target))
+
+	// Create a context that expires after 1 min.
+	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Minute)
+	defer cancelCtx()
+
+	log.Info("Creating bigquery clients")
+	targetClient, err := bigquery.NewClient(ctx, target.ProjectID)
+	rtx.Must(err, "Failed to create bigquery.Client")
+	viewClient, err := bigquery.NewClient(ctx, view.ProjectID)
+	rtx.Must(err, "Failed to create bigquery.Client")
+
+	// Create or Update view query and description.
+	log.Info("Reading view metadata: ", id(view))
+	tb := viewClient.Dataset(view.DatasetID).Table(view.TableID)
+	err = syncView(ctx, tb, view, sql, *description)
+	rtx.Must(err, "Failed to sync view %q", id(view))
+
+	// Verify or Add view access to target table.
+	log.Info("Reading target dataset metadata: ", id(target))
+	ds := targetClient.Dataset(target.DatasetID)
+	err = syncDatasetAccess(ctx, ds, view, target)
+	rtx.Must(err, "Failed to grant access to ds: %q", id(target))
+
 	log.Info("Success!")
 }
