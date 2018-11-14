@@ -134,6 +134,10 @@ func main() {
 	flag.Parse()
 	log.SetLevel(log.Level(*logLevel))
 
+	if *viewSource == "" || *accessTarget == "" {
+		log.Fatal("Flags --create-view and --to-access must be specified.")
+	}
+
 	// Parsing flags.
 	view := parseTableID(*viewSource)
 	target := parseTableID(*accessTarget)
