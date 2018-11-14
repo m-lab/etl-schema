@@ -12,13 +12,15 @@
 # See: https://cloud.google.com/functions/docs/concepts/iam
 # TODO(soltesz): Add deployment automation when fine-grained permissions are
 # possible.
+language: go
+
+go:
+- '1.11'
+go_import_path: github.com/m-lab/etl-schema
 
 before_install:
+- go get github.com/mattn/goveralls
 - echo Branch is ${TRAVIS_BRANCH} and Tag is $TRAVIS_TAG
-
-# Install gcloud, for integration tests.
-- $TRAVIS_BUILD_DIR/travis/install_gcloud.sh
-- source "${HOME}/google-cloud-sdk/path.bash.inc"
 
 # These directories will be cached on successful "script" builds, and restored,
 # if available, to save time on future builds.
@@ -27,7 +29,17 @@ cache:
     - "$HOME/google-cloud-sdk/"
 
 script:
-- true
+- set -e
+- go test -v -short -covermode=count -coverprofile=merge.cov github.com/m-lab/etl-schema/cmd/bq_create_view
+- goveralls -coverprofile=merge.cov -service=travis-ci
+
+before_deploy:
+- go get github.com/m-lab/etl-schema/cmd/bq_create_view
+
+# Install gcloud, for integration tests.
+- $TRAVIS_BUILD_DIR/travis/install_gcloud.sh
+- source "${HOME}/google-cloud-sdk/path.bash.inc"
+
 
 #################################################################################
 # Deployment Section
@@ -71,6 +83,7 @@ deploy:
     && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
     && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
+    && ./create_base_views.sh SERVICE_ACCOUNT_mlab_sandbox mlab-sandbox mlab-sandbox "ndt sidestream switch traceroute"
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
@@ -91,6 +104,7 @@ deploy:
     && ./make_views.sh mlab-staging intermediate_v3_1_1 rc_v3_1 "rc release"
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
     && ./make_views.sh mlab-staging intermediate_v3_1_1 rc_v3_1 "rc release"
+    && ./create_base_views.sh SERVICE_ACCOUNT_mlab_staging mlab-staging mlab-staging "ndt sidestream switch traceroute"
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
@@ -112,6 +126,8 @@ deploy:
     && ./make_views.sh measurement-lab intermediate_v3_1_1 rc_v3_1 "rc release"
     && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
     && ./make_views.sh measurement-lab intermediate_v3_1_1 rc_v3_1 "rc release"
+    && ./create_base_views.sh SERVICE_ACCOUNT_mlab_oti mlab-oti mlab-oti "ndt sidestream switch traceroute"
+    && ./create_base_views.sh SERVICE_ACCOUNT_mlab_oti mlab-oti measurement-lab "ndt sidestream switch traceroute"
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
