@@ -34,7 +34,8 @@
               { "name": "longitude", "type": "FLOAT"},
               { "name": "metro_code", "type": "INTEGER"},
               { "name": "postal_code", "type": "STRING"},
-              { "name": "region", "type": "STRING"}
+              { "name": "region", "type": "STRING"},
+              { "name": "radius", "type": "INTEGER", "description": "Accuracy radius in km"}
             ], "name": "local_geolocation", "type": "RECORD"},
           {
             "fields": [
@@ -48,7 +49,8 @@
               { "name": "longitude", "type": "FLOAT"},
               { "name": "metro_code", "type": "INTEGER"},
               { "name": "postal_code", "type": "STRING"},
-              { "name": "region", "type": "STRING"}
+              { "name": "region", "type": "STRING"},
+              { "name": "radius", "type": "INTEGER", "description": "Accuracy radius in km"}
             ], "name": "remote_geolocation", "type": "RECORD"}
         ], "name": "connection_spec", "type": "RECORD"},
       {
