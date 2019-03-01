@@ -42,7 +42,7 @@
               { "name": "metro_code", "type": "INTEGER"},
               { "name": "postal_code", "type": "STRING"},
               { "name": "region", "type": "STRING"},
-              { "name": "radius", "type": "INTEGER"}
+              { "name": "radius", "type": "INTEGER", "description": "Accuracy radius in km"}
             ], "name": "client_geolocation", "type": "RECORD"},
           {
             "fields": [
