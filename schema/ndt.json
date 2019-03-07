@@ -36,6 +36,12 @@
             ], "name": "client_info", "type": "RECORD"},
           {
             "fields": [
+              { "name": "as_numbers", "type": "STRING", "mode": "REPEATED", "description": "list of associated AS numbers"},
+              { "name": "as_orgs", "type": "STRING", "mode": "REPEATED", "description": "list of associated AS org names"},
+              { "name": "iata_code", "type": "STRING", "description": "airport code"}
+            ], "name": "server_info", "type": "RECORD"},
+          {
+            "fields": [
               { "name": "area_code", "type": "INTEGER"},
               { "name": "city", "type": "STRING"},
               { "name": "continent_code", "type": "STRING"},
