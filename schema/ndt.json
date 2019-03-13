@@ -33,17 +33,15 @@
             "fields": [
             {
               "fields": [
-                { "name": "asn", "type": "STRING", "description": "Autonomous System Number"},
-                { "name": "org", "type": "STRING", "description": "Autonomous System organization name"}
+                { "name": "asn", "type": "STRING", "description": "Autonomous System Number"}
               ], "name": "as", "type": "RECORD"}
             ], "name": "client", "type": "RECORD"},
           {
             "fields": [
-              { "name": "iata_code", "type": "STRING", "description": "IATA airport code"},
+              { "name": "iata_code", "type": "STRING", "description": "IATA airport code (of server)"},
               {
               "fields": [
-                { "name": "asn", "type": "STRING", "description": "Autonomous System Number"},
-                { "name": "org", "type": "STRING", "description": "Autonomous System organization name"}
+                { "name": "asn", "type": "STRING", "description": "Autonomous System Number"}
               ], "name": "as", "type": "RECORD"}
             ], "name": "server", "type": "RECORD"},
           {
