@@ -31,16 +31,21 @@
           { "name": "websockets", "type": "BOOLEAN"},
           {
             "fields": [
-              { "name": "as_number", "type": "INTEGER", "description": "associated Autonomous System Number"},
-              { "name": "alt_asn", "type": "INTEGER", "description": "second (multi-origin) ASN"},
-              { "name": "as_organization", "type": "STRING", "description": "Autonomous System organization name"}
-            ], "name": "client_info", "type": "RECORD"},
+            {
+              "fields": [
+                { "name": "asn", "type": "STRING", "description": "Autonomous System Number"},
+                { "name": "org", "type": "STRING", "description": "Autonomous System organization name"}
+              ], "name": "as", "type": "RECORD"}
+            ], "name": "client", "type": "RECORD"},
           {
             "fields": [
-              { "name": "as_number", "type": "INTEGER", "description": "associated Autonomous System Number"},
-              { "name": "as_organization", "type": "STRING", "description": "Autonomous System organization name"},
-              { "name": "iata_code", "type": "STRING", "description": "airport code"}
-            ], "name": "server_info", "type": "RECORD"},
+              { "name": "iata_code", "type": "STRING", "description": "IATA airport code"},
+              {
+              "fields": [
+                { "name": "asn", "type": "STRING", "description": "Autonomous System Number"},
+                { "name": "org", "type": "STRING", "description": "Autonomous System organization name"}
+              ], "name": "as", "type": "RECORD"}
+            ], "name": "server", "type": "RECORD"},
           {
             "fields": [
               { "name": "area_code", "type": "INTEGER"},
