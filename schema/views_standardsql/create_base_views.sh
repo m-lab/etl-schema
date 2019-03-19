@@ -5,31 +5,41 @@
 #
 # Example usage:
 #
-#  ./create_base_views.sh mlab-sandbox mlab-sandbox "ndt sidestream"
-#  ./create_base_views.sh mlab-oti measurement-lab "ndt sidestream"
-
+#  ./create_base_views.sh mlab-sandbox mlab-sandbox \
+#       base_tables.ndt=ndt.web100 \
+#       base_tables.sidestream=global.sidestream
+#  ./create_base_views.sh mlab-oti measurement-lab \
+#       base_tables.ndt=ndt.web100 \
+#       base_tables.sidestream=global.sidestream
 
 set -eu
-USAGE="$0 <env-name> <source-project> <dest-project> <experiment1 experiment2 [...]>"
+USAGE="$0 <env-name> <source-project> <dest-project>"
+USAGE+=" <dataset1.table=dataset2.view [...]>"
 KEYNAME=${1:?Please provide a key name}
 SRC_PROJECT=${2:?Please provide source project: $USAGE}
 DST_PROJECT=${3:?Please provide destination project: $USAGE}
-EXPERIMENTS=${4:?Please provide set of experiment names: $USAGE}
+shift 3
+_=${1:?Please provide set of view assignments: $USAGE}
 
 echo "${!KEYNAME}" > /tmp/sa.json
 export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
 
-for experiment in ${EXPERIMENTS} ; do
+for assignment in $@ ; do
+
+  # Extract the source table and destination view from the assignment spec.
+  src=${assignment%%=*}
+  dest=${assignment##*=}
 
   # Make dataset for base views.
-  bq mk "${DST_PROJECT}:${experiment}" || :
+  bq mk "${DST_PROJECT}:${dest%%.*}" || :
 
   # Make base view referring to the source table.
   description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"$'\n'
-  description+="View of all '${experiment}' data processed by the ETL Gardener"
+  description+="View of all '${SRC_PROJECT}.${src}' data processed by the"
+  description+=" ETL Gardener."
 
   bq_create_view \
-      -create-view "${DST_PROJECT}.${experiment}.base" \
+      -create-view "${DST_PROJECT}.${dest}" \
       -description "${description}" \
-      -to-access "${SRC_PROJECT}.base_tables.${experiment}"
+      -to-access "${SRC_PROJECT}.${src}"
 done
