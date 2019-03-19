@@ -1,14 +1,14 @@
 #!/bin/bash
 #
-# create_base_views.sh creates "base" views that reference all data from
+# create_named_views.sh creates "named" views that reference all data from
 # source tables managed by gardener.
 #
 # Example usage:
 #
-#  ./create_base_views.sh mlab-sandbox mlab-sandbox \
+#  ./create_named_views.sh mlab-sandbox mlab-sandbox \
 #       base_tables.ndt=ndt.web100 \
 #       base_tables.sidestream=global.sidestream
-#  ./create_base_views.sh mlab-oti measurement-lab \
+#  ./create_named_views.sh mlab-oti measurement-lab \
 #       base_tables.ndt=ndt.web100 \
 #       base_tables.sidestream=global.sidestream
 
@@ -30,10 +30,10 @@ for assignment in $@ ; do
   src=${assignment%%=*}
   dest=${assignment##*=}
 
-  # Make dataset for base views.
+  # Make dataset for view.
   bq mk "${DST_PROJECT}:${dest%%.*}" || :
 
-  # Make base view referring to the source table.
+  # Make view referring to the source table.
   description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"$'\n'
   description+="View of all '${SRC_PROJECT}.${src}' data processed by the"
   description+=" ETL Gardener."
