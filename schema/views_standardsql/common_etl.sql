@@ -26,13 +26,17 @@ SELECT
     connection_spec.tls,
     connection_spec.websockets,
     connection_spec.client_geolocation,
-    connection_spec.server_geolocation)
+    connection_spec.server_geolocation,
+    connection_spec.server,
+    connection_spec.client)
   AS connection_spec,
   STRUCT(
     web100_log_entry.version,
     web100_log_entry.log_time,
     "" AS group_name,   -- not included in ETL
     web100_log_entry.connection_spec,
+    web100_log_entry.snap)
+    /*
     STRUCT(
       web100_log_entry.snap.AbruptTimeouts, web100_log_entry.snap.ActiveOpen, web100_log_entry.snap.CERcvd,
       web100_log_entry.snap.CongAvoid, web100_log_entry.snap.CongOverCount, web100_log_entry.snap.CongSignals,
@@ -66,7 +70,7 @@ SELECT
       web100_log_entry.snap.SndLimTransCwnd, web100_log_entry.snap.SndLimTransRwin, web100_log_entry.snap.SndLimTransSnd,
       web100_log_entry.snap.SndMax, web100_log_entry.snap.SndNxt, web100_log_entry.snap.SndUna,
       web100_log_entry.snap.SndWindScale, web100_log_entry.snap.SpuriousFrDetected, web100_log_entry.snap.StartTimeStamp,
-      -- mod(web100_log_entry.snap.StartTimeStamp, 1000000) AS StartTimeUsec, --Not needed in common schema
+      mod(web100_log_entry.snap.StartTimeStamp, 1000000) AS StartTimeUsec, --Not needed in common schema
       web100_log_entry.snap.State, web100_log_entry.snap.SubsequentTimeouts, web100_log_entry.snap.SumRTT,
       web100_log_entry.snap.TimeStamps, web100_log_entry.snap.Timeouts, web100_log_entry.snap.WinScaleRcvd,
       web100_log_entry.snap.WinScaleSent, web100_log_entry.snap.X_OtherReductionsCM, web100_log_entry.snap.X_OtherReductionsCV,
@@ -74,6 +78,7 @@ SELECT
       web100_log_entry.snap.X_dbg2, web100_log_entry.snap.X_dbg3, web100_log_entry.snap.X_dbg4,
       web100_log_entry.snap.X_rcv_ssthresh, web100_log_entry.snap.X_wnd_clamp)
     AS snap)
+    */
   AS web100_log_entry
 FROM `${PROJECT}.base_tables.ndt`
-WHERE _PARTITIONTIME >= TIMESTAMP("2017-05-11 00:00:00")
+-- WHERE _PARTITIONTIME >= TIMESTAMP("2017-05-11 00:00:00")
