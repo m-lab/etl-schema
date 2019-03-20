@@ -5,7 +5,9 @@
 -- Note that at present, data from May 10 to mid September does NOT have geo annotations.
 SELECT *
 FROM `${DATASET}.common_etl`
+/*
 WHERE partition_date > DATE("2017-05-10")
 UNION ALL
 SELECT *
 FROM `${PROJECT}.legacy.ndt_plx`
+*/

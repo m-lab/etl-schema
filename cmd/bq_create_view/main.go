@@ -130,6 +130,13 @@ func syncDatasetAccess(ctx context.Context, ds datasetInterface, view, target *b
 	return nil
 }
 
+const (
+	viewTemplate = `
+		#standardSQL
+		SELECT CAST(_PARTITIONTIME AS DATE) AS partition_date, *
+		FROM ` + "`%s`"
+)
+
 func main() {
 	flag.Parse()
 	log.SetLevel(log.Level(*logLevel))
@@ -141,7 +148,7 @@ func main() {
 	// Parsing flags.
 	view := parseTableID(*viewSource)
 	target := parseTableID(*accessTarget)
-	sql := fmt.Sprintf("#standardSQL\nSELECT * FROM `%s`", id(target))
+	sql := fmt.Sprintf(viewTemplate, id(target))
 
 	// Create a context that expires after 1 min.
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Minute)
