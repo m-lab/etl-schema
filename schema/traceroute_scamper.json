@@ -58,7 +58,7 @@
         "type": "RECORD",
         "mode": "REPEATED",
         "fields": [
-          { "name": "hop_source", "type": "RECORD",
+          { "name": "source", "type": "RECORD",
             "fields": [
               { "name": "ip", "type": "STRING"},
               { "name": "city", "type": "STRING"},
