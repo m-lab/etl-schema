@@ -1,10 +1,10 @@
 [
       { "name": "uuid", "type": "STRING"},
-      { "name": "hostname", "type": "STRING"},
       { "name": "start_time", "type": "TIMESTAMP"},
       { "name": "stop_time", "type": "TIMESTAMP"},
       { "name": "version", "type": "STRING"},
       { "name": "src_ip", "type": "STRING"},
+      { "name": "src_hostname", "type": "STRING"},
       { "name": "src_geolocation", "type": "RECORD",
         "fields": [
           { "name": "area_code", "type": "INTEGER"},
@@ -21,6 +21,7 @@
         ]},
       { "name": "src_asn", "type": "INTEGER"},
       { "name": "dst_ip", "type": "STRING"},
+      { "name": "dst_hostname", "type": "STRING"},
       { "name": "dst_geolocation", "type": "RECORD",
         "fields": [
           { "name": "area_code", "type": "INTEGER"},
@@ -44,13 +45,13 @@
         "fields": [
           { "name": "hop_src_ip", "type": "STRING"},
           { "name": "hop_src_city", "type": "STRING"},
-          { "name": "hostname", "type": "STRING"},
+          { "name": "hop_src_hostname", "type": "STRING"},
           { "name": "linkc", "type": "INTEGER"},
           { "name": "links",
             "type": "RECORD",
             "mode": "REPEATED",
             "fields": [
-              { "name": "hop_dest_ip", "type": "STRING"},
+              { "name": "hop_dst_ip", "type": "STRING"},
               { "name": "probes",
                 "type": "RECORD",
                 "mode": "REPEATED",
