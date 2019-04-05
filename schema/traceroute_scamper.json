@@ -1,12 +1,16 @@
 [
+      { "name": "task_filename", "type": "STRING"},
+      { "name": "parse_time", "type": "TIMESTAMP"},
+      { "name": "parser_version", "type": "STRING"},
       { "name": "uuid", "type": "STRING"},
       { "name": "start_time", "type": "TIMESTAMP"},
       { "name": "stop_time", "type": "TIMESTAMP"},
-      { "name": "version", "type": "STRING"},
+      { "name": "scamper_version", "type": "STRING"},
       { "name": "source", "type": "RECORD",
         "fields": [
           { "name": "ip", "type": "STRING"},
           { "name": "hostname", "type": "STRING"},
+          { "name": "asn", "type": "INTEGER"},
           { "name": "geolocation", "type": "RECORD",
             "fields": [
               { "name": "area_code", "type": "INTEGER"},
@@ -23,13 +27,13 @@
               { "name": "radius", "type": "INTEGER"}
             ]
           }
-          { "name": "asn", "type": "INTEGER"},
         ]
       }
       { "name": "destination", "type": "RECORD",
         "fields": [
           { "name": "ip", "type": "STRING"},
           { "name": "hostname", "type": "STRING"},
+          { "name": "asn", "type": "INTEGER"},
           { "name": "geolocation", "type": "RECORD",
             "fields": [
               { "name": "area_code", "type": "INTEGER"},
@@ -46,16 +50,15 @@
               { "name": "radius", "type": "INTEGER"}
             ]
           }
-          { "name": "asn", "type": "INTEGER"},
         ]
       }
       { "name": "probe_size", "type": "INTEGER"},
       { "name": "probec", "type": "INTEGER"},
-      { "name": "traceroute_hop",
+      { "name": "hop",
         "type": "RECORD",
         "mode": "REPEATED",
         "fields": [
-          { "name": "hop_src", "type": "RECORD",
+          { "name": "hop_source", "type": "RECORD",
             "fields": [
               { "name": "ip", "type": "STRING"},
               { "name": "city", "type": "STRING"},
