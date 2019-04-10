@@ -80,5 +80,5 @@ SELECT
     AS snap)
     */
   AS web100_log_entry
-FROM `${PROJECT}.base_tables.ndt`
+FROM `${PROJECT}.ndt.web100`
 -- WHERE _PARTITIONTIME >= TIMESTAMP("2017-05-11 00:00:00")
