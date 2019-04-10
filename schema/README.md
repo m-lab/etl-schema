@@ -1,3 +1,5 @@
+# Schema
+
 Schema includes bigquery schema (json) files, and code associated with
 populating bigquery entities.
 
