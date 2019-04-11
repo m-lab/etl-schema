@@ -19,6 +19,7 @@ var (
 	viewSource   = flag.String("create-view", "", "Source view id: <project>.<dataset>.<view>")
 	accessTarget = flag.String("to-access", "", "Target table id accessed by view. Must already exist.")
 	description  = flag.String("description", "", "Description for view")
+	user         = flag.String("user", "", "When creating the view dataset, add edit access for user.")
 	logLevel     = flag.Int("log.level", 4, "Log level")
 )
 
@@ -45,6 +46,17 @@ func canAccess(table *bigquery.Table, access []*bigquery.AccessEntry) bool {
 	for i := range access {
 		if access[i].View != nil {
 			if equalTables(access[i].View, table) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func userCanAccess(user string, access []*bigquery.AccessEntry) bool {
+	for i := range access {
+		if access[i].EntityType == bigquery.UserEmailEntity {
+			if access[i].Entity == user {
 				return true
 			}
 		}
@@ -92,6 +104,48 @@ func syncView(ctx context.Context, tb tableInterface, view *bigquery.Table, sql,
 type datasetInterface interface {
 	Metadata(ctx context.Context) (*bigquery.DatasetMetadata, error)
 	Update(ctx context.Context, tm bigquery.DatasetMetadataToUpdate, etag string) (*bigquery.DatasetMetadata, error)
+	Create(ctx context.Context, tm *bigquery.DatasetMetadata) error
+}
+
+func syncDataset(ctx context.Context, ds datasetInterface, user string) error {
+	md, err := ds.Metadata(ctx)
+	if err != nil {
+		apiErr, ok := err.(*googleapi.Error)
+		if !ok {
+			// This is not a googleapi.Error, so treat it as fatal.
+			return err
+		}
+		// We can only handle 404 errors caused by the view not existing.
+		if apiErr.Code != 404 {
+			return err
+		}
+		if user == "" {
+			return fmt.Errorf("User must not be empty")
+		}
+		log.Info("Creating dataset")
+		err = ds.Create(ctx, &bigquery.DatasetMetadata{
+			Access: []*bigquery.AccessEntry{
+				// Default access entries.
+				{Role: bigquery.OwnerRole, EntityType: bigquery.SpecialGroupEntity, Entity: "projectOwners"},
+				{Role: bigquery.WriterRole, EntityType: bigquery.SpecialGroupEntity, Entity: "projectWriters"},
+				{Role: bigquery.ReaderRole, EntityType: bigquery.SpecialGroupEntity, Entity: "projectReaders"},
+				// Access entry for service accounts or individual users beyond the default.
+				{Role: bigquery.WriterRole, EntityType: bigquery.UserEmailEntity, Entity: user},
+			},
+		})
+		return err
+	}
+
+	// If user is already present in the access entry list, then we're done.
+	if userCanAccess(user, md.Access) {
+		return nil
+	}
+
+	// Add user. Note: if a service account is not already present, it may not have permission to add itself.
+	acl := append(md.Access, &bigquery.AccessEntry{
+		Role: bigquery.WriterRole, EntityType: bigquery.UserEmailEntity, Entity: user})
+	_, err = ds.Update(ctx, bigquery.DatasetMetadataToUpdate{Access: acl}, md.ETag)
+	return err
 }
 
 func syncDatasetAccess(ctx context.Context, ds datasetInterface, view, target *bigquery.Table) error {
@@ -160,9 +214,15 @@ func main() {
 	viewClient, err := bigquery.NewClient(ctx, view.ProjectID)
 	rtx.Must(err, "Failed to create bigquery.Client")
 
+	// Create or Update view dataset.
+	log.Info("Syncing view dataset: ", id(view))
+	viewDs := viewClient.Dataset(view.DatasetID)
+	err = syncDataset(ctx, viewDs, *user)
+	rtx.Must(err, "Failed to sync dataset: %q", viewDs.DatasetID)
+
 	// Create or Update view query and description.
 	log.Info("Reading view metadata: ", id(view))
-	tb := viewClient.Dataset(view.DatasetID).Table(view.TableID)
+	tb := viewDs.Table(view.TableID)
 	err = syncView(ctx, tb, view, sql, *description)
 	rtx.Must(err, "Failed to sync view %q", id(view))
 
