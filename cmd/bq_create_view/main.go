@@ -137,7 +137,7 @@ func syncDataset(ctx context.Context, ds datasetInterface, user string) error {
 	}
 
 	// If user is already present in the access entry list, then we're done.
-	if userCanAccess(user, md.Access) {
+	if user == "" || userCanAccess(user, md.Access) {
 		return nil
 	}
 
