@@ -19,7 +19,7 @@ var (
 	viewSource   = flag.String("create-view", "", "Source view id: <project>.<dataset>.<view>")
 	accessTarget = flag.String("to-access", "", "Target table id accessed by view. Must already exist.")
 	description  = flag.String("description", "", "Description for view")
-	user         = flag.String("user", "", "When creating the view dataset, add edit access for user.")
+	user         = flag.String("user", "", "User that should have view dataset edit access.")
 	logLevel     = flag.Int("log.level", 4, "Log level")
 )
 
@@ -110,13 +110,14 @@ type datasetInterface interface {
 func syncDataset(ctx context.Context, ds datasetInterface, user string) error {
 	md, err := ds.Metadata(ctx)
 	if err != nil {
-		apiErr, ok := err.(*googleapi.Error)
-		if !ok {
+		switch apiErr := err.(type) {
+		case *googleapi.Error:
+			// We can only handle 404 errors caused by the view not existing.
+			if apiErr.Code != 404 {
+				return err
+			}
+		default:
 			// This is not a googleapi.Error, so treat it as fatal.
-			return err
-		}
-		// We can only handle 404 errors caused by the view not existing.
-		if apiErr.Code != 404 {
 			return err
 		}
 		if user == "" {
@@ -141,7 +142,16 @@ func syncDataset(ctx context.Context, ds datasetInterface, user string) error {
 		return nil
 	}
 
-	// Add user. Note: if a service account is not already present, it may not have permission to add itself.
+	// Add user to the AccessEntry.
+	//
+	// Note: in order to create views in a dataset, a service-account actor must
+	// have "writer" access in the AccessEntry for the dataset. This is true even
+	// if the service-account previously created the dataset.
+	//
+	// So, if the process is authenticated as a service-account and that user is
+	// trying to add itself, then it may not have permission to do so (even if it
+	// has BigQuery Editor role). In this case, the Update will fail and someone
+	// with greater privileges must update the AccessEntry on the user's behalf.
 	acl := append(md.Access, &bigquery.AccessEntry{
 		Role: bigquery.WriterRole, EntityType: bigquery.UserEmailEntity, Entity: user})
 	_, err = ds.Update(ctx, bigquery.DatasetMetadataToUpdate{Access: acl}, md.ETag)
