@@ -23,15 +23,14 @@ _=${1:?Please provide set of view assignments: $USAGE}
 
 echo "${!KEYNAME}" > /tmp/sa.json
 export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+# Extract service account user name.
+USER=$( gcloud config get-value account )
 
 for assignment in $@ ; do
 
   # Extract the source table and destination view from the assignment spec.
   src=${assignment%%=*}
   dest=${assignment##*=}
-
-  # Make dataset for view.
-  bq mk "${DST_PROJECT}:${dest%%.*}" || :
 
   # Make view referring to the source table.
   description="Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"$'\n'
@@ -41,5 +40,6 @@ for assignment in $@ ; do
   bq_create_view \
       -create-view "${DST_PROJECT}.${dest}" \
       -description "${description}" \
-      -to-access "${SRC_PROJECT}.${src}"
+      -to-access "${SRC_PROJECT}.${src}" \
+      -user "${USER}"
 done
