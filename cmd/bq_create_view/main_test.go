@@ -69,6 +69,7 @@ func Test_syncView(t *testing.T) {
 type fakeDataset struct {
 	mdErr  error
 	upErr  error
+	crErr  error
 	md     *bigquery.DatasetMetadata
 	update *bigquery.DatasetMetadata
 }
@@ -78,6 +79,9 @@ func (fd *fakeDataset) Metadata(ctx context.Context) (*bigquery.DatasetMetadata,
 }
 func (fd *fakeDataset) Update(ctx context.Context, tm bigquery.DatasetMetadataToUpdate, etag string) (*bigquery.DatasetMetadata, error) {
 	return fd.update, fd.upErr
+}
+func (fd *fakeDataset) Create(ctx context.Context, tm *bigquery.DatasetMetadata) error {
+	return fd.crErr
 }
 
 func Test_syncDatasetAccess(t *testing.T) {
@@ -204,6 +208,83 @@ func Test_parseTableID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := parseTableID(tt.id); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("parseTableID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_syncDataset(t *testing.T) {
+	type args struct {
+	}
+	tests := []struct {
+		name    string
+		ds      datasetInterface
+		user    string
+		wantErr bool
+	}{
+		{
+			name: "okay-update",
+			ds: &fakeDataset{
+				md: &bigquery.DatasetMetadata{
+					Access: []*bigquery.AccessEntry{
+						{Role: bigquery.OwnerRole, EntityType: bigquery.SpecialGroupEntity, Entity: "projectOwners"},
+						{Role: bigquery.WriterRole, EntityType: bigquery.SpecialGroupEntity, Entity: "projectWriters"},
+						{Role: bigquery.ReaderRole, EntityType: bigquery.SpecialGroupEntity, Entity: "projectReaders"},
+					},
+				},
+			},
+			user: "fake-user",
+		},
+		{
+			name: "okay-create",
+			ds: &fakeDataset{
+				md:    nil,
+				mdErr: &googleapi.Error{Code: 404},
+			},
+			user: "fake-user",
+		},
+		{
+			name: "okay-user-already-exists",
+			ds: &fakeDataset{
+				md: &bigquery.DatasetMetadata{
+					Access: []*bigquery.AccessEntry{
+						{Role: bigquery.WriterRole, EntityType: bigquery.UserEmailEntity, Entity: "fake-user"},
+					},
+				},
+			},
+			user: "fake-user",
+		},
+		{
+			name: "error-user-not-specified",
+			ds: &fakeDataset{
+				md:    nil,
+				mdErr: &googleapi.Error{Code: 404},
+			},
+			user:    "",
+			wantErr: true,
+		},
+		{
+			name: "error-access-denied-metadata-error",
+			ds: &fakeDataset{
+				md:    nil,
+				mdErr: &googleapi.Error{Code: 403},
+			},
+			wantErr: true,
+		},
+		{
+			name: "error-unknown-metadata-error",
+			ds: &fakeDataset{
+				md:    nil,
+				mdErr: fmt.Errorf("This is a fake error that syncDataset can't handle"),
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		ctx := context.Background()
+		t.Run(tt.name, func(t *testing.T) {
+			if err := syncDataset(ctx, tt.ds, tt.user); (err != nil) != tt.wantErr {
+				t.Errorf("syncDataset() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
