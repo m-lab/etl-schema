@@ -43,3 +43,15 @@ switch.json contains the schema for DISCO tables. To create a new table:
 
     bq --project_id mlab-sandbox mk --time_partitioning_type=DAY \
         --schema schema/switch.json -t base_tables.switch
+
+## Update Table Schema in Place
+
+NOTE: schema updates are best used to add new columns. See [modiying table
+schemas](https://cloud.google.com/bigquery/docs/managing-table-schemas) for
+other use cases.
+
+For example:
+
+```bash
+bq update mlab-sandbox:private.sidestream schema/ss.json
+```
