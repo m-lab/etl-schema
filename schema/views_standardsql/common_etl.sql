@@ -2,7 +2,7 @@
 -- ETL table projected into common schema, for union with PLX legacy data.
 SELECT
   test_id,
-  DATE(_PARTITIONTIME) AS partition_date,
+  partition_date,
   0 AS project, -- not included in ETL
   log_time,
   task_filename,
@@ -80,5 +80,5 @@ SELECT
     AS snap)
     */
   AS web100_log_entry
-FROM `${PROJECT}.base_tables.ndt`
+FROM `${PROJECT}.ndt.web100`
 -- WHERE _PARTITIONTIME >= TIMESTAMP("2017-05-11 00:00:00")
