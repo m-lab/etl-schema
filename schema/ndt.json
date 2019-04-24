@@ -5,6 +5,11 @@
       { "name": "parser_version", "type": "STRING"},
       { "name": "log_time", "type": "TIMESTAMP"},
       { "name": "blacklist_flags", "type": "INTEGER", "description": "Deprecated.  Use flag in anomalies record instead."},
+      { "name": "server_city", "type": "STRING", "description": "Server City - clustered"},
+      { "name": "server_asn", "type": "INTEGER", "description": "Server ASN - clustered"},
+      { "name": "client_country", "type": "STRING", "description": "Client country - clustered"},
+      { "name": "client_region", "type": "STRING", "description": "Client subdivision_1_name - clustered"},
+      { "name": "client_asn", "type": "INTEGER", "description": "Client ASN - clustered"},
       {
         "fields": [
           { "name": "no_meta", "type": "BOOLEAN"},
