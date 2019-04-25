@@ -1,5 +1,5 @@
 #standardSQL
---  All good quality download tests
+-- All good quality download tests
 SELECT * FROM `%s.ndt.recommended`
 WHERE
   -- download direction, and at least 8KB transfered
