@@ -1,15 +1,15 @@
 #!/bin/bash
 #
-# sync_TABLE.sh creates or updates a single BQ TABLEs using local schema
+# sync_table.sh creates or updates a single BQ table using local schema
 # definitions. If the remote schema for an existing TABLE is structurally
 # different than the local schema, the difference is printed before being
 # updated.
 #
-# By default, sync_TABLE.sh run in dryrun mode, making no
+# By default, sync_table.sh run in dryrun mode, making no
 # permanent changes. To commit changes, provide the final argument 'nodryrun'.
 #
 # Example:
-#   ./sync_TABLE.sh mlab-sandbox:ndt.web100 ndt.json [nodryrun]
+#   ./sync_table.sh mlab-sandbox:ndt.web100 ndt.json [nodryrun]
 
 
 USAGE="$0 <full-TABLE-name> <schema file>"
@@ -19,7 +19,7 @@ NODRYRUN=${3:-dryrun} # Run in dryrun mode by default.
 
 set -eu
 
-[[ ${FULL_TABLE} =~ (.*):(.*)\.(.*) ]]    # BASH_REMATCH[0] is now "bcd"
+[[ ${FULL_TABLE} =~ (.*):(.*)\.(.*) ]]    # parse the project:dataset.table string
 
 PROJECT=${BASH_REMATCH[1]}
 DATASET=${BASH_REMATCH[2]}
