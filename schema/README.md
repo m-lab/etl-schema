@@ -13,8 +13,9 @@ All parsers write to the `base_tables` dataset.
 ndt.json contains the schema for the NDT tables. It can be used to
 create a new table in mlab-sandbox project by invoking:
 
-    bq --project_id mlab-sandbox mk --time_partitioning_field=log_time \
-        --schema schema/ndt.json --clustering_fields client_country,client_asn,client_region,server_asn -t ndt.web100
+    bq mk --time_partitioning_field=log_time \
+    --clustering_fields client_country,client_asn,client_region,server_asn \
+    -t mlab-sandbox:ndt.web100 schema/ndt.json
 
 ## Paris-Traceroute
 
