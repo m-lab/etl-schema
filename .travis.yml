@@ -2,9 +2,8 @@
 #
 # The steps it takes are:
 #
-#  * decrypt service account credentials
+#  * Run unit tests.
 #  * install the Google Cloud SDK command line tools (gcloud)
-#  * cache the gcloud installation and setup
 #  * deploy the bigquery views when the branch/tag matches a supported
 #    deployment target.
 #
@@ -21,12 +20,6 @@ go_import_path: github.com/m-lab/etl-schema
 before_install:
 - go get github.com/mattn/goveralls
 - echo Branch is ${TRAVIS_BRANCH} and Tag is $TRAVIS_TAG
-
-# These directories will be cached on successful "script" builds, and restored,
-# if available, to save time on future builds.
-cache:
-  directories:
-    - "$HOME/google-cloud-sdk/"
 
 script:
 - set -e
@@ -47,7 +40,7 @@ before_deploy:
 #  Overview:
 #   1.  Test in sandbox during development
 #   2.  Deploy to staging on commit to master
-#   3.  Deploy to prod when a branch is tagged with prod-* or xxx-prod-*
+#   3.  Deploy to prod when a branch is tagged with prod-*
 #
 #  We want to test individual components in sandbox, and avoid stepping on each
 #  other, so we do NOT automate deployment to sandbox.  Each person should
@@ -77,17 +70,9 @@ deploy:
 - provider: script
   script:
     # Update these version numbers when making changes to the views.
-    # TODO - add feature to allow making aliases from existing intermediate.
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_sandbox
-    && cd $TRAVIS_BUILD_DIR/schema/views_legacysql
-    && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
-    && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
-    && ./make_views.sh mlab-sandbox intermediate_v3_1_1 rc_v3_1 "rc release"
-    && ./create_named_views.sh SERVICE_ACCOUNT_mlab_sandbox mlab-sandbox mlab-sandbox
-       base_tables.ndt=ndt.web100
-       base_tables.sidestream=global.sidestream
-       base_tables.switch=utilization.switch
-       base_tables.traceroute=global.traceroute
+    && cd $TRAVIS_BUILD_DIR/views
+    && ./create_dataset_views.sh SERVICE_ACCOUNT_mlab_sandbox mlab-sandbox mlab-sandbox
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
@@ -104,15 +89,8 @@ deploy:
 - provider: script
   script:
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_staging
-    && cd $TRAVIS_BUILD_DIR/schema/views_legacysql
-    && ./make_views.sh mlab-staging intermediate_v3_1_1 rc_v3_1 "rc release"
-    && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
-    && ./make_views.sh mlab-staging intermediate_v3_1_1 rc_v3_1 "rc release"
-    && ./create_named_views.sh SERVICE_ACCOUNT_mlab_staging mlab-staging mlab-staging
-       base_tables.ndt=ndt.web100
-       base_tables.sidestream=global.sidestream
-       base_tables.switch=utilization.switch
-       base_tables.traceroute=global.traceroute
+    && cd $TRAVIS_BUILD_DIR/views
+    && ./create_dataset_views.sh SERVICE_ACCOUNT_mlab_staging mlab-staging mlab-staging
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
@@ -120,7 +98,7 @@ deploy:
 
 ######################################################################
 #  Prod deployments
-#  Deployed on manual tagging with prod-*, or (group)-prod-*
+#  Deployed on manual tagging with prod-*.
 #  Should be used AFTER code review, commit to master, and staging soak.
 #  Triggers when *ANY* branch is tagged with prod-*'
 ######################################################################
@@ -128,24 +106,12 @@ deploy:
 - provider: script
   script:
     # Update these version numbers when making changes to the views.
-    # TODO - add feature to allow making aliases from existing intermediate.
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_oti
-    && cd $TRAVIS_BUILD_DIR/schema/views_legacysql
-    && ./make_views.sh measurement-lab intermediate_v3_1_1 rc_v3_1 "rc release"
-    && cd $TRAVIS_BUILD_DIR/schema/views_standardsql
-    && ./make_views.sh measurement-lab intermediate_v3_1_1 rc_v3_1 "rc release"
-    && ./create_named_views.sh SERVICE_ACCOUNT_mlab_oti mlab-oti mlab-oti
-       base_tables.ndt=ndt.web100
-       base_tables.sidestream=global.sidestream
-       base_tables.switch=utilization.switch
-       base_tables.traceroute=global.traceroute
-    && ./create_named_views.sh SERVICE_ACCOUNT_mlab_oti mlab-oti measurement-lab
-       base_tables.ndt=ndt.web100
-       base_tables.sidestream=global.sidestream
-       base_tables.switch=utilization.switch
-       base_tables.traceroute=global.traceroute
+    && cd $TRAVIS_BUILD_DIR/views
+    && ./create_dataset_views.sh SERVICE_ACCOUNT_mlab_oti mlab-oti mlab-oti
+    && ./create_dataset_views.sh SERVICE_ACCOUNT_mlab_oti mlab-oti measurement-lab
   skip_cleanup: true
   on:
     repo: m-lab/etl-schema
     all_branches: true
-    condition: $TRAVIS_TAG == prod-*
+    condition: $TRAVIS_TAG =~ ^prod-v[0-9]+\.[0-9]+\.[0-9]+
