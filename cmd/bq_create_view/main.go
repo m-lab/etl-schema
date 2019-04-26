@@ -11,19 +11,23 @@ import (
 	"strings"
 
 	"cloud.google.com/go/bigquery"
+	"github.com/m-lab/go/flagx"
 	"github.com/m-lab/go/rtx"
 	"google.golang.org/api/googleapi"
 )
 
 var (
-	viewSource   = flag.String("create-view", "", "Source view id: <project>.<dataset>.<view>")
-	accessTarget = flag.String("to-access", "", "Target table id accessed by view. Must already exist.")
+	viewSource   = flag.String("create-view", "", "Full name of BQ view id: <project>.<dataset>.<view>")
+	accessTarget = flag.String("referencing", "", "Full table or view id that the view references. Must already exist.")
 	description  = flag.String("description", "", "Description for view")
-	user         = flag.String("user", "", "User that should have view dataset edit access.")
+	editor       = flag.String("editor", "", "User name that should have edit access to the view dataset.")
 	logLevel     = flag.Int("log.level", 4, "Log level")
+	viewTemplate = flagx.FileBytes{}
 )
 
 func init() {
+	flag.Var(&viewTemplate, "template", "File name of view query template. Use at most one '%s' to refer to target project.")
+
 	log.SetFormatter(&log.TextFormatter{
 		DisableColors: true,
 		FullTimestamp: true,
@@ -170,6 +174,12 @@ func syncDatasetAccess(ctx context.Context, ds datasetInterface, view, target *b
 		return nil
 	}
 
+	// Access entries to the same project and dataset are unnecessary (and an error).
+	if view.ProjectID == target.ProjectID && view.DatasetID == target.DatasetID {
+		log.Info("Confirmed: view access is enabled")
+		return nil
+	}
+
 	log.Infof("Adding access: %s can access %s", id(view), id(target))
 	// Note: it's possible for md.Access to include AccessEntries for views that no
 	// longer exist. If that's the case, then the Update below will fail.
@@ -194,25 +204,19 @@ func syncDatasetAccess(ctx context.Context, ds datasetInterface, view, target *b
 	return nil
 }
 
-const (
-	viewTemplate = `
-		#standardSQL
-		SELECT CAST(_PARTITIONTIME AS DATE) AS partition_date, *
-		FROM ` + "`%s`"
-)
-
 func main() {
 	flag.Parse()
 	log.SetLevel(log.Level(*logLevel))
 
-	if *viewSource == "" || *accessTarget == "" {
-		log.Fatal("Flags --create-view and --to-access must be specified.")
+	if *viewSource == "" || *accessTarget == "" || len(viewTemplate) == 0 {
+		flag.Usage()
+		log.Fatal("--create-view, --to-access, and --template flags are required.")
 	}
 
 	// Parsing flags.
 	view := parseTableID(*viewSource)
 	target := parseTableID(*accessTarget)
-	sql := fmt.Sprintf(viewTemplate, id(target))
+	sql := fmt.Sprintf(viewTemplate.String(), target.ProjectID)
 
 	// Create a context that expires after 1 min.
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Minute)
@@ -227,7 +231,7 @@ func main() {
 	// Create or Update view dataset.
 	log.Info("Syncing view dataset: ", id(view))
 	viewDs := viewClient.Dataset(view.DatasetID)
-	err = syncDataset(ctx, viewDs, *user)
+	err = syncDataset(ctx, viewDs, *editor)
 	rtx.Must(err, "Failed to sync dataset: %q", viewDs.DatasetID)
 
 	// Create or Update view query and description.
