@@ -17,10 +17,10 @@ import (
 )
 
 var (
-	viewSource   = flag.String("create-view", "", "Source view id: <project>.<dataset>.<view>")
-	accessTarget = flag.String("to-access", "", "Target table id accessed by view. Must already exist.")
+	viewSource   = flag.String("create-view", "", "Full name of BQ view id: <project>.<dataset>.<view>")
+	accessTarget = flag.String("referencing", "", "Full table or view id that the view references. Must already exist.")
 	description  = flag.String("description", "", "Description for view")
-	user         = flag.String("user", "", "User that should have view dataset edit access.")
+	editor       = flag.String("editor", "", "User name that should have edit access to the view dataset.")
 	logLevel     = flag.Int("log.level", 4, "Log level")
 	viewTemplate = flagx.FileBytes{}
 )
@@ -174,6 +174,7 @@ func syncDatasetAccess(ctx context.Context, ds datasetInterface, view, target *b
 		return nil
 	}
 
+	// Access entries to the same project and dataset are unnecessary (and an error).
 	if view.ProjectID == target.ProjectID && view.DatasetID == target.DatasetID {
 		log.Info("Confirmed: view access is enabled")
 		return nil
@@ -230,7 +231,7 @@ func main() {
 	// Create or Update view dataset.
 	log.Info("Syncing view dataset: ", id(view))
 	viewDs := viewClient.Dataset(view.DatasetID)
-	err = syncDataset(ctx, viewDs, *user)
+	err = syncDataset(ctx, viewDs, *editor)
 	rtx.Must(err, "Failed to sync dataset: %q", viewDs.DatasetID)
 
 	// Create or Update view query and description.
