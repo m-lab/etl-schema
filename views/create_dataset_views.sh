@@ -24,6 +24,8 @@ BASEDIR=$( pwd )
 if [[ "${KEYNAME}" != "self" ]] ; then
   echo "${!KEYNAME}" > /tmp/sa.json
   export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
+  # Guarantee that `gcloud config get-value accounnt` works as intended.
+  gcloud auth activate-service-account --key-file /tmp/sa.json
 fi
 # Extract service account user name.
 USER=$( gcloud config get-value account )
