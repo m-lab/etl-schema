@@ -69,7 +69,6 @@ deploy:
 
 - provider: script
   script:
-    # Update these version numbers when making changes to the views.
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_sandbox
     && cd $TRAVIS_BUILD_DIR/views
     && ./create_dataset_views.sh SERVICE_ACCOUNT_mlab_sandbox mlab-sandbox mlab-sandbox
@@ -105,7 +104,6 @@ deploy:
 
 - provider: script
   script:
-    # Update these version numbers when making changes to the views.
     $TRAVIS_BUILD_DIR/travis/activate_service_account.sh SERVICE_ACCOUNT_mlab_oti
     && cd $TRAVIS_BUILD_DIR/views
     && ./create_dataset_views.sh SERVICE_ACCOUNT_mlab_oti mlab-oti mlab-oti
