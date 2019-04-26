@@ -36,8 +36,8 @@ the appropriate project name.
 
 ```bash
 # To update testing views in sandbox.
-./create_dataset_views.sh "user" mlab-sandbox mlab-sandbox
+./create_dataset_views.sh "self" mlab-sandbox mlab-sandbox
 
 # To update public accessible views.
-./create_dataset_views.sh "user" mlab-oti measurement-lab
+./create_dataset_views.sh "self" mlab-oti measurement-lab
 ```

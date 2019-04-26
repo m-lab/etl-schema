@@ -10,18 +10,18 @@
 #
 # Example usage:
 #
-#  ./create_dataset_views.sh "user" mlab-sandbox mlab-sandbox
-#  ./create_dataset_views.sh "user" mlab-oti measurement-lab
+#  ./create_dataset_views.sh "self" mlab-sandbox mlab-sandbox
+#  ./create_dataset_views.sh "self" mlab-oti measurement-lab
 
 set -eu
 USAGE="$0 <key-name> <source-project> <dest-project>"
-KEYNAME=${1:?Please provide a key name to authorize operations or "user"}
+KEYNAME=${1:?Please provide a key name to authorize operations or "self"}
 SRC_PROJECT=${2:?Please provide source project: $USAGE}
 DST_PROJECT=${3:?Please provide destination project: $USAGE}
 
 BASEDIR=$( pwd )
 
-if [[ "${KEYNAME}" != "user" ]] ; then
+if [[ "${KEYNAME}" != "self" ]] ; then
   echo "${!KEYNAME}" > /tmp/sa.json
   export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
 fi
@@ -52,10 +52,10 @@ function create_view() {
 
   bq_create_view \
       -create-view "${dst_project}.${dataset}.${view}" \
-      -to-access "${project_dataset_table}" \
+      -referencing "${project_dataset_table}" \
       -template "${template}" \
       -description "${description}" \
-      -user "${USER}"
+      -editor "${USER}"
 }
 
 
