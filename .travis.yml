@@ -112,4 +112,4 @@ deploy:
   on:
     repo: m-lab/etl-schema
     all_branches: true
-    condition: $TRAVIS_TAG =~ ^prod-v[0-9]+\.[0-9]+\.[0-9]+
+    condition: $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+
