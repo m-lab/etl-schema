@@ -1,6 +1,15 @@
 #standardSQL
--- All good quality download tests
-SELECT * FROM `%s.ndt.recommended`
+SELECT
+       -- All good quality download tests
+       *,
+       -- A synthetic column that conforms to our best practices.
+       -- The times are in microseconds, and dividing total throughput by total microseconds yields
+       -- mean throughput in Megabits per second.
+       8 * (web100_log_entry.snap.HCThruOctetsAcked /
+       (web100_log_entry.snap.SndLimTimeRwin +
+        web100_log_entry.snap.SndLimTimeCwnd +
+        web100_log_entry.snap.SndLimTimeSnd)) AS MeanDownloadThroughputMbps
+FROM `%s.ndt.recommended`
 WHERE
   -- download direction, and at least 8KB transfered
   connection_spec.data_direction IS NOT NULL
