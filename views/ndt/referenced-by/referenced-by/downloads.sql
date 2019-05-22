@@ -7,7 +7,7 @@ SELECT
       -- microseconds yields mean throughput in Megabits per second.  This
       -- query excludes any time during which the connection was quiescent,
       -- and as such is a fairer representation of how fast we were able to
-      -- push data down the pipe than just dividing by
+      -- push data down the pipe as compared to just dividing by
       -- web100_log_entry.snap.Duration
       --
       -- TODO: Delete this once https://github.com/m-lab/etl/issues/663 is
