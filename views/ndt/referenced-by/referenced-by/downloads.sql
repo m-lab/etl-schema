@@ -12,10 +12,12 @@ SELECT
       --
       -- TODO: Delete this once https://github.com/m-lab/etl/issues/663 is
       -- resolved.
-       8 * (web100_log_entry.snap.HCThruOctetsAcked /
-       (web100_log_entry.snap.SndLimTimeRwin +
-        web100_log_entry.snap.SndLimTimeCwnd +
-        web100_log_entry.snap.SndLimTimeSnd)) AS MeanDownloadThroughputMbps
+      STRUCT(
+        8 * (web100_log_entry.snap.HCThruOctetsAcked /
+        (web100_log_entry.snap.SndLimTimeRwin +
+         web100_log_entry.snap.SndLimTimeCwnd +
+         web100_log_entry.snap.SndLimTimeSnd)) AS mean_download_throughput_mbps
+      ) as alpha
 FROM `%s.ndt.recommended`
 WHERE
   -- download direction, and at least 8KB transfered
