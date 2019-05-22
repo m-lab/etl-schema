@@ -1,10 +1,14 @@
 #standardSQL
 SELECT
-       -- All good quality download tests
+      -- All good quality download tests
        *,
-       -- A synthetic column that conforms to our best practices.
-       -- The times are in microseconds, and dividing total throughput by total microseconds yields
-       -- mean throughput in Megabits per second.
+      -- A synthetic column that conforms to our best practices.
+      -- The times are in microseconds, and dividing total throughput by total
+      -- microseconds yields mean throughput in Megabits per second.  This
+      -- query excludes any time during which the connection was quiescent,
+      -- and as such is a fairer representation of how fast we were able to
+      -- push data down the pipe than just dividing by
+      -- web100_log_entry.snap.Duration
        8 * (web100_log_entry.snap.HCThruOctetsAcked /
        (web100_log_entry.snap.SndLimTimeRwin +
         web100_log_entry.snap.SndLimTimeCwnd +
