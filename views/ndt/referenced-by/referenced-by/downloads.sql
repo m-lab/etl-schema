@@ -9,6 +9,9 @@ SELECT
       -- and as such is a fairer representation of how fast we were able to
       -- push data down the pipe than just dividing by
       -- web100_log_entry.snap.Duration
+      --
+      -- TODO: Delete this once https://github.com/m-lab/etl/issues/663 is
+      -- resolved.
        8 * (web100_log_entry.snap.HCThruOctetsAcked /
        (web100_log_entry.snap.SndLimTimeRwin +
         web100_log_entry.snap.SndLimTimeCwnd +
