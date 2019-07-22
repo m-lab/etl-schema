@@ -6,7 +6,7 @@
 --  TCP end state is sensible
 --  Test duration was between 9 and 60 seconds.
 SELECT * 
-FROM `%s.ndt.web100`
+FROM `{{.ProjectID}}.ndt.web100`
 WHERE
   -- not blacklisted
   (blacklist_flags = 0 OR

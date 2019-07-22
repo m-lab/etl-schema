@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
+	"text/template"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -216,7 +218,12 @@ func main() {
 	// Parsing flags.
 	view := parseTableID(*viewSource)
 	target := parseTableID(*accessTarget)
-	sql := fmt.Sprintf(viewTemplate.String(), target.ProjectID)
+
+	// Evaluate viewTemplate.
+	var viewContent bytes.Buffer
+	tmpl := template.Must(template.New("template").Parse(viewTemplate.String()))
+	rtx.Must(tmpl.Execute(&viewContent, target), "Failed to execute view template: %q", viewTemplate)
+	sql := viewContent.String()
 
 	// Create a context that expires after 1 min.
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Minute)

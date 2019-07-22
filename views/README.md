@@ -29,8 +29,9 @@ This will result in creation, e.g. for mlab-sandbox, of:
 - mlab-sandbox:ndt.downloads - referencing only recommended
 - mlab-sandbox:ndt.uploads - referencing only recommended.
 
-Each .sql file may contain a single %s, which will be replaced with
-the appropriate project name.
+Each .sql file may contain a Go text/template referencing fields of a
+bigquery.Table, e.g. `{{.ProjectID}}` which will be replaced with
+the current project name.
 
 ## Creating Views
 

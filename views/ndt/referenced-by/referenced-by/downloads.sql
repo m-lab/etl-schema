@@ -18,7 +18,7 @@ SELECT
          web100_log_entry.snap.SndLimTimeCwnd +
          web100_log_entry.snap.SndLimTimeSnd)) AS mean_download_throughput_mbps
       ) as alpha
-FROM `%s.ndt.recommended`
+FROM `{{.ProjectID}}.ndt.recommended`
 WHERE
   -- download direction, and at least 8KB transfered
   connection_spec.data_direction IS NOT NULL
