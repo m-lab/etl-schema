@@ -1,7 +1,7 @@
 #standardSQL
 --  good quality upload tests
 SELECT *
-FROM `%s.ndt.recommended`
+FROM `{{.ProjectID}}.ndt.recommended`
 WHERE
   -- is upload
   connection_spec.data_direction IS NOT NULL
