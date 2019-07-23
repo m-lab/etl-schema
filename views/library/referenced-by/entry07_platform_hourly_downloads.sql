@@ -6,7 +6,9 @@ WITH web100_lga03 AS (
     TIMESTAMP_TRUNC(start_time, HOUR) as hour, hostname, COUNT(*) as count
   FROM `{{.ProjectID}}.library.entry07_web100_downloads`
   WHERE
+      -- TODO: remove hostname filters.
       hostname LIKE '%lga03%'
+
   AND mbps is not NULL
   AND mbps > 0
   AND duration > 9
@@ -20,15 +22,16 @@ WITH web100_lga03 AS (
     TIMESTAMP_TRUNC(start_time, hour) as hour,  hostname, count(*) as count
   FROM `{{.ProjectID}}.library.entry07_result_downloads`
   WHERE
-        hostname LIKE '%lga03%'
+      -- TODO: remove hostname filters.
+      hostname LIKE '%lga03%'
 
-    -- NOTE: without filtering, we find similar number of raw rows in BQ for both platforms.
-    -- When filtering mbps here, we find fewer total tests from the new platform.
-    -- Possibly b/c the web100 ndt server still saves parsable data while ndt-server
-    -- does not, or due to the ndt-server failing for some legacy clients.
-    AND mbps is not NULL
-    AND mbps > 0
-    AND duration > 9
+  -- NOTE: without filtering, we find similar number of raw rows in BQ for both platforms.
+  -- When filtering mbps here, we find fewer total tests from the new platform.
+  -- Possibly b/c the web100 ndt server still saves parsable data while ndt-server
+  -- does not, or due to the ndt-server failing for some legacy clients.
+  AND mbps is not NULL
+  AND mbps > 0
+  AND duration > 9
 
   GROUP BY hour, hostname
   ORDER BY hostname, hour
