@@ -20,7 +20,7 @@ WITH web100_lga03 AS (
 
   SELECT
     TIMESTAMP_TRUNC(start_time, hour) as hour,  hostname, count(*) as count
-  FROM `{{.ProjectID}}.library.entry07_result_downloads`
+  FROM `{{.ProjectID}}.library.entry07_ndt5_downloads`
   WHERE
       -- TODO: remove hostname filters.
       hostname LIKE '%lga03%'
