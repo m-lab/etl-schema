@@ -14,7 +14,7 @@ SELECT
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
     TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 as duration
 
-FROM `{{.ProjectID}}.base_tables.legacy`
+FROM `{{.ProjectID}}.base_tables.result`
 
 WHERE
       DATE(result.StartTime) BETWEEN DATE("2019-07-19") AND DATE("2019-07-29")
