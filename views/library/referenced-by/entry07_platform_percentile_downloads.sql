@@ -18,8 +18,8 @@ WITH legacy AS (
     date
 ),
 
-legacyQuantiles AS (
-  SELECT date, downloads, d, o FROM legacy, legacy.percentiles AS d WITH OFFSET AS o
+legacy_quantiles AS (
+  SELECT date, downloads, bin, index FROM legacy, legacy.percentiles AS bin WITH OFFSET AS index
 ),
 
 ndt5 AS (
@@ -36,36 +36,37 @@ ndt5 AS (
     date
 ),
 
-ndt5Quantiles AS (
-    SELECT date, downloads, d, o FROM ndt5, ndt5.percentiles AS d WITH OFFSET AS o
+ndt5_quantiles AS (
+    SELECT date, downloads, bin, index FROM ndt5, ndt5.percentiles AS bin WITH OFFSET AS index
 ),
 
-allDates AS (
+all_dates AS (
   SELECT
-    ndt5Quantiles.date,
-    ndt5Quantiles.downloads as ndt5Downloads,
-    legacyQuantiles.downloads as legacyDownloads,
-    ndt5Quantiles.o AS percentile,
-    ndt5Quantiles.d AS ndt5,
-    legacyQuantiles.d AS legacy
+    ndt5_quantiles.date,
+    ndt5_quantiles.downloads as ndt5_downloads,
+    legacy_quantiles.downloads as legacy_downloads,
+    ndt5_quantiles.index AS percentile,
+    ndt5_quantiles.bin AS ndt5,
+    legacy_quantiles.bin AS legacy
   FROM
-    ndt5Quantiles JOIN legacyQuantiles ON (
-          ndt5Quantiles.o=legacyQuantiles.o
-      AND ndt5Quantiles.date=legacyQuantiles.date)
+    ndt5_quantiles JOIN legacy_quantiles ON (
+          ndt5_quantiles.index=legacy_quantiles.index
+      AND ndt5_quantiles.date=legacy_quantiles.date)
   ORDER BY
     date, percentile
 )
 
 SELECT
+  -- NOTE: cast as a string to easily use as a datastudio "dimension".
   CAST(date as string) as date,
-  ndt5Downloads,
-  legacyDownloads,
+  ndt5_downloads,
+  legacy_downloads,
   percentile,
   ndt5,
   legacy
 
 FROM
-  allDates
+  all_dates
 
 ORDER BY
   date, percentile
