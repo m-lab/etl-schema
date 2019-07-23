@@ -1,5 +1,8 @@
 /*
-  legacy vs ndt5 by date, based on summary w/ tcpinfo, lga03, duration > 9
+
+  Percentile data for Q-Q style plots, comparing legacy web100 and k8s ndt5
+  download data by date and percentile.
+
 */
 
 WITH legacy AS (
