@@ -33,7 +33,7 @@ WITH web100_lga03 AS (
   AND mbps > 0
   AND duration > 9
 
-  GROUP BY hour, hostname
+  GROUP BY hostname, hour
   ORDER BY hostname, hour
 )
 
