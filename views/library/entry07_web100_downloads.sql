@@ -1,7 +1,7 @@
 #standardSQL
 /*
 
-  This query extracts web100 download tests, filtering monitoring IPs.
+  This query extracts web100 download tests, removing monitoring IPs.
 
   The server hostname is reported as a canonical, abbreviated hostname e.g.
   "mlab1.lga03".

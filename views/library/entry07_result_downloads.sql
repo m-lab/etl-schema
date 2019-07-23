@@ -2,7 +2,7 @@
 /*
 
   Download summary from ndt-server ndt5 protocol result data,
-  filtering monitoring IPs.
+  removing monitoring IPs.
 
   The server hostname is reported as a canonical, abbreviated hostname e.g.
   "mlab3.lga03".
@@ -14,6 +14,7 @@ SELECT
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
     TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 as duration
 
+-- TODO: use 'ndt5' as table name.
 FROM `{{.ProjectID}}.base_tables.result`
 
 WHERE
