@@ -35,7 +35,7 @@ WITH web100_lga03 AS (
   ORDER BY bin
 )
 
-SELECT FORMAT("%08.1f", bin) as bin, hostname, count FROM ndt5_lga03
+SELECT "ndt5" as source, FORMAT("%08.1f", bin) as bin, hostname, count FROM ndt5_lga03
 UNION ALL
-SELECT FORMAT("%08.1f", bin) as bin, hostname, count FROM web100_lga03
+SELECT "web100" as source, FORMAT("%08.1f", bin) as bin, hostname, count FROM web100_lga03
 ORDER BY bin
