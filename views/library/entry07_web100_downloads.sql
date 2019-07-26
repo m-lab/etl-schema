@@ -23,10 +23,10 @@ SELECT
       web100_log_entry.snap.SndLimTimeCwnd +
         web100_log_entry.snap.SndLimTimeSnd) / 1000000.0 as duration
 
-FROM `{{.ProjectID}}.ndt.web100`
+FROM `mlab-oti.ndt.web100`
 
 WHERE
-      partition_date BETWEEN DATE("2019-07-19") AND DATE("2019-07-29")
+      partition_date BETWEEN DATE("2019-07-19") AND DATE("2019-07-24")
   AND web100_log_entry.connection_spec.local_ip IS NOT NULL
   AND web100_log_entry.connection_spec.remote_ip IS NOT NULL
   AND web100_log_entry.connection_spec.remote_ip NOT IN(

@@ -10,12 +10,12 @@
 SELECT
     result.StartTime as start_time,
     result.S2C.MeanThroughputMbps as mbps,
-    CONCAT(result.Control.Protocol, result.Control.MessageProtocol) as protocol,
+    CONCAT(result.Control.Protocol, "+", result.Control.MessageProtocol) as protocol,
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
     TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 as duration
 
 -- TODO: use 'ndt5' as table name.
-FROM `{{.ProjectID}}.base_tables.result`
+FROM `mlab-oti.base_tables.result`
 
 WHERE
       DATE(result.StartTime) BETWEEN DATE("2019-07-19") AND DATE("2019-07-29")
