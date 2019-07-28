@@ -18,7 +18,7 @@ SELECT
 FROM `mlab-oti.base_tables.result`
 
 WHERE
-      DATE(result.StartTime) BETWEEN DATE("2019-07-19") AND DATE("2019-07-29")
+      DATE(result.StartTime) BETWEEN DATE("2019-07-19") AND DATE("2019-07-25")
   AND result.S2C IS NOT NULL
   AND result.S2C.ClientIP IS NOT NULL
   AND result.S2C.ClientIP NOT IN(
