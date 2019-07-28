@@ -26,12 +26,13 @@ SELECT
 FROM `mlab-oti.ndt.web100`
 
 WHERE
-      partition_date BETWEEN DATE("2019-07-19") AND DATE("2019-07-24")
+      partition_date BETWEEN DATE("2019-07-19") AND DATE("2019-07-25")
   AND web100_log_entry.connection_spec.local_ip IS NOT NULL
   AND web100_log_entry.connection_spec.remote_ip IS NOT NULL
   AND web100_log_entry.connection_spec.remote_ip NOT IN(
     "45.56.98.222", "35.192.37.249", "35.225.75.192",
     "2600:3c03::f03c:91ff:fe33:819", "23.228.128.99", "2605:a601:f1ff:fffe::99")
+  AND REGEXP_CONTAINS(connection_spec.server_hostname, "bom02|ams03|lga03|lax02")
   -- Download direction, and at least 8KB transfered
   AND connection_spec.data_direction IS NOT NULL
   AND connection_spec.data_direction = 1
