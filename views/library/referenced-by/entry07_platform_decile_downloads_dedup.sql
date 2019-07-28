@@ -18,7 +18,7 @@ WITH raw_web100 as (
 FROM `mlab-oti.ndt.web100`
 
 WHERE
-      partition_date BETWEEN DATE("2019-07-19") AND DATE("2019-07-29")
+      partition_date BETWEEN DATE("2019-07-19") AND DATE("2019-07-25")
   AND web100_log_entry.connection_spec.local_ip IS NOT NULL
   AND web100_log_entry.connection_spec.remote_ip IS NOT NULL
   AND web100_log_entry.connection_spec.remote_ip NOT IN(
@@ -37,9 +37,13 @@ WHERE
   -- NOTE: this filter does not exclude tests with CongSignals > 0 because we
   -- want to compare aggreate test counts.
 ), raw_web100_remote AS (
-    SELECT *, ROW_NUMBER() OVER (PARTITION BY remote_ip ORDER BY mbps DESC) AS row_number from raw_web100 WHERE CAST(protocol AS STRING) IN("null", "truetrue")
-), raw_web100_max AS (  SELECT *   FROM raw_web100_remote   WHERE row_number = 1
-
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY remote_ip ORDER BY mbps DESC) AS row_number
+    FROM raw_web100
+    WHERE CAST(protocol AS STRING) IN("null", "truetrue")
+), raw_web100_max AS (
+    SELECT *
+    FROM raw_web100_remote
+    WHERE row_number = 1
 ), raw_ndt5 AS (
   SELECT
     result.StartTime as start_time,
@@ -53,7 +57,7 @@ WHERE
   FROM `mlab-oti.base_tables.result`
 
   WHERE
-      DATE(result.StartTime) BETWEEN DATE("2019-07-19") AND DATE("2019-07-29")
+      DATE(result.StartTime) BETWEEN DATE("2019-07-19") AND DATE("2019-07-25")
   AND result.S2C IS NOT NULL
   AND result.S2C.ClientIP IS NOT NULL
   AND result.S2C.ClientIP NOT IN(
@@ -70,7 +74,7 @@ WHERE
     COUNT(*) AS downloads,
     APPROX_QUANTILES(ROUND(mbps,3), 10) AS deciles
   FROM `raw_web100_max`
-  WHERE mbps > 0.1
+  WHERE mbps > 0.05
      AND REGEXP_CONTAINS(hostname, "mlab[23]")
   GROUP BY
     hostname
