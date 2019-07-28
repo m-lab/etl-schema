@@ -13,9 +13,9 @@ WITH web100 AS (
   FROM `{{.ProjectID}}.library.entry07_web100_downloads`
   WHERE
     -- TODO: remove site filter.
-    hostname LIKE "%mlab2.lga03%"
+    hostname LIKE "%mlab1.ams03%"
     AND CAST(protocol AS STRING) IN("null", "truetrue")
-    AND mbps > 0.1
+    AND mbps > 0.05
   GROUP BY
     date
 ),
@@ -32,7 +32,7 @@ ndt5 AS (
   FROM `{{.ProjectID}}.library.entry07_ndt5_downloads`
   WHERE
     -- TODO: remove site filter.
-    hostname LIKE "%lga03%"
+    hostname LIKE "%ams03%"
     AND CAST(protocol AS STRING) IN("null", "WSS+JSON")
     AND mbps > 0
     AND duration > 9
