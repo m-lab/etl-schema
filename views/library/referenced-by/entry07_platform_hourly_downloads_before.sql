@@ -113,8 +113,10 @@ WHERE
     COUNT(*) AS count
     --,APPROX_QUANTILES(ROUND(mbps,3), 10) AS deciles
   FROM `raw_web100_max`
-  WHERE mbps > 0.05
-     AND REGEXP_CONTAINS(hostname, "mlab[123]")
+  WHERE
+        mbps is not NULL
+    AND mbps > 0.05
+    AND REGEXP_CONTAINS(hostname, "mlab[123]")
   GROUP BY
     hour, hostname
 ),
@@ -126,8 +128,9 @@ ndt5_lga03 AS (
     COUNT(*) AS count
     --,APPROX_QUANTILES(ROUND(mbps ,3), 10) AS deciles
   FROM raw_ndt5_max
-  WHERE  duration > 9 and mbps > 0
-      AND REGEXP_CONTAINS(hostname, "mlab[123]")
+  WHERE mbps is not NULL
+    AND duration > 9 and mbps > 0
+    AND REGEXP_CONTAINS(hostname, "mlab[123]")
   GROUP BY
     hour, hostname
 )
