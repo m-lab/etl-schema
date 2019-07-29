@@ -73,7 +73,6 @@ WHERE
 ), raw_web100_remote AS (
     SELECT *, ROW_NUMBER() OVER (PARTITION BY remote_ip ORDER BY mbps DESC) AS row_number
     FROM raw_web100
-    -- WHERE CAST(protocol AS STRING) IN("null", "truetrue")
 ), raw_web100_max AS (
     SELECT *
     FROM raw_web100_remote
@@ -101,20 +100,23 @@ WHERE
 ), raw_ndt5_remote AS (
    select *, ROW_NUMBER() OVER(Partition BY remote_ip ORDER BY mbps DESC) AS row_number
    FROM raw_ndt5
-   -- WHERE CAST(protocol AS STRING) IN("null", "WSS+JSON")
 ), raw_ndt5_max AS (
   SELECT *
   FROM raw_ndt5_remote
   WHERE row_number = 1
-), web100_lga03 AS (
+),
+
+web100_lga03 AS (
   SELECT
     TIMESTAMP_TRUNC(start_time, hour) as hour,
     hostname,
     COUNT(*) AS count
-    --,APPROX_QUANTILES(ROUND(mbps,3), 10) AS deciles
-  FROM `raw_web100_max`
-  WHERE mbps > 0.05
-     AND REGEXP_CONTAINS(hostname, "mlab[123]")
+  FROM raw_web100_max
+  WHERE
+        mbps is not NULL
+    AND mbps > 0.05
+    AND duration > 9
+    AND REGEXP_CONTAINS(hostname, "mlab[123]")
   GROUP BY
     hour, hostname
 ),
@@ -124,10 +126,12 @@ ndt5_lga03 AS (
     TIMESTAMP_TRUNC(start_time, hour) as hour,
     hostname,
     COUNT(*) AS count
-    --,APPROX_QUANTILES(ROUND(mbps ,3), 10) AS deciles
   FROM raw_ndt5_max
-  WHERE  duration > 9 and mbps > 0
-      AND REGEXP_CONTAINS(hostname, "mlab[123]")
+  WHERE
+        mbps is not NULL
+    AND mbps > 0
+    AND duration > 9
+    AND REGEXP_CONTAINS(hostname, "mlab[123]")
   GROUP BY
     hour, hostname
 )
