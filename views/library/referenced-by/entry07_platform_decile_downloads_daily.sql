@@ -15,7 +15,9 @@ WITH web100 AS (
     -- TODO: remove site filter.
     hostname LIKE "%mlab1.ams03%"
     AND CAST(protocol AS STRING) IN("null", "truetrue")
+    AND mbps is not NULL
     AND mbps > 0.05
+    AND duration > 9
   GROUP BY
     date
 ),
@@ -34,6 +36,7 @@ ndt5 AS (
     -- TODO: remove site filter.
     hostname LIKE "%ams03%"
     AND CAST(protocol AS STRING) IN("null", "WSS+JSON")
+    AND mbps is not NULL
     AND mbps > 0
     AND duration > 9
   GROUP BY
