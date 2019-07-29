@@ -74,7 +74,10 @@ WHERE
     COUNT(*) AS downloads,
     APPROX_QUANTILES(ROUND(mbps,3), 10) AS deciles
   FROM `raw_web100_max`
-  WHERE mbps > 0.05
+  WHERE
+         mbps IS NOT NULL
+     AND mbps > 0.05
+     AND duration > 9
      AND REGEXP_CONTAINS(hostname, "mlab[23]")
   GROUP BY
     hostname
@@ -90,7 +93,10 @@ ndt5 AS (
     COUNT(*) AS downloads,
     APPROX_QUANTILES(ROUND(mbps ,3), 10) AS deciles
   FROM raw_ndt5_max
-  WHERE  duration > 9 and mbps > 0
+  WHERE
+          mbps IS NOT NULL
+      AND mbps > 0
+      AND duration > 9
       AND REGEXP_CONTAINS(hostname, "mlab[23]")
   GROUP BY
     hostname
