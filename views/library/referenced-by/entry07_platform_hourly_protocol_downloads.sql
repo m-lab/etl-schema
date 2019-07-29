@@ -94,7 +94,8 @@ web100_lga03 AS (
   WHERE
 
       mbps is not NULL
-  AND mbps > 0.05
+  --AND mbps > 0.05
+  AND TRUNC(mbps * duration / 3.2) >= 1
   AND duration > 9
 
   GROUP BY hostname, protocol, hour

@@ -114,7 +114,8 @@ web100_lga03 AS (
   FROM raw_web100_max
   WHERE
         mbps is not NULL
-    AND mbps > 0.05
+    -- AND mbps > 0.05
+    AND TRUNC(mbps * duration / 3.2) >= 1
     AND duration > 9
     AND REGEXP_CONTAINS(hostname, "mlab[123]")
   GROUP BY
