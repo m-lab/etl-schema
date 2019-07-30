@@ -11,7 +11,7 @@ WITH raw_web100 as (
       cast(connection_spec.tls as string)) AS protocol,
     (web100_log_entry.snap.Duration) / 1000000.0 as duration
 
-  FROM `mlab-oti.ndt.web100`
+  FROM `{{.ProjectID}}.ndt.web100`
 
   WHERE
       partition_date BETWEEN DATE("2019-07-10") AND DATE("2019-07-16")
@@ -47,7 +47,7 @@ raw_ndt5 AS (
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
     TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MILLISECOND)/1000 as duration
 
-  FROM `mlab-oti.base_tables.result`
+  FROM `{{.ProjectID}}.base_tables.result`
 
   WHERE
       DATE(result.StartTime) BETWEEN DATE("2019-07-10") AND DATE("2019-07-16")
