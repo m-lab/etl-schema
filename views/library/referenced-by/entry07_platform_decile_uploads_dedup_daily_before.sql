@@ -2,12 +2,17 @@ WITH raw_web100 as (
   SELECT
     log_time as start_time,
     web100_log_entry.connection_spec.remote_ip as remote_ip,
-    8 * SAFE_DIVIDE(web100_log_entry.snap.HCThruOctetsReceived, web100_log_entry.snap.Duration) AS mbps,
+    8 * SAFE_DIVIDE(web100_log_entry.snap.HCThruOctetsReceived,
+      IF(web100_log_entry.snap.Duration > 13000000,
+         web100_log_entry.snap.Duration-3000000,
+         web100_log_entry.snap.Duration)) AS mbps,
     REPLACE(connection_spec.server_hostname, ".measurement-lab.org", "") as hostname,
     CONCAT(
       cast(connection_spec.websockets as string),
       cast(connection_spec.tls as string)) AS protocol,
-    (web100_log_entry.snap.Duration) / 1000000.0 as duration
+    (IF(web100_log_entry.snap.Duration > 13000000,
+        web100_log_entry.snap.Duration-3000000,
+        web100_log_entry.snap.Duration)) / 1000000.0 as duration
 
   FROM `mlab-oti.ndt.web100`
 
