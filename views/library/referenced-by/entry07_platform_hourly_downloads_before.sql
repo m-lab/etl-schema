@@ -1,37 +1,5 @@
 #standardSQL
 
-/*
-WITH web100_lga03 AS (
-
-  SELECT
-    TIMESTAMP_TRUNC(start_time, HOUR) as hour, hostname, COUNT(*) as count
-  FROM `{{.ProjectID}}.library.entry07_web100_downloads`
-  WHERE
-      mbps is not NULL
-  AND mbps > 0.1
-  AND duration > 9
-
-  GROUP BY hostname, hour
-  ORDER BY hostname, hour
-
-), result_lga03 AS (
-
-  SELECT
-    TIMESTAMP_TRUNC(start_time, hour) as hour,  hostname, count(*) as count
-  FROM `{{.ProjectID}}.library.entry07_ndt5_downloads`
-  WHERE
-  -- NOTE: without filtering, we find similar number of raw rows in BQ for both platforms.
-  -- When filtering mbps here, we find fewer total tests from the new platform.
-  -- Possibly b/c the web100 ndt server still saves parsable data while ndt-server
-  -- does not, or due to the ndt-server failing for some legacy clients.
-      mbps is not NULL
-  AND mbps > 0
-  AND duration > 9
-
-  GROUP BY hostname, hour
-  ORDER BY hostname, hour
-)
-*/
 WITH raw_web100 as (
   SELECT
     log_time as start_time,
