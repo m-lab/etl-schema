@@ -104,9 +104,7 @@ WHERE
   SELECT *
   FROM raw_ndt5_remote
   WHERE row_number = 1
-),
-
-web100_lga03 AS (
+), web100_lga03 AS (
   SELECT
     TIMESTAMP_TRUNC(start_time, hour) as hour,
     hostname,
