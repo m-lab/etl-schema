@@ -108,4 +108,4 @@ SELECT * FROM web100_lga03
 UNION ALL
 SELECT * FROM ndt5_lga03
 )
-order by hour, hostname
+ORDER BY hour, hostname

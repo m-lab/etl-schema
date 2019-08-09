@@ -106,4 +106,4 @@ SELECT * FROM web100_hosts
 UNION ALL
 SELECT * FROM ndt5_hosts
 )
-order by hour, hostname
+ORDER BY hour, hostname
