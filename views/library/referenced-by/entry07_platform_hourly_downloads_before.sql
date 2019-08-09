@@ -1,21 +1,21 @@
 #standardSQL
 
-WITH raw_web100 as (
+WITH raw_web100 AS (
   SELECT
-    log_time as start_time,
-    web100_log_entry.connection_spec.remote_ip as remote_ip,
+    log_time AS start_time,
+    web100_log_entry.connection_spec.remote_ip AS remote_ip,
     8 * (web100_log_entry.snap.HCThruOctetsAcked /
         (web100_log_entry.snap.SndLimTimeRwin +
          web100_log_entry.snap.SndLimTimeCwnd +
          web100_log_entry.snap.SndLimTimeSnd)) AS mbps,
     REPLACE(
-      connection_spec.server_hostname, ".measurement-lab.org", "") as hostname,
+      connection_spec.server_hostname, ".measurement-lab.org", "") AS hostname,
     CONCAT(
-      cast(connection_spec.websockets as string),
-      cast(connection_spec.tls as string)) AS protocol,
+      cast(connection_spec.websockets AS string),
+      cast(connection_spec.tls AS string)) AS protocol,
     (web100_log_entry.snap.SndLimTimeRwin +
       web100_log_entry.snap.SndLimTimeCwnd +
-        web100_log_entry.snap.SndLimTimeSnd) / 1000000.0 as duration
+        web100_log_entry.snap.SndLimTimeSnd) / 1000000.0 AS duration
 
 FROM `{{.ProjectID}}.ndt.web100`
 
@@ -47,14 +47,14 @@ WHERE
     WHERE row_number = 1
 ), raw_ndt5 AS (
   SELECT
-    result.StartTime as start_time,
-    result.S2C.MeanThroughputMbps as mbps,
+    result.StartTime AS start_time,
+    result.S2C.MeanThroughputMbps AS mbps,
     result.ClientIP AS remote_ip,
-    CONCAT(result.Control.Protocol, "+", result.Control.MessageProtocol) as protocol,
+    CONCAT(result.Control.Protocol, "+", result.Control.MessageProtocol) AS protocol,
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
-    TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 as duration
+    TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 AS duration
 
-  -- TODO: use 'ndt5' as table name.
+  -- TODO: use 'ndt5' AS table name.
   FROM `{{.ProjectID}}.base_tables.result`
 
   WHERE
@@ -66,7 +66,7 @@ WHERE
     "2600:3c03::f03c:91ff:fe33:819", "23.228.128.99", "2605:a601:f1ff:fffe::99")
 
 ), raw_ndt5_remote AS (
-   select *, ROW_NUMBER() OVER(Partition BY remote_ip ORDER BY mbps DESC) AS row_number
+   SELECT *, ROW_NUMBER() OVER(Partition BY remote_ip ORDER BY mbps DESC) AS row_number
    FROM raw_ndt5
 ), raw_ndt5_max AS (
   SELECT *
@@ -74,7 +74,7 @@ WHERE
   WHERE row_number = 1
 ), web100_lga03 AS (
   SELECT
-    TIMESTAMP_TRUNC(start_time, hour) as hour,
+    TIMESTAMP_TRUNC(start_time, hour) AS hour,
     hostname,
     COUNT(*) AS count
   FROM raw_web100_max
@@ -90,7 +90,7 @@ WHERE
 
 ndt5_lga03 AS (
   SELECT
-    TIMESTAMP_TRUNC(start_time, hour) as hour,
+    TIMESTAMP_TRUNC(start_time, hour) AS hour,
     hostname,
     COUNT(*) AS count
   FROM raw_ndt5_max
@@ -104,7 +104,7 @@ ndt5_lga03 AS (
 )
 
 
-select * from(
+SELECT * FROM(
 SELECT * FROM web100_lga03
 UNION ALL
 SELECT * FROM ndt5_lga03

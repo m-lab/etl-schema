@@ -1,25 +1,25 @@
-WITH raw_web100 as (
+WITH raw_web100 AS (
   SELECT
-    log_time as start_time,
-    web100_log_entry.connection_spec.remote_ip as remote_ip,
+    log_time AS start_time,
+    web100_log_entry.connection_spec.remote_ip AS remote_ip,
     8 * SAFE_DIVIDE(web100_log_entry.snap.HCThruOctetsReceived,
       IF(web100_log_entry.snap.Duration > 13000000,
          web100_log_entry.snap.Duration-3000000,
          web100_log_entry.snap.Duration)) AS mbps,
-    REPLACE(connection_spec.server_hostname, ".measurement-lab.org", "") as hostname,
+    REPLACE(connection_spec.server_hostname, ".measurement-lab.org", "") AS hostname,
     CONCAT(
-      cast(connection_spec.websockets as string),
-      cast(connection_spec.tls as string)) AS protocol,
+      cast(connection_spec.websockets AS string),
+      cast(connection_spec.tls AS string)) AS protocol,
     (IF(web100_log_entry.snap.Duration > 13000000,
         web100_log_entry.snap.Duration-3000000,
-        web100_log_entry.snap.Duration)) / 1000000.0 as duration
+        web100_log_entry.snap.Duration)) / 1000000.0 AS duration
 
   FROM `{{.ProjectID}}.ndt.web100`
 
   WHERE
 
       partition_date BETWEEN DATE("2019-07-10") AND DATE("2019-07-16")
-  -- not from EB monitoring or unknown client
+  -- not FROM EB monitoring or unknown client
     AND web100_log_entry.connection_spec.local_ip IS NOT NULL
     AND web100_log_entry.connection_spec.remote_ip IS NOT NULL
     AND web100_log_entry.connection_spec.remote_ip NOT IN(
@@ -44,12 +44,12 @@ WITH raw_web100 as (
     WHERE row_number = 1
 ), raw_ndt5 AS (
   SELECT
-    result.StartTime as start_time,
-    result.C2S.MeanThroughputMbps as mbps,
+    result.StartTime AS start_time,
+    result.C2S.MeanThroughputMbps AS mbps,
     result.ClientIP AS remote_ip,
-    CONCAT(result.Control.Protocol, "+", result.Control.MessageProtocol) as protocol,
+    CONCAT(result.Control.Protocol, "+", result.Control.MessageProtocol) AS protocol,
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
-    TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MILLISECOND)/1000 as duration
+    TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MILLISECOND)/1000 AS duration
 
   FROM `{{.ProjectID}}.base_tables.result`
 
@@ -86,7 +86,7 @@ WITH raw_web100 as (
 ),
 
 web100_quantiles AS (
-  SELECT date, REGEXP_EXTRACT(hostname, "mlab2.(.*)") as site, hostname, downloads, value, index FROM web100, web100.deciles AS value WITH OFFSET AS index
+  SELECT date, REGEXP_EXTRACT(hostname, "mlab2.(.*)") AS site, hostname, downloads, value, index FROM web100, web100.deciles AS value WITH OFFSET AS index
 ),
 
 ndt5 AS (
@@ -106,7 +106,7 @@ ndt5 AS (
 ),
 
 ndt5_quantiles AS (
-    SELECT date, REGEXP_EXTRACT(hostname, "mlab3.(.*)") as site, hostname, downloads, value, index FROM ndt5, ndt5.deciles AS value WITH OFFSET AS index
+    SELECT date, REGEXP_EXTRACT(hostname, "mlab3.(.*)") AS site, hostname, downloads, value, index FROM ndt5, ndt5.deciles AS value WITH OFFSET AS index
 ),
 
 all_hostnames AS (
@@ -129,14 +129,14 @@ all_hostnames AS (
 
 
 SELECT
-  -- NOTE: cast as a string to easily use as a datastudio "dimension".
-  CAST(date AS string) as date,
+  -- NOTE: cast AS a string to easily use AS a datastudio "dimension".
+  CAST(date AS string) AS date,
   site,
   ndt5_downloads,
   web100_downloads,
   decile,
-  ndt5 as mlab3,
-  web100 as mlab2
+  ndt5 AS mlab3,
+  web100 AS mlab2
 
 FROM
   all_hostnames

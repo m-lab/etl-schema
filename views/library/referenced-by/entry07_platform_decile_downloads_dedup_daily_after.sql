@@ -53,7 +53,7 @@ WHERE
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
     TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 AS duration
 
-  -- TODO: use 'ndt5' as table name.
+  -- TODO: use 'ndt5' AS table name.
   FROM `{{.ProjectID}}.base_tables.result`
 
   WHERE
@@ -126,7 +126,7 @@ all_hostnames AS (
 
 
 SELECT
-  -- NOTE: cast as a string to easily use as a datastudio "dimension".
+  -- NOTE: cast AS a string to easily use AS a datastudio "dimension".
   CAST(date AS string) AS date,
   site,
   ndt5_downloads,
