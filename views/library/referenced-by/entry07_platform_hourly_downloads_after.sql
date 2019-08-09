@@ -66,7 +66,7 @@ WHERE
     "2600:3c03::f03c:91ff:fe33:819", "23.228.128.99", "2605:a601:f1ff:fffe::99")
 
 ), raw_ndt5_remote AS (
-   SELECT *, ROW_NUMBER() OVER(Partition BY remote_ip ORDER BY mbps DESC) AS row_number
+   SELECT *, ROW_NUMBER() OVER(PARTITION BY remote_ip ORDER BY mbps DESC) AS row_number
    FROM raw_ndt5
 ), raw_ndt5_max AS (
   SELECT *

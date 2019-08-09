@@ -1,4 +1,8 @@
 #standardSQL
+#
+# entry07_platform_hourly_uploads_before use the same queries as
+# entry07_platform_hourly_uploads_after but dates that cover the period before
+# the upgrade: DATE("2019-07-10") AND DATE("2019-07-16").
 
 WITH raw_web100 AS (
   SELECT
@@ -58,7 +62,7 @@ raw_ndt5 AS (
       "2600:3c03::f03c:91ff:fe33:819", "23.228.128.99", "2605:a601:f1ff:fffe::99")
 
 ), raw_ndt5_remote AS (
-   SELECT *, ROW_NUMBER() OVER(Partition BY remote_ip ORDER BY mbps DESC) AS row_number
+   SELECT *, ROW_NUMBER() OVER(PARTITION BY remote_ip ORDER BY mbps DESC) AS row_number
    FROM raw_ndt5
 ), raw_ndt5_max AS (
   SELECT *
@@ -74,7 +78,6 @@ web100_hosts AS (
   FROM raw_web100_max
   WHERE
         mbps is not NULL
-    -- AND mbps > 0.05
     AND TRUNC(mbps * duration / 3.2) >= 1
     AND duration > 9
     AND REGEXP_CONTAINS(hostname, "mlab[123]")
