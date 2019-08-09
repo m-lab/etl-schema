@@ -2,12 +2,17 @@ WITH raw_web100 AS (
   SELECT
     log_time AS start_time,
     web100_log_entry.connection_spec.remote_ip AS remote_ip,
-    8 * SAFE_DIVIDE(web100_log_entry.snap.HCThruOctetsReceived, web100_log_entry.snap.Duration) AS mbps,
+    8 * SAFE_DIVIDE(web100_log_entry.snap.HCThruOctetsReceived,
+      IF(web100_log_entry.snap.Duration > 13000000,
+         web100_log_entry.snap.Duration-3000000,
+         web100_log_entry.snap.Duration)) AS mbps,
     REPLACE(connection_spec.server_hostname, ".measurement-lab.org", "") AS hostname,
     CONCAT(
       cast(connection_spec.websockets AS string),
       cast(connection_spec.tls AS string)) AS protocol,
-    (web100_log_entry.snap.Duration) / 1000000.0 AS duration
+    (IF(web100_log_entry.snap.Duration > 13000000,
+        web100_log_entry.snap.Duration-3000000,
+        web100_log_entry.snap.Duration)) / 1000000.0 AS duration
 
   FROM `{{.ProjectID}}.ndt.web100`
 
