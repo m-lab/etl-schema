@@ -1,19 +1,19 @@
-WITH raw_web100 as (
+WITH raw_web100 AS (
   SELECT
-    log_time as start_time,
-    web100_log_entry.connection_spec.remote_ip as remote_ip,
+    log_time AS start_time,
+    web100_log_entry.connection_spec.remote_ip AS remote_ip,
     8 * (web100_log_entry.snap.HCThruOctetsAcked /
         (web100_log_entry.snap.SndLimTimeRwin +
          web100_log_entry.snap.SndLimTimeCwnd +
          web100_log_entry.snap.SndLimTimeSnd)) AS mbps,
     REPLACE(
-      connection_spec.server_hostname, ".measurement-lab.org", "") as hostname,
+      connection_spec.server_hostname, ".measurement-lab.org", "") AS hostname,
     CONCAT(
-      cast(connection_spec.websockets as string),
-      cast(connection_spec.tls as string)) AS protocol,
+      cast(connection_spec.websockets AS string),
+      cast(connection_spec.tls AS string)) AS protocol,
     (web100_log_entry.snap.SndLimTimeRwin +
       web100_log_entry.snap.SndLimTimeCwnd +
-        web100_log_entry.snap.SndLimTimeSnd) / 1000000.0 as duration
+        web100_log_entry.snap.SndLimTimeSnd) / 1000000.0 AS duration
 
 FROM `{{.ProjectID}}.ndt.web100`
 
@@ -46,12 +46,12 @@ WHERE
     WHERE row_number = 1
 ), raw_ndt5 AS (
   SELECT
-    result.StartTime as start_time,
-    result.S2C.MeanThroughputMbps as mbps,
+    result.StartTime AS start_time,
+    result.S2C.MeanThroughputMbps AS mbps,
     result.ClientIP AS remote_ip,
-    CONCAT(result.Control.Protocol, "+", result.Control.MessageProtocol) as protocol,
+    CONCAT(result.Control.Protocol, "+", result.Control.MessageProtocol) AS protocol,
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
-    TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 as duration
+    TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 AS duration
 
   -- TODO: use 'ndt5' as table name.
   FROM `{{.ProjectID}}.base_tables.result`
@@ -65,8 +65,8 @@ WHERE
     "2600:3c03::f03c:91ff:fe33:819", "23.228.128.99", "2605:a601:f1ff:fffe::99")
 
 ), raw_ndt5_remote AS (
-   select *, ROW_NUMBER() OVER(Partition BY remote_ip ORDER BY mbps DESC) AS row_number FROM raw_ndt5 WHERE CAST(protocol AS STRING) IN("null", "WSS+JSON")
-), raw_ndt5_max AS (select * from raw_ndt5_remote where row_number = 1
+   SELECT *, ROW_NUMBER() OVER(PARTITION BY remote_ip ORDER BY mbps DESC) AS row_number FROM raw_ndt5 WHERE CAST(protocol AS STRING) IN("null", "WSS+JSON")
+), raw_ndt5_max AS (SELECT * FROM raw_ndt5_remote WHERE row_number = 1
 
 ), web100 AS (
   SELECT
@@ -77,8 +77,6 @@ WHERE
   FROM raw_web100_max
   WHERE
          mbps IS NOT NULL
-     --AND mbps > 0.32 -- skip everything that would be a zero in ndt5.
-    -- AND mbps * duration > 3.2
      AND duration > 9
      AND REGEXP_CONTAINS(hostname, "mlab[23]")
   GROUP BY
@@ -86,7 +84,7 @@ WHERE
 ),
 
 web100_quantiles AS (
-  SELECT date, REGEXP_EXTRACT(hostname, "mlab[23].(.*)") as site, hostname, downloads, value, index FROM web100, web100.deciles AS value WITH OFFSET AS index
+  SELECT date, REGEXP_EXTRACT(hostname, "mlab[23].(.*)") AS site, hostname, downloads, value, index FROM web100, web100.deciles AS value WITH OFFSET AS index
 ),
 
 ndt5 AS (
@@ -98,7 +96,6 @@ ndt5 AS (
   FROM raw_ndt5_max
   WHERE
           mbps IS NOT NULL
-    --  AND mbps * duration > 3.2
       AND duration > 9
       AND REGEXP_CONTAINS(hostname, "mlab[23]")
   GROUP BY
@@ -106,7 +103,7 @@ ndt5 AS (
 ),
 
 ndt5_quantiles AS (
-    SELECT date, REGEXP_EXTRACT(hostname, "mlab[23].(.*)") as site, hostname, downloads, value, index FROM ndt5, ndt5.deciles AS value WITH OFFSET AS index
+    SELECT date, REGEXP_EXTRACT(hostname, "mlab[23].(.*)") AS site, hostname, downloads, value, index FROM ndt5, ndt5.deciles AS value WITH OFFSET AS index
 ),
 
 all_hostnames AS (
@@ -130,7 +127,7 @@ all_hostnames AS (
 
 SELECT
   -- NOTE: cast as a string to easily use as a datastudio "dimension".
-  CAST(date AS string) as date,
+  CAST(date AS string) AS date,
   site,
   ndt5_downloads,
   web100_downloads,
