@@ -53,7 +53,6 @@ WHERE
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
     TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 AS duration
 
-  -- TODO: use 'ndt5' AS table name.
   FROM `{{.ProjectID}}.ndt.ndt5`
 
   WHERE
