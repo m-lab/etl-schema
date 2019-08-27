@@ -55,7 +55,7 @@ WHERE
     TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 AS duration
 
   -- TODO: use 'ndt5' AS table name.
-  FROM `{{.ProjectID}}.base_tables.result`
+  FROM `{{.ProjectID}}.ndt.ndt5`
 
   WHERE
       DATE(result.StartTime) BETWEEN DATE("2019-07-19") AND DATE("2019-07-25")
