@@ -16,8 +16,7 @@ WITH ndt5downloads AS (
   SELECT
     partition_date,
     result.S2C
-  FROM
-    `measurement-lab.ndt.ndt5`
+  FROM `measurement-lab.ndt.ndt5`
   WHERE
     result.S2C IS NOT NULL
     AND result.S2C.Error = "" -- Limit results to those without any error.
