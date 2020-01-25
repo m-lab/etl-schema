@@ -12,73 +12,10 @@
 -- annotations, take the `ndt5.a` column and combine with annotation.server &
 -- annotation.client rows.
 
-WITH ndt5downloads AS (
+WITH StandardWeb100 AS (
   SELECT
-    partition_date,
-    result.S2C
-  FROM `measurement-lab.ndt.ndt5`
-  WHERE
-    result.S2C IS NOT NULL
-    AND result.S2C.Error = "" -- Limit results to those without any error.
-),
-
-tcpinfo AS (
-  SELECT * EXCEPT (snapshots)
-  FROM `measurement-lab.ndt.tcpinfo`
-),
-
-ndt5_tcpinfo_joined AS (
-  SELECT
-    downloads.*, tcpinfo.Client, tcpinfo.Server, tcpinfo.FinalSnapshot.TCPInfo AS TCPInfo,
-  FROM
-    -- Use a left join to allow NDT test without matching tcpinfo rows.
-    ndt5downloads AS downloads LEFT JOIN tcpinfo
-    ON
-     downloads.partition_date = tcpinfo.partition_date AND
-     downloads.S2C.UUID = tcpinfo.UUID AND
-     tcpinfo.FinalSnapshot.TCPInfo.TotalRetrans > 0
-),
-
-StandardNDT5 AS (
-  SELECT
-    partition_date as test_date,
-    STRUCT (
-      -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
-      S2C.UUID,
-      S2C.StartTime AS TestTime,
-      "cubic" AS CongestionControl,
-      S2C.MeanThroughputMbps,
-      S2C.MinRTT/1000000000 AS MinRTT,
-      TCPInfo.BytesRetrans / TCPInfo.BytesSent AS LossRate
-    ) AS a,
-    -- NOTE: standard columns for views exclude the parseInfo struct because
-    -- multiple tables are used to create a derived view. Users that want the
-    -- underlying parseInfo values should refer to the corresponding tables
-    -- using the shared UUID.
-    STRUCT (
-      S2C.ClientIP AS IP,
-      S2C.ClientPort AS Port,
-      Client.Geo,
-      STRUCT(
-        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-        -- inclues this information yet.
-        -- NOTE: Select the first ASN b/c stanard columns defines a single field.
-        CAST (Client.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
-    ) AS client,
-    STRUCT (
-      S2C.ServerIP AS IP,
-      S2C.ServerPort AS Port,
-      Server.Geo,
-      STRUCT(
-        CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
-    ) AS server,
-  FROM ndt5_tcpinfo_joined
-),
-
-StandardWeb100 AS (
-  SELECT
+    -- NOTE: we name the partition_date to test_date to prevent exposing
+    -- implementation details that are expected to change.
     partition_date as test_date,
     STRUCT(
       CONCAT(
@@ -139,8 +76,69 @@ StandardWeb100 AS (
         connection_spec.server.network.asn AS ASNumber
       ) AS Network
     ) AS server,
+  FROM `measurement-lab.ndt.downloads`
+),
+
+ndt5downloads AS (
+  SELECT partition_date, result.S2C
+  FROM   `measurement-lab.ndt.ndt5`
+  -- Limit results with S2C results and without any error.
+  WHERE  result.S2C IS NOT NULL AND result.S2C.Error = ""
+),
+
+tcpinfo AS (
+  SELECT * EXCEPT (snapshots)
+  FROM `measurement-lab.ndt.tcpinfo`
+),
+
+ndt5_tcpinfo_joined AS (
+  SELECT
+    downloads.*, tcpinfo.Client, tcpinfo.Server, tcpinfo.FinalSnapshot.TCPInfo AS TCPInfo,
   FROM
-    `measurement-lab.ndt.downloads`
+    -- Use a left join to allow NDT test without matching tcpinfo rows.
+    ndt5downloads AS downloads LEFT JOIN tcpinfo
+    ON
+     downloads.partition_date = tcpinfo.partition_date AND
+     downloads.S2C.UUID = tcpinfo.UUID AND
+     tcpinfo.FinalSnapshot.TCPInfo.TotalRetrans > 0
+),
+
+StandardNDT5 AS (
+  SELECT
+    partition_date as test_date,
+    STRUCT (
+      -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
+      S2C.UUID,
+      S2C.StartTime AS TestTime,
+      "cubic" AS CongestionControl,
+      S2C.MeanThroughputMbps,
+      S2C.MinRTT/1000000000 AS MinRTT,
+      TCPInfo.BytesRetrans / TCPInfo.BytesSent AS LossRate
+    ) AS a,
+    -- NOTE: standard columns for views exclude the parseInfo struct because
+    -- multiple tables are used to create a derived view. Users that want the
+    -- underlying parseInfo values should refer to the corresponding tables
+    -- using the shared UUID.
+    STRUCT (
+      S2C.ClientIP AS IP,
+      S2C.ClientPort AS Port,
+      Client.Geo,
+      STRUCT(
+        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
+        -- inclues this information yet.
+        -- NOTE: Select the first ASN b/c stanard columns defines a single field.
+        CAST (Client.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+      ) AS Network
+    ) AS client,
+    STRUCT (
+      S2C.ServerIP AS IP,
+      S2C.ServerPort AS Port,
+      Server.Geo,
+      STRUCT(
+        CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+      ) AS Network
+    ) AS server,
+  FROM ndt5_tcpinfo_joined
 )
 
 -- Export the result of the union of both tables.
