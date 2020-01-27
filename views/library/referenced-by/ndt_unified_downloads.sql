@@ -5,12 +5,12 @@
 -- support.
 --
 -- Note on design: ndt5 joins with the tcpinfo table in order to collect the
--- Server & Client geo information. Once the uuid-annotator is deloyed, the geo
--- annotations should come from the annotation tables, and the LossRate metric
--- should be saved by ndt5 natively. As well, once ndt5 parser outputs rows that
--- use standard columns, this view becomes much simpler: join ndt5 with
--- annotations, take the `ndt5.a` column and combine with annotation.server &
--- annotation.client rows.
+-- Server & Client geo information. Once the uuid-annotator is deployed, the
+-- geo annotations should come from the annotation tables, and the LossRate
+-- metric should be saved by ndt5 natively. As well, once ndt5 parser outputs
+-- rows that use standard columns, this view becomes much simpler: join ndt5
+-- with annotations, take the `ndt5.a` column and combine with
+-- annotation.server & annotation.client rows.
 
 WITH StandardWeb100 AS (
   SELECT
@@ -125,8 +125,8 @@ StandardNDT5 AS (
       Client.Geo,
       STRUCT(
         -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-        -- inclues this information yet.
-        -- NOTE: Select the first ASN b/c stanard columns defines a single field.
+        -- includes this information yet.
+        -- NOTE: Select the first ASN b/c standard columns defines a single field.
         CAST (Client.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS client,
@@ -141,7 +141,7 @@ StandardNDT5 AS (
   FROM ndt5_tcpinfo_joined
 )
 
--- Export the result of the union of both tables.
+ -- Export the result of the union of both tables.
 SELECT * FROM StandardWeb100
 UNION ALL
 SELECT * FROM StandardNDT5
