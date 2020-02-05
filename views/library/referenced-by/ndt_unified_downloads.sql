@@ -18,6 +18,9 @@ WITH StandardWeb100 AS (
     -- implementation details that are expected to change.
     partition_date as test_date,
     STRUCT(
+      task_filename AS ArchiveURL
+    ) AS ParseInfo,
+    STRUCT(
       CONCAT(
         web100_log_entry.connection_spec.local_ip,
         CAST (web100_log_entry.connection_spec.local_port AS STRING),
@@ -80,7 +83,7 @@ WITH StandardWeb100 AS (
 ),
 
 ndt5downloads AS (
-  SELECT partition_date, result.S2C
+  SELECT partition_date, result.S2C, ParseInfo
   FROM   `measurement-lab.ndt.ndt5`
   -- Limit results with S2C results and without any error.
   WHERE  result.S2C IS NOT NULL AND result.S2C.Error = ""
@@ -106,6 +109,9 @@ ndt5_tcpinfo_joined AS (
 StandardNDT5 AS (
   SELECT
     partition_date as test_date,
+     STRUCT(
+      ParseInfo.TaskFilename AS ArchiveURL
+    ) AS ParseInfo,
     STRUCT (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       S2C.UUID,
@@ -145,3 +151,4 @@ StandardNDT5 AS (
 SELECT * FROM StandardWeb100
 UNION ALL
 SELECT * FROM StandardNDT5
+
