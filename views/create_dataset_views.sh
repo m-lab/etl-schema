@@ -44,8 +44,11 @@ function create_view() {
 
   # TODO: perform table template construction in bq_create_view.
   # NB: this requires FROM and back ticks on the same line, ignores all other FROMs
-  project_dataset_tables=$( awk -F\` /FROM/'{print $2}' ${template} | sed "s/{{\.ProjectID}}/${src_project}/g" )
-  # TODO: support multiple source tables in bq_create_view.  Only set ACL's on the first and hope for the best
+  project_dataset_tables=$(
+    awk -F\` /FROM/'{print $2}' ${template} | \
+    sed "s/{{\.ProjectID}}/${src_project}/g" )
+  # TODO: support multiple source tables in bq_create_view.
+  # We only set ACL's on the first and hope for the best
   project_dataset_table=$(set -- ${project_dataset_tables} ; echo $1 )
 
   # Strip filename down to view name.
