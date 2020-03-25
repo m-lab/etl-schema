@@ -14,8 +14,8 @@ WITH ndt5uploads AS (
   (result.C2S.Error != "") AS b_HasError,
   TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MICROSECOND) AS connection_duration
   FROM   `{{.ProjectID}}.ndt.ndt5`
-  -- Limit results with C2S results and without any error.
-  WHERE  result.C2S IS NOT NULL AND result.C2S.Error = ""
+  -- Limit to valid C2S results
+  WHERE  result.C2S IS NOT NULL
 ),
 
 tcpinfo AS (
@@ -29,8 +29,7 @@ PreCleanTCPinfo AS (
     tcpinfo.FinalSnapshot AS FinalSnapshot,
     -- Receiver side can not compute b_HasLoss
     -- Receiver side can not directly compute b_HasBloat
-    (
-      uploads.C2S.ClientIP IN
+    ( uploads.C2S.ClientIP IN
 	("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
 	"2600:3c03::f03c:91ff:fe33:819",  "2605:a601:f1ff:fffe::99")
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
@@ -72,7 +71,7 @@ NDT5UploadModels AS (
       ( -- Losses > 0 make no sense for C2S
       	NOT b_OAM AND NOT b_HasError
       	AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
-AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
+	AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
 	AND connection_duration BETWEEN 9000000 AND 60000000
       ) AS row_valid_2019  -- Same as row_valid_best
     ) AS b,
@@ -102,7 +101,7 @@ AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
     STRUCT (
     	b_OAM,
     	FinalSnapshot
-    ) AS RawNDT5
+    ) AS RawNDT5 -- Beware: subject to breaking changes
 
   FROM PreCleanTCPinfo
 )

@@ -1,20 +1,14 @@
--- ndt_unified_*_uploads is a `library` view designed to combine all
--- historical NDT upload measurements. The resulting schema use
--- field names defined by the Standard Top-level Columns design. This
--- schema is expected to receive long term support.
 --
--- This query defines a view that presents the Web100 portion of that
--- data.  It must match the column types in ndt_unified_ndt5_uploads
--- exactly; both get merged into ndt_unified_uploads with a single
--- simple SELECT/UNION/WHERE query.
+-- Legacy NDT/web100 upload data in standard columns plus additional annotations.
+-- This contributes one portion of the data used by MLab Unified Standard Views.
 --
--- DO NOT BORROW CODE OR USE THIS VIEW DIRECTLY unless you enjoy
--- fixing your code after we make breaking changes.
+-- This view is only intended to accessed by a MLab Standard views: breaking changes
+-- here will be offset by changes to the Standard views.
 --
--- Use (or copy) ndt_unified_uploads(-*)
+-- Researchers accessing this view to construct their own samples may
+-- need to track changes to MLab Unified Standard Views.
 --
--- Fold in earlier views: ndt.uploads, and ndt.recommended
---
+
 WITH PreCleanWeb100 AS (
   SELECT
     -- NOTE: we name the partition_date to test_date to prevent exposing
@@ -33,13 +27,17 @@ WITH PreCleanWeb100 AS (
          web100_log_entry.snap.SndLimTimeCwnd +
          web100_log_entry.snap.SndLimTimeSnd) AS measurement_duration, -- Time transfering data
     (blacklist_flags IS NOT NULL and blacklist_flags != 0
-        OR anomalies.blacklist_flags IS NOT NULL
-        OR web100_log_entry.connection_spec.remote_ip IN
-          ("45.56.98.222", "35.192.37.249", "35.225.75.192", "2600:3c03::f03c:91ff:fe33:819", "23.228.128.99", "2605:a601:f1ff:fffe::99")
-        OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip), 8) = NET.IP_FROM_STRING("10.0.0.0"))
-        OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip), 12) = NET.IP_FROM_STRING("172.16.0.0"))
-        OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip), 16) = NET.IP_FROM_STRING("192.168.0.0"))
-     ) AS OAM  -- Data is not from valid clients
+        OR anomalies.blacklist_flags IS NOT NULL ) AS b_HasError,
+    (web100_log_entry.connection_spec.remote_ip IN
+          ("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
+	  "2600:3c03::f03c:91ff:fe33:819", "2605:a601:f1ff:fffe::99")
+        OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
+		8) = NET.IP_FROM_STRING("10.0.0.0"))
+        OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
+		12) = NET.IP_FROM_STRING("172.16.0.0"))
+        OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
+		16) = NET.IP_FROM_STRING("192.168.0.0"))
+     ) AS b_OAM  -- Data is not from valid clients
   FROM `{{.ProjectID}}.ndt.web100`
   WHERE
     web100_log_entry.snap.Duration IS NOT NULL
@@ -67,7 +65,7 @@ Web100UploadModels AS (
     -- Struct b has predicates for various cleaning assumptions
     STRUCT (
       ( -- Upload only, >8kB transfered
-        NOT OAM
+        NOT b_OAM AND NOT b_HasError
         AND connection_spec.data_direction IS NOT NULL
         AND connection_spec.data_direction = 1
         AND web100_log_entry.snap.HCThruOctetsAcked IS NOT NULL
@@ -75,7 +73,7 @@ Web100UploadModels AS (
         AND connection_duration BETWEEN 9000000 AND 60000000
 	) AS row_valid_best,
       ( -- Upload only, >kB transfered, 9-60 seconds, > 0 loss
-        NOT OAM
+        NOT b_OAM
         AND connection_spec.data_direction IS NOT NULL
         AND connection_spec.data_direction = 1
         AND web100_log_entry.snap.HCThruOctetsAcked IS NOT NULL
