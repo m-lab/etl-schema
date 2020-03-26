@@ -30,6 +30,10 @@ fi
 # Extract service account user name.
 USER=$( gcloud config get-value account )
 
+BQ_CREATE_VIEW=bq_create_view
+if [[ -x ${BASEDIR}/bq_create_view ]] ; then
+  BQ_CREATE_VIEW=${BASEDIR}/bq_create_view
+fi
 
 function create_view() {
   local src_project=$1
@@ -48,7 +52,7 @@ function create_view() {
 
   echo -n "Creating "${dst_project}.${dataset}.${view}" using "${template}
 
-  bq_create_view \
+  ${BQ_CREATE_VIEW} \
       -src-project "${src_project}" \
       -create-view "${dst_project}.${dataset}.${view}" \
       -template "${template}" \
