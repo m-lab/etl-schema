@@ -258,6 +258,12 @@ func main() {
 	err = syncDataset(ctx, viewDs, *editor)
 	rtx.Must(err, "Failed to sync dataset: %q", viewDs.DatasetID)
 
+	// Create or Update view query and description.
+	log.Info("Reading view metadata: ", id(view))
+	tb := viewDs.Table(view.TableID)
+	err = syncView(ctx, tb, view, sql, *description)
+	rtx.Must(err, "Failed to sync view %q", id(view))
+
 	// Verify or Add view access to target table.
 	for _, table := range tables {
 		target := parseTableID(table)
@@ -268,12 +274,6 @@ func main() {
 		err = syncDatasetAccess(ctx, ds, view, target)
 		rtx.Must(err, "Failed to grant access to ds: %q", id(target))
 	}
-
-	// Create or Update view query and description.
-	log.Info("Reading view metadata: ", id(view))
-	tb := viewDs.Table(view.TableID)
-	err = syncView(ctx, tb, view, sql, *description)
-	rtx.Must(err, "Failed to sync view %q", id(view))
 
 	log.Info("Success!")
 }
