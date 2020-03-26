@@ -42,24 +42,15 @@ function create_view() {
   description+=$'\n'$'\n'"Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"
   description+=$'\n'"View of data from '${src_project}'."
 
-  # TODO: perform table template construction in bq_create_view.
-  dataset_table_fmt=$(
-    grep 'FROM' ${template} \
-    | head -1 \
-    | awk -F\` '{print $2}' \
-    | sed 's|{{.ProjectID}}|%s|g' )
-  project_dataset_table=$( printf "${dataset_table_fmt}" "${src_project}" )
-
   # Strip filename down to view name.
   view="${template%%.sql}"
   view="${view##./}"
 
-  echo -n "Creating "${dst_project}.${dataset}.${view}" to access "
-  echo ${project_dataset_table}" using "${template}
+  echo -n "Creating "${dst_project}.${dataset}.${view}" using "${template}
 
   bq_create_view \
+      -src-project "${src_project}" \
       -create-view "${dst_project}.${dataset}.${view}" \
-      -referencing "${project_dataset_table}" \
       -template "${template}" \
       -description "${description}" \
       -editor "${USER}"
