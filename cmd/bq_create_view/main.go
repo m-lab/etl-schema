@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"regexp"
 	"text/template"
 	"time"
 
@@ -19,8 +20,8 @@ import (
 )
 
 var (
+	srcProject   = flag.String("src-project", "", "Project id of source data, used to evaluate template")
 	viewSource   = flag.String("create-view", "", "Full name of BQ view id: <project>.<dataset>.<view>")
-	accessTarget = flag.String("referencing", "", "Full table or view id that the view references. Must already exist.")
 	description  = flag.String("description", "", "Description for view")
 	editor       = flag.String("editor", "", "User name that should have edit access to the view dataset.")
 	logLevel     = flag.Int("log.level", 4, "Log level")
@@ -34,6 +35,21 @@ func init() {
 		DisableColors: true,
 		FullTimestamp: true,
 	})
+}
+
+// findTables takes the complete text of an SQL query and extracts and returns
+// every BQ SQL table pattern.
+func findTables(sql string) []string {
+	found := []string{}
+	segment := "[{}A-Za-z0-9._-]+"
+	r := regexp.MustCompile("`" + segment + "\\." + segment + "\\." + segment + "`")
+	f := r.FindAllStringSubmatch(sql, -1)
+	for _, results := range f {
+		for _, result := range results {
+			found = append(found, result)
+		}
+	}
+	return found
 }
 
 func parseTableID(id string) *bigquery.Table {
@@ -210,28 +226,29 @@ func main() {
 	flag.Parse()
 	log.SetLevel(log.Level(*logLevel))
 
-	if *viewSource == "" || *accessTarget == "" || len(viewTemplate) == 0 {
+	if *viewSource == "" || len(viewTemplate) == 0 {
 		flag.Usage()
 		log.Fatal("--create-view, --to-access, and --template flags are required.")
 	}
 
 	// Parsing flags.
 	view := parseTableID(*viewSource)
-	target := parseTableID(*accessTarget)
+	src := &bigquery.Table{
+		ProjectID: *srcProject,
+	}
 
 	// Evaluate viewTemplate.
 	var viewContent bytes.Buffer
 	tmpl := template.Must(template.New("template").Parse(viewTemplate.String()))
-	rtx.Must(tmpl.Execute(&viewContent, target), "Failed to execute view template: %q", viewTemplate)
+	rtx.Must(tmpl.Execute(&viewContent, src), "Failed to execute view template: %q", viewTemplate)
 	sql := viewContent.String()
+	tables := findTables(sql)
 
 	// Create a context that expires after 1 min.
 	ctx, cancelCtx := context.WithTimeout(context.Background(), time.Minute)
 	defer cancelCtx()
 
 	log.Info("Creating bigquery clients")
-	targetClient, err := bigquery.NewClient(ctx, target.ProjectID)
-	rtx.Must(err, "Failed to create bigquery.Client")
 	viewClient, err := bigquery.NewClient(ctx, view.ProjectID)
 	rtx.Must(err, "Failed to create bigquery.Client")
 
@@ -248,10 +265,15 @@ func main() {
 	rtx.Must(err, "Failed to sync view %q", id(view))
 
 	// Verify or Add view access to target table.
-	log.Info("Reading target dataset metadata: ", id(target))
-	ds := targetClient.Dataset(target.DatasetID)
-	err = syncDatasetAccess(ctx, ds, view, target)
-	rtx.Must(err, "Failed to grant access to ds: %q", id(target))
+	for _, table := range tables {
+		target := parseTableID(table)
+		log.Info("Reading target dataset metadata: ", id(target))
+		targetClient, err := bigquery.NewClient(ctx, target.ProjectID)
+		rtx.Must(err, "Failed to create bigquery.Client")
+		ds := targetClient.Dataset(target.DatasetID)
+		err = syncDatasetAccess(ctx, ds, view, target)
+		rtx.Must(err, "Failed to grant access to ds: %q", id(target))
+	}
 
 	log.Info("Success!")
 }
