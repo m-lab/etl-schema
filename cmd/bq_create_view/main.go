@@ -42,11 +42,11 @@ func init() {
 func findTables(sql string) []string {
 	found := []string{}
 	segment := "[{}A-Za-z0-9._-]+"
-	r := regexp.MustCompile("`" + segment + "\\." + segment + "\\." + segment + "`")
+	r := regexp.MustCompile("`(" + segment + "\\." + segment + "\\." + segment + ")`")
 	f := r.FindAllStringSubmatch(sql, -1)
 	for _, results := range f {
-		for _, result := range results {
-			found = append(found, result)
+		if len(results) == 2 {
+			found = append(found, results[1])
 		}
 	}
 	return found

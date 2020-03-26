@@ -306,9 +306,9 @@ func Test_findTables(t *testing.T) {
 			    SELECT * FROM %s
 			`, "`a.b.c`", "`measurement-lab.ndt.ndt5`", "`{{.ProjectID}}.base_tables.tcpinfo`"),
 			want: []string{
-				"`a.b.c`",
-				"`measurement-lab.ndt.ndt5`",
-				"`{{.ProjectID}}.base_tables.tcpinfo`",
+				"a.b.c",
+				"measurement-lab.ndt.ndt5",
+				"{{.ProjectID}}.base_tables.tcpinfo",
 			},
 		},
 	}
