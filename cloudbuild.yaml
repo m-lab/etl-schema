@@ -5,6 +5,9 @@ options:
   env:
   - PROJECT_ID=$PROJECT_ID
   - WORKSPACE_LINK=/go/src/github.com/m-lab/etl-schema
+  # Environment variables used by create_dataset_views.sh.
+  - TRAVIS_TAG=$TAG_NAME
+  - TRAVIS_COMMIT=$COMMIT_SHA
 
 ############################################################################
 steps:
@@ -18,8 +21,6 @@ steps:
   env:
     # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-sandbox,mlab-staging
-    - TRAVIS_TAG=$TAG_NAME
-    - TRAVIS_COMMIT=$COMMIT_SHA
   args:
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
 
@@ -28,8 +29,6 @@ steps:
   env:
     # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-oti
-    - TRAVIS_TAG=$TAG_NAME
-    - TRAVIS_COMMIT=$COMMIT_SHA
   args:
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID measurement-lab
