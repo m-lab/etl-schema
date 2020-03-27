@@ -19,7 +19,8 @@ KEYNAME=${1:?Please provide a key name to authorize operations or "self"}
 SRC_PROJECT=${2:?Please provide source project: $USAGE}
 DST_PROJECT=${3:?Please provide destination project: $USAGE}
 
-BASEDIR=$( pwd )
+BASEDIR=$( realpath $( dirname "${BASH_SOURCE[0]}" ) )
+cd ${BASEDIR}
 
 if [[ "${KEYNAME}" != "self" ]] ; then
   echo "${!KEYNAME}" > /tmp/sa.json
