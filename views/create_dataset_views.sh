@@ -44,7 +44,7 @@ function create_view() {
 
   description=$(
     awk '/^--/ {print substr($0, 3)} /^SELECT/ {exit(0)}' ${template} )
-  description+=$'\n'$'\n'"Release tag: $TRAVIS_TAG     Commit: $TRAVIS_COMMIT"
+  description+=$'\n'$'\n'"Release tag: $TAG_NAME Commit: $COMMIT_SHA"
   description+=$'\n'"View of data from '${src_project}'."
 
   # Strip filename down to view name.
