@@ -6,8 +6,8 @@ options:
   - PROJECT_ID=$PROJECT_ID
   - WORKSPACE_LINK=/go/src/github.com/m-lab/etl-schema
   # Environment variables used by create_dataset_views.sh.
-  - TRAVIS_TAG=$TAG_NAME
-  - TRAVIS_COMMIT=$COMMIT_SHA
+  - TAG_NAME=$TAG_NAME
+  - COMMIT_SHA=$COMMIT_SHA
 
 ############################################################################
 steps:
