@@ -289,3 +289,34 @@ func Test_syncDataset(t *testing.T) {
 		})
 	}
 }
+
+func Test_findTables(t *testing.T) {
+	tests := []struct {
+		name string
+		sql  string
+		want []string
+	}{
+		{
+			name: "success",
+			sql: fmt.Sprintf(`
+			    SELECT * FROM %s
+			    UNION ALL
+			    SELECT * FROM %s
+			    UNION ALL
+			    SELECT * FROM %s
+			`, "`a.b.c`", "`measurement-lab.ndt.ndt5`", "`mlab-oti.base_tables.tcpinfo`"),
+			want: []string{
+				"a.b.c",
+				"measurement-lab.ndt.ndt5",
+				"mlab-oti.base_tables.tcpinfo",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := findTables(tt.sql); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("findTables() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

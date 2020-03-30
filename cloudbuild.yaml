@@ -1,0 +1,34 @@
+# Timeout for complete build. Default is 10m.
+timeout: 1800s
+
+options:
+  env:
+  - PROJECT_ID=$PROJECT_ID
+  - WORKSPACE_LINK=/go/src/github.com/m-lab/etl-schema
+  # Environment variables used by create_dataset_views.sh.
+  - TAG_NAME=$TAG_NAME
+  - COMMIT_SHA=$COMMIT_SHA
+
+############################################################################
+steps:
+- name: gcr.io/$PROJECT_ID/golang-cbif
+  args:
+  - go get -v github.com/m-lab/etl-schema/cmd/bq_create_view
+  - cp /go/bin/bq_create_view ./views
+
+# Deployments to sandbox and staging.
+- name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif
+  env:
+    # Use cbif condition: only run these steps in one of these projects.
+    - PROJECT_IN=mlab-sandbox,mlab-staging
+  args:
+    - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
+
+# Deployments to oti and measurement-lab.
+- name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif
+  env:
+    # Use cbif condition: only run these steps in one of these projects.
+    - PROJECT_IN=mlab-oti
+  args:
+    - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
+    - /workspace/views/create_dataset_views.sh self $PROJECT_ID measurement-lab
