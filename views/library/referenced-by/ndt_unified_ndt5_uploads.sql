@@ -3,10 +3,9 @@
 -- This contributes one portion of the data used by MLab Unified Standard Views.
 --
 -- This view is only intended to accessed by a MLab Standard views: breaking changes
--- here will be offset by changes to the Standard views.
+-- here will be offset by changes to the Published Standard views.
 --
--- Researchers accessing this view to construct their own samples may
--- need to track changes to MLab Unified Standard Views.
+-- Anything here not visible in a standard view is subject to breaking changes.
 --
 
 WITH ndt5uploads AS (
@@ -30,21 +29,21 @@ PreCleanTCPinfo AS (
     -- Receiver side can not compute b_HasLoss
     -- Receiver side can not directly compute b_HasBloat
     ( uploads.C2S.ClientIP IN
-	("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
-	"2600:3c03::f03c:91ff:fe33:819",  "2605:a601:f1ff:fffe::99")
+        ("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
+        "2600:3c03::f03c:91ff:fe33:819",  "2605:a601:f1ff:fffe::99")
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
-		8) = NET.IP_FROM_STRING("10.0.0.0"))
+                8) = NET.IP_FROM_STRING("10.0.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
-		12) = NET.IP_FROM_STRING("172.16.0.0"))
+                12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
-		16) = NET.IP_FROM_STRING("192.168.0.0"))
+                16) = NET.IP_FROM_STRING("192.168.0.0"))
     ) AS b_OAM  -- Data is not from valid clients
  FROM
     -- Use a left join to allow NDT test without matching tcpinfo rows.
     ndt5uploads AS uploads
     LEFT JOIN tcpinfo
     ON
-#    uploads.partition_date = tcpinfo.partition_date AND -- why does this exclude rows?
+#    uploads.partition_date = tcpinfo.partition_date AND -- why does this exclude rows? issue:#63
      uploads.C2S.UUID = tcpinfo.UUID
 ),
 
@@ -58,23 +57,24 @@ NDT5UploadModels AS (
       FinalSnapshot.CongestionAlgorithm AS CongestionControl,
       C2S.MeanThroughputMbps,
       FinalSnapshot.TCPInfo.MinRTT, -- Sender's MinRTT
-      Null AS LossRate,  -- Receiver can not disambiguate reordering and loss
-      "ndt5.tcp_info" AS ToolStack
+      0 AS LossRate,  -- Receiver can not disambiguate reordering and loss
+      "ndt5.tcpinfo" AS ToolStack
     ) AS a,
+    -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
       ( -- Many Filters are built into the parser
-      	NOT b_OAM AND NOT b_HasError
-      	AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
-      	AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
-	AND connection_duration BETWEEN 9000000 AND 60000000
-      ) AS row_valid_best,
+        NOT b_OAM AND NOT b_HasError
+        AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
+        AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
+        AND connection_duration BETWEEN 9000000 AND 60000000
+      ) AS ValidBest,
       ( -- Losses > 0 make no sense for C2S
-      	NOT b_OAM AND NOT b_HasError
-      	AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
-	AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
-	AND connection_duration BETWEEN 9000000 AND 60000000
-      ) AS row_valid_2019  -- Same as row_valid_best
-    ) AS b,
+        NOT b_OAM AND NOT b_HasError
+        AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
+        AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
+        AND connection_duration BETWEEN 9000000 AND 60000000
+      ) AS Valid2019  -- Same as row_valid_best
+    ) AS filter,
     -- NOTE: standard columns for views exclude the parseInfo struct because
     -- multiple tables are used to create a derived view. Users that want the
     -- underlying parseInfo values should refer to the corresponding tables
@@ -84,10 +84,10 @@ NDT5UploadModels AS (
       C2S.ClientPort AS Port,
       Client.Geo,
       STRUCT(
-	-- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-	-- includes this information yet.
-	-- NOTE: Select the first ASN b/c standard columns defines a single field.
-	CAST (Client.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
+        -- includes this information yet.
+        -- NOTE: Select the first ASN b/c standard columns defines a single field.
+        CAST (Client.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS client,
     STRUCT (
@@ -95,14 +95,9 @@ NDT5UploadModels AS (
       C2S.ServerPort AS Port,
       Server.Geo,
       STRUCT(
-	CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+        CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
-    STRUCT (
-    	b_OAM,
-    	FinalSnapshot
-    ) AS RawNDT5 -- Beware: subject to breaking changes
-
   FROM PreCleanTCPinfo
 )
 

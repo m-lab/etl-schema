@@ -30,13 +30,13 @@
 -- We do not consider changes to our constituent views to be breaking
 -- changes if the changes are fully masked by our unified views.
 --
-SELECT * EXCEPT (b)
+SELECT * EXCEPT (filter)
 FROM (
-    SELECT test_date, a, b, client, server
+    SELECT test_date, a, filter, client, server
     FROM `{{.ProjectID}}.library.ndt_unified_ndt5_uploads`
   UNION ALL
-    SELECT test_date, a, b, client, server
+    SELECT test_date, a, filter, client, server
     FROM `{{.ProjectID}}.library.ndt_unified_web100_uploads`
 )
 WHERE
-  b.row_valid_best
+  filter.ValidBest

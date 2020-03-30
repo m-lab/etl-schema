@@ -5,8 +5,7 @@
 -- This view is only intended to accessed by a MLab Standard views: breaking changes
 -- here will be offset by changes to the Standard views.
 --
--- Researchers accessing this view to construct their own samples may
--- need to track changes to MLab Unified Standard Views.
+-- Anything here not visible in a standard view is subject to breaking changes.
 --
 
 WITH PreCleanWeb100 AS (
@@ -30,13 +29,13 @@ WITH PreCleanWeb100 AS (
         OR anomalies.blacklist_flags IS NOT NULL ) AS b_HasError,
     (web100_log_entry.connection_spec.remote_ip IN
           ("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
-	  "2600:3c03::f03c:91ff:fe33:819", "2605:a601:f1ff:fffe::99")
+          "2600:3c03::f03c:91ff:fe33:819", "2605:a601:f1ff:fffe::99")
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
-		8) = NET.IP_FROM_STRING("10.0.0.0"))
+                8) = NET.IP_FROM_STRING("10.0.0.0"))
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
-		12) = NET.IP_FROM_STRING("172.16.0.0"))
+                12) = NET.IP_FROM_STRING("172.16.0.0"))
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
-		16) = NET.IP_FROM_STRING("192.168.0.0"))
+                16) = NET.IP_FROM_STRING("192.168.0.0"))
      ) AS b_OAM  -- Data is not from valid clients
   FROM `{{.ProjectID}}.ndt.web100`
   WHERE
@@ -59,10 +58,10 @@ Web100UploadModels AS (
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsReceived / connection_duration AS MeanThroughputMbps,
       web100_log_entry.snap.MinRTT/1000000 AS MinRTT,  -- Note: sender side
-      Null AS LossRate,
+      0 AS LossRate,
       "ndt.web100" AS ToolStack
     ) AS a,
-    -- Struct b has predicates for various cleaning assumptions
+    -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
       ( -- Upload only, >8kB transfered
         NOT b_OAM AND NOT b_HasError
@@ -71,7 +70,7 @@ Web100UploadModels AS (
         AND web100_log_entry.snap.HCThruOctetsAcked IS NOT NULL
         AND web100_log_entry.snap.HCThruOctetsAcked >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000
-	) AS row_valid_best,
+        ) AS ValidBest,
       ( -- Upload only, >kB transfered, 9-60 seconds, > 0 loss
         NOT b_OAM
         AND connection_spec.data_direction IS NOT NULL
@@ -79,10 +78,8 @@ Web100UploadModels AS (
         AND web100_log_entry.snap.HCThruOctetsAcked IS NOT NULL
         AND web100_log_entry.snap.HCThruOctetsAcked >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000  -- Connection between 9 and 30 seconds (ndt.recommended)
-        -- Zero loss is now viewed as sub optimal
-        AND web100_log_entry.snap.CongSignals IS NOT NULL AND web100_log_entry.snap.CongSignals > 0
-        ) AS row_valid_zeroloss
-    ) AS b,
+        ) AS Valid2019
+    ) AS filter,
     STRUCT (
       web100_log_entry.connection_spec.remote_ip AS IP,
       web100_log_entry.connection_spec.remote_port AS Port,
