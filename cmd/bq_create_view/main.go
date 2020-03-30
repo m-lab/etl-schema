@@ -41,7 +41,7 @@ func init() {
 // every BQ SQL table pattern.
 func findTables(sql string) []string {
 	found := []string{}
-	segment := "[{}A-Za-z0-9._-]+"
+	segment := "[A-Za-z0-9_-]+"
 	r := regexp.MustCompile("`(" + segment + "\\." + segment + "\\." + segment + ")`")
 	f := r.FindAllStringSubmatch(sql, -1)
 	for _, results := range f {
