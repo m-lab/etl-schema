@@ -57,9 +57,11 @@ NDT5UploadModels AS (
       FinalSnapshot.CongestionAlgorithm AS CongestionControl,
       C2S.MeanThroughputMbps,
       FinalSnapshot.TCPInfo.MinRTT, -- Sender's MinRTT
-      0 AS LossRate,  -- Receiver can not disambiguate reordering and loss
-      "ndt5.tcpinfo" AS ToolStack
+      0 AS LossRate  -- Receiver can not disambiguate reordering and loss
     ) AS a,
+    STRUCT (
+     "tcpinfo" AS _Instruments -- THIS WILL CHANGE
+    ) AS node,
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
       ( -- Many Filters are built into the parser

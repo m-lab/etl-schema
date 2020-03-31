@@ -58,9 +58,11 @@ Web100UploadModels AS (
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsReceived / connection_duration AS MeanThroughputMbps,
       web100_log_entry.snap.MinRTT/1000000 AS MinRTT,  -- Note: sender side
-      0 AS LossRate,
-      "ndt.web100" AS ToolStack
+      0 AS LossRate
     ) AS a,
+    STRUCT (
+     "web100" AS _Instruments -- THIS WILL CHANGE
+    ) AS node,
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
       ( -- Upload only, >8kB transfered
