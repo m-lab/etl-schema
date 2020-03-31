@@ -34,10 +34,10 @@
 SELECT * EXCEPT (filter)
 FROM (
     SELECT test_date, a, filter, node, client, server
-    FROM `{{.ProjectID}}.library.ndt_unified_ndt5_uploads`
+    FROM `library.ndt_unified_ndt5_uploads`
   UNION ALL
     SELECT test_date, a, filter, node, client, server
-    FROM `{{.ProjectID}}.library.ndt_unified_web100_uploads`
+    FROM `library.ndt_unified_web100_uploads`
 )
 WHERE
   filter.IsValidBest

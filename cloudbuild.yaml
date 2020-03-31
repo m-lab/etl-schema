@@ -22,7 +22,9 @@ steps:
     # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-sandbox,mlab-staging
   args:
-    - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
+    # Select data for sandbox views
+    # - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
+    - /workspace/views/create_dataset_views.sh self mlab-oti $PROJECT_ID
 
 # Deployments to oti and measurement-lab.
 - name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif
