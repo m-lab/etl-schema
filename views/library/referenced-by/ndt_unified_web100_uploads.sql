@@ -22,9 +22,9 @@ WITH PreCleanWeb100 AS (
     ) AS psuedoUUID,
     *,
     web100_log_entry.snap.Duration AS connection_duration, -- SYN to FIN total time
-    (web100_log_entry.snap.SndLimTimeRwin +
-         web100_log_entry.snap.SndLimTimeCwnd +
-         web100_log_entry.snap.SndLimTimeSnd) AS measurement_duration, -- Time transfering data
+    IF(web100_log_entry.snap.Duration > 12000000,   /* 12 sec */
+       web100_log_entry.snap.Duration - 2000000,
+       web100_log_entry.snap.Duration) AS measurement_duration, -- Time transfering data
     (blacklist_flags IS NOT NULL and blacklist_flags != 0
         OR anomalies.blacklist_flags IS NOT NULL ) AS b_HasError,
     (web100_log_entry.connection_spec.remote_ip IN
@@ -70,7 +70,7 @@ Web100UploadModels AS (
         AND web100_log_entry.snap.HCThruOctetsAcked IS NOT NULL
         AND web100_log_entry.snap.HCThruOctetsAcked >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000
-        ) AS ValidBest,
+        ) AS IsValidBest,
       ( -- Upload only, >kB transfered, 9-60 seconds, > 0 loss
         NOT b_OAM
         AND connection_spec.data_direction IS NOT NULL
@@ -78,7 +78,7 @@ Web100UploadModels AS (
         AND web100_log_entry.snap.HCThruOctetsAcked IS NOT NULL
         AND web100_log_entry.snap.HCThruOctetsAcked >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000  -- Connection between 9 and 30 seconds (ndt.recommended)
-        ) AS Valid2019
+        ) AS IsValid2019
     ) AS filter,
     STRUCT (
       web100_log_entry.connection_spec.remote_ip AS IP,

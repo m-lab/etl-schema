@@ -67,13 +67,13 @@ NDT5UploadModels AS (
         AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
         AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000
-      ) AS ValidBest,
+      ) AS IsValidBest,
       ( -- Losses > 0 make no sense for C2S
         NOT b_OAM AND NOT b_HasError
         AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
         AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000
-      ) AS Valid2019  -- Same as row_valid_best
+      ) AS IsValid2019  -- Same as row_valid_best
     ) AS filter,
     -- NOTE: standard columns for views exclude the parseInfo struct because
     -- multiple tables are used to create a derived view. Users that want the
