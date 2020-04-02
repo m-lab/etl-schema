@@ -59,8 +59,8 @@ WITH PreCleanWeb100 AS (
       psuedoUUID as UUID,
       log_time AS TestTime,
       "reno" AS CongestionControl,
-      web100_log_entry.snap.HCThruOctetsAcked / measurement_duration AS MeanThroughputMbps,
-      web100_log_entry.snap.MinRTT/1000000 AS MinRTT,
+      web100_log_entry.snap.HCThruOctetsAcked * 8.0 / measurement_duration AS MeanThroughputMbps,
+      web100_log_entry.snap.MinRTT AS MinRTT,
       web100_log_entry.snap.SegsRetrans / web100_log_entry.snap.SegsOut AS LossRate
     ) AS a,
     STRUCT (

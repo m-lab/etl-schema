@@ -60,7 +60,7 @@ NDT5DownloadModels AS (
       S2C.StartTime AS TestTime,
       FinalSnapshot.CongestionAlgorithm AS CongestionControl,
       S2C.MeanThroughputMbps,
-      S2C.MinRTT/1000000000 AS MinRTT,
+      S2C.MinRTT/1000000 AS MinRTT, -- units are ms
       FinalSnapshot.TCPInfo.BytesRetrans / FinalSnapshot.TCPInfo.BytesSent AS LossRate
     ) AS a,
     STRUCT (
