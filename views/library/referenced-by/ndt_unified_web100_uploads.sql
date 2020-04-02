@@ -37,7 +37,7 @@ WITH PreCleanWeb100 AS (
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
      ) AS b_OAM  -- Data is not from valid clients
-  FROM `{{.ProjectID}}.ndt.web100`
+  FROM `mlab-oti.ndt.web100`
   WHERE
     web100_log_entry.snap.Duration IS NOT NULL
     AND web100_log_entry.snap.State IS NOT NULL

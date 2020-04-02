@@ -40,7 +40,7 @@ WITH PreCleanWeb100 AS (
      web100_log_entry.snap.OctetsRetrans > 0 AS IsCongested,
      (  web100_log_entry.snap.SmoothedRTT > 2*web100_log_entry.snap.MinRTT AND
         web100_log_entry.snap.SmoothedRTT > 1000 ) AS IsBloated
-  FROM `{{.ProjectID}}.ndt.web100`
+  FROM `mlab-oti.ndt.web100`
   WHERE
     web100_log_entry.snap.Duration IS NOT NULL
     AND web100_log_entry.snap.State IS NOT NULL

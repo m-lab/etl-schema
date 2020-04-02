@@ -12,14 +12,14 @@ WITH ndt5uploads AS (
   SELECT partition_date, result.C2S,
   (result.C2S.Error != "") AS b_HasError,
   TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MICROSECOND) AS connection_duration
-  FROM   `{{.ProjectID}}.ndt.ndt5`
+  FROM   `mlab-oti.ndt.ndt5`
   -- Limit to valid C2S results
   WHERE  result.C2S IS NOT NULL
 ),
 
 tcpinfo AS (
   SELECT * EXCEPT (snapshots)
-  FROM `{{.ProjectID}}.ndt.tcpinfo`
+  FROM `mlab-oti.ndt.tcpinfo`
 ),
 
 PreCleanTCPinfo AS (
