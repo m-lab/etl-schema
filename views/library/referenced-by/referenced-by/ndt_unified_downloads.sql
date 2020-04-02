@@ -3,9 +3,11 @@
 -- of all MLab upload data across the entire platform over all time.
 -- The schema uses the Standard Top-level Columns design.
 --
--- This (DRAFT) view is intended to receive long term support by the
--- M-Lab team.  (IT MAY CHANGE IN THE NEAR TERM, BUT WE WILL FREEZE IT
--- SOON.)
+-- THIS VIEW IS "PREPUBLICATION", we may make changes in response to
+-- additional reviews prior to final publication.
+--
+-- This view is intended to receive long term support by the M-Lab
+-- team.
 --
 -- It is our intent to avoid any changes to this view that might break
 -- dependent queries.  We expect to add columns in the future, but
