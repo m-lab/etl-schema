@@ -39,7 +39,7 @@ WITH PreCleanWeb100 AS (
      ) AS IsOAM,  -- Data is not from valid clients
      web100_log_entry.snap.OctetsRetrans > 0 AS IsCongested,
      (  web100_log_entry.snap.SmoothedRTT > 2*web100_log_entry.snap.MinRTT AND
-        web100_log_entry.snap.SmoothedRTT > 1000000 ) AS IsBloated
+        web100_log_entry.snap.SmoothedRTT > 1000 ) AS IsBloated
   FROM `{{.ProjectID}}.ndt.web100`
   WHERE
     web100_log_entry.snap.Duration IS NOT NULL

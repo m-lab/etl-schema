@@ -30,7 +30,7 @@ PreCleanTCPinfo AS (
     (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS IsCongested,
     -- Final RTT sample twice the minimum and above 1 second means bloated
     ((FinalSnapshot.TCPInfo.RTT > 2*FinalSnapshot.TCPInfo.MinRTT) AND
-       (FinalSnapshot.TCPInfo.RTT > 1000000)) AS IsBloated,
+       (FinalSnapshot.TCPInfo.RTT > 1000)) AS IsBloated,
     (
       downloads.S2C.ClientIP IN
         ("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
