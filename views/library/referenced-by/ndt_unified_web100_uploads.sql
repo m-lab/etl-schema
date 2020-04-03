@@ -57,7 +57,7 @@ Web100UploadModels AS (
       log_time AS TestTime,
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsReceived * 8.0 / connection_duration AS MeanThroughputMbps,
-      web100_log_entry.snap.MinRTT AS MinRTT,  -- Note: download side measurement (ms)
+      web100_log_entry.snap.MinRTT * 1.0 AS MinRTT,  -- Note: download side measurement (ms)
       0 AS LossRate
     ) AS a,
     STRUCT (

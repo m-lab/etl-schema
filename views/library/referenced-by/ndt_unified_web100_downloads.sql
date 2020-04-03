@@ -60,7 +60,7 @@ WITH PreCleanWeb100 AS (
       log_time AS TestTime,
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsAcked * 8.0 / measurement_duration AS MeanThroughputMbps,
-      web100_log_entry.snap.MinRTT AS MinRTT,
+      web100_log_entry.snap.MinRTT * 1.0 AS MinRTT,
       web100_log_entry.snap.SegsRetrans / web100_log_entry.snap.SegsOut AS LossRate
     ) AS a,
     STRUCT (

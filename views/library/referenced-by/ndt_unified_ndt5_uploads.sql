@@ -56,7 +56,7 @@ NDT5UploadModels AS (
       C2S.StartTime AS TestTime,
       FinalSnapshot.CongestionAlgorithm AS CongestionControl,
       C2S.MeanThroughputMbps AS MeanThroughputMbps,
-      FinalSnapshot.TCPInfo.MinRTT/1000 AS MinRTT, -- Sender's MinRTT (ms)
+      FinalSnapshot.TCPInfo.MinRTT/1000.0 AS MinRTT, -- Sender's MinRTT (ms)
       0 AS LossRate  -- Receiver can not disambiguate reordering and loss
     ) AS a,
     STRUCT (
