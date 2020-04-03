@@ -1,4 +1,5 @@
--- This view, ndt_unified_uploads, is our current best understanding
+--
+-- This view, ndt_unified_downloads, is our current best understanding
 -- of all MLab upload data across the entire platform over all time.
 -- The schema uses the Standard Top-level Columns design.
 --
@@ -16,7 +17,7 @@
 -- data under this view will change.  This view will isolate
 -- constituent changes from users.
 --
--- Views of the form ndt_unified_uploads_XXXX reflect our
+-- Views of the form ndt_unified_downloads_XXXX reflect our
 -- understanding of the data under different assumptions or at earlier
 -- dates.  These views are intended to be useful to test how our
 -- processing changed might affect research results.
@@ -33,13 +34,14 @@
 -- We do not consider changes to our constituent views to be breaking
 -- changes if the changes are fully masked by our unified views.
 --
+
 SELECT * EXCEPT (filter)
 FROM (
     SELECT test_date, a, filter, node, client, server
-    FROM `{{.ProjectID}}.library.ndt_unified_ndt5_uploads`
+    FROM `{{.ProjectID}}.library.ndt_unified_ndt5_downloads`
   UNION ALL
     SELECT test_date, a, filter, node, client, server
-    FROM `{{.ProjectID}}.library.ndt_unified_web100_uploads`
+    FROM `{{.ProjectID}}.library.ndt_unified_web100_downloads`
 )
 WHERE
   filter.IsValidBest
