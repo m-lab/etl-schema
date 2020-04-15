@@ -22,7 +22,7 @@ tcpinfo AS (
   FROM `mlab-oti.ndt.tcpinfo`
 ),
 
-PreCleanTCPinfo AS (
+PreCleanNDT5 AS (
   SELECT
     uploads.*, tcpinfo.Client, tcpinfo.Server,
     tcpinfo.FinalSnapshot AS FinalSnapshot,
@@ -100,7 +100,8 @@ NDT5UploadModels AS (
         CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
-  FROM PreCleanTCPinfo
+    PreCleanNDT5 AS _raw  -- Not stable and subject to breaking changes
+  FROM PreCleanNDT5
 )
 
 SELECT * FROM NDT5UploadModels
