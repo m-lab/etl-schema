@@ -100,7 +100,7 @@ NDT5UploadModels AS (
         CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
-    PreCleanNDT5 AS _raw  -- Not stable and subject to breaking changes
+    PreCleanNDT5 AS _internal202004  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
 )
 
