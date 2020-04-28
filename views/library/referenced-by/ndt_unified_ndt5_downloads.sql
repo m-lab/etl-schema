@@ -9,7 +9,7 @@
 --
 
 WITH ndt5downloads AS (
-  SELECT partition_date, result.S2C,
+  SELECT partition_date, ParseInfo, result.S2C,
   (result.S2C.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MICROSECOND) AS connection_duration
   FROM   `mlab-oti.ndt.ndt5`
@@ -22,9 +22,11 @@ tcpinfo AS (
   FROM `mlab-oti.ndt.tcpinfo`
 ),
 
-PreCleanTCPinfo AS (
+PreCleanNDT5 AS (
   SELECT
     downloads.*, tcpinfo.Client, tcpinfo.Server,
+    tcpinfo.ParseInfo AS TCPParseInfo,
+    downloads.ParseInfo AS NDT5ParseInfo,
     tcpinfo.FinalSnapshot AS FinalSnapshot,
     -- Any loss implys a netowork bottleneck
     (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS IsCongested,
@@ -61,7 +63,7 @@ NDT5DownloadModels AS (
       FinalSnapshot.CongestionAlgorithm AS CongestionControl,
       S2C.MeanThroughputMbps,
       S2C.MinRTT/1000000.0 AS MinRTT, -- units are ms
-      FinalSnapshot.TCPInfo.BytesRetrans / FinalSnapshot.TCPInfo.BytesSent AS LossRate
+      SAFE_DIVIDE(FinalSnapshot.TCPInfo.BytesRetrans, FinalSnapshot.TCPInfo.BytesSent) AS LossRate
     ) AS a,
     STRUCT (
      "tcpinfo" AS _Instruments -- THIS WILL CHANGE
@@ -106,7 +108,8 @@ NDT5DownloadModels AS (
         CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
-  FROM PreCleanTCPinfo
+    PreCleanNDT5 AS _internal202004  -- Not stable and subject to breaking changes
+  FROM PreCleanNDT5
 )
 
 SELECT * FROM NDT5DownloadModels

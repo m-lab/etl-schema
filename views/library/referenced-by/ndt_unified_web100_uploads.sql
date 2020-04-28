@@ -127,6 +127,7 @@ Web100UploadModels AS (
         connection_spec.server.network.asn AS ASNumber
       ) AS Network
     ) AS server,
+    PreCleanWeb100 AS _internal202004  -- Not stable and subject to breaking changes
   FROM PreCleanWeb100
   WHERE
     measurement_duration > 0 AND connection_duration > 0

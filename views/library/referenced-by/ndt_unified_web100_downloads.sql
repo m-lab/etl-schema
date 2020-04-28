@@ -61,7 +61,7 @@ WITH PreCleanWeb100 AS (
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsAcked * 8.0 / measurement_duration AS MeanThroughputMbps,
       web100_log_entry.snap.MinRTT * 1.0 AS MinRTT,
-      web100_log_entry.snap.SegsRetrans / web100_log_entry.snap.SegsOut AS LossRate
+      SAFE_DIVIDE(web100_log_entry.snap.SegsRetrans, web100_log_entry.snap.SegsOut) AS LossRate
     ) AS a,
     STRUCT (
      "web100" AS _Instruments -- THIS WILL CHANGE
@@ -132,6 +132,7 @@ WITH PreCleanWeb100 AS (
         connection_spec.server.network.asn AS ASNumber
       ) AS Network
     ) AS server,
+    PreCleanWeb100 AS _internal202004  -- Not stable and subject to breaking changes
   FROM PreCleanWeb100
   WHERE
     measurement_duration > 0 AND connection_duration > 0
