@@ -29,8 +29,14 @@ PreCleanNDT5 AS (
     -- Receiver side can not compute IsCongested
     -- Receiver side can not directly compute IsBloated
     ( uploads.C2S.ClientIP IN
-        ("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
-        "2600:3c03::f03c:91ff:fe33:819",  "2605:a601:f1ff:fffe::99")
+         -- TODO(m-lab/etl/issues/893): move to parser configuration.
+        ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
+          "35.225.75.192", -- script-exporter VM in GCE, staging.
+          "35.192.37.249", -- script-exporter VM in GCE, oti.
+          "23.228.128.99", "2605:a601:f1ff:fffe::99", -- ks addresses.
+          "45.56.98.222", "2600:3c03::f03c:91ff:fe33:819", -- eb addresses.
+          "35.202.153.90", "35.188.150.110" -- Static IPs from GKE VMs for e2e tests.
+        )
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 8) = NET.IP_FROM_STRING("10.0.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
