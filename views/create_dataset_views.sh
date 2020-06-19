@@ -79,7 +79,8 @@ for DATASET_DIR in $( find -maxdepth 1 -type d -a -not -name "." ) ; do
     while [[ -d "referenced-by" ]] ; do
 
       cd referenced-by
-      for TEMPLATE in $( find -maxdepth 1 -name "*.sql" ) ; do
+      # TODO(etl-schema/issues/78) - dont us sort
+      for TEMPLATE in $( find -maxdepth 1 -name "*.sql" | sort ) ; do
 
         create_view "${DST_PROJECT}" "${DST_PROJECT}" "${DATASET}" "${TEMPLATE}"
       done
