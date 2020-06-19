@@ -15,6 +15,8 @@ WITH ndt5downloads AS (
   FROM   `mlab-oti.ndt.ndt5`
   -- Limit to valid S2C results
   WHERE result.S2C IS NOT NULL
+  AND result.S2C.UUID IS NOT NULL
+  AND result.S2C.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
 ),
 
 tcpinfo AS (
@@ -25,8 +27,6 @@ tcpinfo AS (
 PreCleanNDT5 AS (
   SELECT
     downloads.*, tcpinfo.Client, tcpinfo.Server,
-    tcpinfo.ParseInfo AS TCPParseInfo,
-    downloads.ParseInfo AS NDT5ParseInfo,
     tcpinfo.FinalSnapshot AS FinalSnapshot,
     -- Any loss implys a netowork bottleneck
     (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS IsCongested,
@@ -43,25 +43,28 @@ PreCleanNDT5 AS (
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(downloads.S2C.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
-    ) AS IsOAM  -- Data is not from valid clients
+    ) AS IsOAM,  -- Data is not from valid clients
+    tcpinfo.ParseInfo AS TCPparser,
+    downloads.ParseInfo AS NDT5parser,
   FROM
     -- Use a left join to allow NDT test without matching tcpinfo rows.
     ndt5downloads AS downloads
     LEFT JOIN tcpinfo
     ON
-#    downloads.partition_date = tcpinfo.partition_date AND -- why does this exclude rows? issue:#63
-     downloads.S2C.UUID = tcpinfo.UUID
+      downloads.partition_date = tcpinfo.partition_date -- This may exclude a few rows issue:#63
+      AND downloads.S2C.UUID = tcpinfo.UUID
 ),
 
 NDT5DownloadModels AS (
   SELECT
-    partition_date as test_date,
+    S2C.UUID AS id,
+    partition_date as test_date, -- rename to date
     STRUCT (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       S2C.UUID,
       S2C.StartTime AS TestTime,
       FinalSnapshot.CongestionAlgorithm AS CongestionControl,
-      S2C.MeanThroughputMbps,
+      S2C.MeanThroughputMbps AS MeanThroughputMbps,
       S2C.MinRTT/1000000.0 AS MinRTT, -- units are ms
       SAFE_DIVIDE(FinalSnapshot.TCPInfo.BytesRetrans, FinalSnapshot.TCPInfo.BytesSent) AS LossRate
     ) AS a,
@@ -103,12 +106,22 @@ NDT5DownloadModels AS (
     STRUCT (
       S2C.ServerIP AS IP,
       S2C.ServerPort AS Port,
+      REGEXP_EXTRACT(ParseInfo.TaskFileName,
+            'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
+      REGEXP_EXTRACT(ParseInfo.TaskFileName,
+            '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
       Server.Geo,
       STRUCT(
         CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
-    PreCleanNDT5 AS _internal202004  -- Not stable and subject to breaking changes
+    STRUCT (
+       ParseInfo.ParserVersion AS Version,
+       ParseInfo.ParseTime AS Time,
+       ParseInfo.TaskFileName AS ArchiveURL,
+       S2C.UUID AS Filename
+    ) AS _parser,
+    PreCleanNDT5 AS _internal202006  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
 )
 

@@ -35,10 +35,10 @@
 --
 SELECT * EXCEPT (filter)
 FROM (
-    SELECT test_date, a, filter, node, client, server
+    SELECT id, test_date, a, filter, node, client, server
     FROM `{{.ProjectID}}.library.ndt_unified_ndt5_uploads`
   UNION ALL
-    SELECT test_date, a, filter, node, client, server
+    SELECT id, test_date, a, filter, node, client, server
     FROM `{{.ProjectID}}.library.ndt_unified_web100_uploads`
 )
 WHERE
