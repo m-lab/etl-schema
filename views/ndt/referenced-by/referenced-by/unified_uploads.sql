@@ -33,12 +33,14 @@
 -- We do not consider changes to our constituent views to be breaking
 -- changes if the changes are fully masked by our unified views.
 --
+-- NB: deprecate test_date in favor of date
+--
 SELECT * EXCEPT (filter)
 FROM (
-    SELECT test_date, a, filter, node, client, server
+    SELECT id, test_date AS date, a, filter, node, client, server, test_date
     FROM `{{.ProjectID}}.library.ndt_unified_ndt5_uploads`
   UNION ALL
-    SELECT test_date, a, filter, node, client, server
+    SELECT id, test_date AS date, a, filter, node, client, server, test_date
     FROM `{{.ProjectID}}.library.ndt_unified_web100_uploads`
 )
 WHERE

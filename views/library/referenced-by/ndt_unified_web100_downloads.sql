@@ -19,7 +19,7 @@ WITH PreCleanWeb100 AS (
       web100_log_entry.connection_spec.remote_ip,
       CAST (web100_log_entry.connection_spec.remote_port AS STRING),
       CAST (partition_date AS STRING)
-    ) AS psuedoUUID,
+    ) AS pseudoUUID,
     *,
     web100_log_entry.snap.Duration AS connection_duration, -- SYN to FIN total time
     (web100_log_entry.snap.SndLimTimeRwin +
@@ -39,7 +39,13 @@ WITH PreCleanWeb100 AS (
      ) AS IsOAM,  -- Data is not from valid clients
      web100_log_entry.snap.OctetsRetrans > 0 AS IsCongested,
      (  web100_log_entry.snap.SmoothedRTT > 2*web100_log_entry.snap.MinRTT AND
-        web100_log_entry.snap.SmoothedRTT > 1000 ) AS IsBloated
+        web100_log_entry.snap.SmoothedRTT > 1000 ) AS IsBloated,
+    STRUCT (
+      parser_version AS Version,
+      parse_time AS Time,
+      task_filename AS ArchiveURL,
+      "web100" AS Filename
+    ) AS Web100parser,
   FROM `mlab-oti.ndt.web100`
   WHERE
     web100_log_entry.snap.Duration IS NOT NULL
@@ -51,12 +57,13 @@ WITH PreCleanWeb100 AS (
     AND web100_log_entry.snap.SndLimTimeSnd IS NOT NULL
 ),
 
-       Web100DownloadModels AS (
+Web100DownloadModels AS (
   SELECT
-    test_date,
+     pseudoUUID as id,
+     test_date, -- Rename to date
     -- Struct a models various TCP behaviors
     STRUCT(
-      psuedoUUID as UUID,
+      pseudoUUID as UUID,
       log_time AS TestTime,
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsAcked * 8.0 / measurement_duration AS MeanThroughputMbps,
@@ -114,6 +121,10 @@ WITH PreCleanWeb100 AS (
     STRUCT (
       web100_log_entry.connection_spec.local_ip AS IP,
       web100_log_entry.connection_spec.local_port AS Port,
+      REGEXP_EXTRACT(task_filename,
+            'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
+      REGEXP_EXTRACT(task_filename,
+            '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
       STRUCT(
         connection_spec.server_geolocation.continent_code,
         connection_spec.server_geolocation.country_code,
@@ -132,7 +143,7 @@ WITH PreCleanWeb100 AS (
         connection_spec.server.network.asn AS ASNumber
       ) AS Network
     ) AS server,
-    PreCleanWeb100 AS _internal202004  -- Not stable and subject to breaking changes
+    PreCleanWeb100 AS _internal202006  -- Not stable and subject to breaking changes
   FROM PreCleanWeb100
   WHERE
     measurement_duration > 0 AND connection_duration > 0

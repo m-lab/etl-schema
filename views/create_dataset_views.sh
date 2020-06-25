@@ -63,13 +63,13 @@ function create_view() {
 
 
 # For each directory in the current directory.
-for DATASET_DIR in $( find -maxdepth 1 -type d -a -not -name "." ) ; do
+for DATASET_DIR in $( find -maxdepth 1 -type d -a -not -name "." | sort ) ; do
   pushd $DATASET_DIR &> /dev/null
 
     DATASET=${DATASET_DIR##./}
 
     # Create top level views. These reference tables in the "SRC_PROJECT".
-    for TEMPLATE in $( find -maxdepth 1 -name "*.sql" ) ; do
+    for TEMPLATE in $( find -maxdepth 1 -name "*.sql" | sort ) ; do
 
       create_view "${SRC_PROJECT}" "${DST_PROJECT}" "${DATASET}" "${TEMPLATE}"
     done
@@ -79,7 +79,8 @@ for DATASET_DIR in $( find -maxdepth 1 -type d -a -not -name "." ) ; do
     while [[ -d "referenced-by" ]] ; do
 
       cd referenced-by
-      for TEMPLATE in $( find -maxdepth 1 -name "*.sql" ) ; do
+      # TODO(etl-schema/issues/78) - dont us sort
+      for TEMPLATE in $( find -maxdepth 1 -name "*.sql" | sort ) ; do
 
         create_view "${DST_PROJECT}" "${DST_PROJECT}" "${DATASET}" "${TEMPLATE}"
       done
