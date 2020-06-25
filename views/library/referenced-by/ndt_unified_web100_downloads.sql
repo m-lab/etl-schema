@@ -19,7 +19,7 @@ WITH PreCleanWeb100 AS (
       web100_log_entry.connection_spec.remote_ip,
       CAST (web100_log_entry.connection_spec.remote_port AS STRING),
       CAST (partition_date AS STRING)
-    ) AS psuedoUUID,
+    ) AS pseudoUUID,
     *,
     web100_log_entry.snap.Duration AS connection_duration, -- SYN to FIN total time
     (web100_log_entry.snap.SndLimTimeRwin +
@@ -59,11 +59,11 @@ WITH PreCleanWeb100 AS (
 
 Web100DownloadModels AS (
   SELECT
-     psuedoUUID as id,
+     pseudoUUID as id,
      test_date, -- Rename to date
     -- Struct a models various TCP behaviors
     STRUCT(
-      psuedoUUID as UUID,
+      pseudoUUID as UUID,
       log_time AS TestTime,
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsAcked * 8.0 / measurement_duration AS MeanThroughputMbps,

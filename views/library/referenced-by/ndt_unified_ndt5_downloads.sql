@@ -57,8 +57,8 @@ PreCleanNDT5 AS (
     ndt5downloads AS downloads
     LEFT JOIN tcpinfo
     ON
-      downloads.partition_date = tcpinfo.partition_date -- This may exclude a few rows issue:#63
-      AND downloads.S2C.UUID = tcpinfo.UUID
+#     downloads.partition_date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
+      downloads.S2C.UUID = tcpinfo.UUID
 ),
 
 NDT5DownloadModels AS (
@@ -121,12 +121,6 @@ NDT5DownloadModels AS (
         CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
-    STRUCT (
-       ParseInfo.ParserVersion AS Version,
-       ParseInfo.ParseTime AS Time,
-       ParseInfo.TaskFileName AS ArchiveURL,
-       S2C.UUID AS Filename
-    ) AS _parser,
     PreCleanNDT5 AS _internal202006  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
 )

@@ -19,7 +19,7 @@ WITH PreCleanWeb100 AS (
       web100_log_entry.connection_spec.remote_ip,
       CAST (web100_log_entry.connection_spec.remote_port AS STRING),
       CAST (partition_date AS STRING)
-    ) AS psuedoUUID,
+    ) AS pseudoUUID,
     *,
     web100_log_entry.snap.Duration AS connection_duration, -- SYN to FIN total time
     IF(web100_log_entry.snap.Duration > 12000000,   /* 12 sec */
@@ -38,7 +38,7 @@ WITH PreCleanWeb100 AS (
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
      ) AS IsOAM,  -- Data is not from valid clients
      ( -- Eliminate some clearly bogus data
-	 web100_log_entry.snap.HCThruOctetsReceived > 1E14 -- approximately 10Gb/s for 24 hours
+       web100_log_entry.snap.HCThruOctetsReceived > 1E14 -- approximately 10Gb/s for 24 hours
      ) AS IsCorrupted,
     STRUCT (
       parser_version AS Version,
@@ -59,11 +59,11 @@ WITH PreCleanWeb100 AS (
 
 Web100UploadModels AS (
   SELECT
-    psuedoUUID as id,
+    pseudoUUID as id,
     test_date, -- Rename to date
     -- Struct a models various TCP behaviors
     STRUCT(
-      psuedoUUID as UUID,
+      pseudoUUID as UUID,
       log_time AS TestTime,
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsReceived * 8.0 / connection_duration AS MeanThroughputMbps,

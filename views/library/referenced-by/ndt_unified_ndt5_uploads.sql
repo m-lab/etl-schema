@@ -52,8 +52,8 @@ PreCleanNDT5 AS (
     ndt5uploads AS uploads
     LEFT JOIN tcpinfo
     ON
-      uploads.partition_date = tcpinfo.partition_date  -- This may exclude a few rows issue:#63
-      AND uploads.C2S.UUID = tcpinfo.UUID
+#     uploads.partition_date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
+      uploads.C2S.UUID = tcpinfo.UUID
 ),
 
 NDT5UploadModels AS (
