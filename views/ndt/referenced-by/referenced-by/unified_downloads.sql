@@ -36,11 +36,19 @@
 --
 -- NB: deprecate test_date in favor of date
 --
-SELECT * EXCEPT (filter)
+SELECT *
+EXCEPT (filter)
 FROM (
+    -- NB: reording UNION clauses may cause breaking changes to field names
+    -- 2019-07-18 to present
     SELECT id, test_date AS date, a, filter, node, client, server, test_date
     FROM `{{.ProjectID}}.library.ndt_unified_ndt5_downloads`
   UNION ALL
+    -- 2020-03-12 to present
+    SELECT id, test_date AS date, a, filter, node, client, server, test_date
+    FROM `{{.ProjectID}}.library.ndt_unified_ndt7_downloads`
+  UNION ALL
+    -- 2009-02-18 to 2019-11-20
     SELECT id, test_date AS date, a, filter, node, client, server, test_date
     FROM `{{.ProjectID}}.library.ndt_unified_web100_downloads`
 )
