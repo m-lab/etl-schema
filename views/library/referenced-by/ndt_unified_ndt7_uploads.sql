@@ -10,15 +10,13 @@
 
 WITH ndt7uploads AS (
   SELECT *,
-  raw.Upload.ClientMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Upload.ServerMeasurements))] AS lastSample,
-# (raw.Upload.Error != "") AS IsErrored,  -- TODO NOT IN NDT7
-  False AS IsErrored,  -- TODO MISSING?
+  raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Upload.ServerMeasurements))] AS lastSample,
+# (raw.Upload.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
+  False AS IsErrored,
   TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MICROSECOND) AS connection_duration
   FROM   `mlab-oti.raw_ndt.ndt7`
   -- Limit to valid S2C results
-  WHERE raw.Upload IS NOT NULL  -- TODO CHECK before Publication
-  AND raw.Upload.ServerMeasurements IS NOT NULL   -- TODO CHECK before Publication
-  AND ARRAY_LENGTH(raw.Upload.ServerMeasurements) > 0 -- TODO CHECK before Publication
+  WHERE raw.Upload IS NOT NULL
   AND raw.Upload.UUID IS NOT NULL
   AND raw.Upload.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
 ),
@@ -53,8 +51,8 @@ PreCleanNDT7 AS (
     ndt7uploads AS uploads
     LEFT JOIN `mlab-oti.raw_ndt.annotation` AS annotation
     ON
-	uploads.date = annotation.date AND
-	uploads.id = annotation.id
+      uploads.date = annotation.date AND
+      uploads.id = annotation.id
 ),
 
 NDT7UploadModels AS (
@@ -66,10 +64,11 @@ NDT7UploadModels AS (
       a.TestTime,
       a.CongestionControl,
       a.MeanThroughputMbps,
-      a.MinRTT * 1000.0, -- TODO issue
+      a.MinRTT,  -- mS
       Null AS LossRate  -- Receiver can not disambiguate reordering and loss
     ) AS a,
     STRUCT (
+     -- "Instruments" is not quite the right concept
      "ndt7" AS _DataSilo -- TODO THIS WILL CHANGE
     ) AS node,
     -- Struct filter has predicates for various cleaning assumptions
@@ -94,24 +93,25 @@ NDT7UploadModels AS (
     STRUCT (
       raw.ClientIP AS IP,
       raw.ClientPort AS Port,
+      -- TODO reverse this mapping in all views (breaking?)
       STRUCT (  -- Map new geo into older production geo
-      	     client.Geo.ContinentCode, -- aka continent_code,
-	     client.Geo.CountryCode, -- aka country_code,
-	     client.Geo.CountryCode3, -- aka country_code3,
-	     client.Geo.CountryName, -- aka country_name,
-	     client.Geo.Region, -- aka region,
-	     -- client.Geo. Subdivision1ISOCode -- OMITED
-	     -- client.Geo. Subdivision1Name -- OMITED
-	     -- client.Geo.Subdivision2ISOCode -- OMITED
-	     -- client.Geo.Subdivision2Name -- OMITED
-	     client.Geo.MetroCode, -- aka metro_code,
-	     client.Geo.City, -- aka city,
-	     client.Geo.AreaCode, -- aka area_code,
-	     client.Geo.PostalCode, -- aka postal_code,
-	     client.Geo.Latitude, -- aka latitude,
-	     client.Geo.Longitude, -- aka longitude,
-	     client.Geo.AccuracyRadiusKm -- aka radius
-	     -- client.Geo.Missing -- Future
+             client.Geo.ContinentCode, -- aka continent_code,
+             client.Geo.CountryCode, -- aka country_code,
+             client.Geo.CountryCode3, -- aka country_code3,
+             client.Geo.CountryName, -- aka country_name,
+             client.Geo.Region, -- aka region,
+             -- client.Geo. Subdivision1ISOCode -- OMITED
+             -- client.Geo. Subdivision1Name -- OMITED
+             -- client.Geo.Subdivision2ISOCode -- OMITED
+             -- client.Geo.Subdivision2Name -- OMITED
+             client.Geo.MetroCode, -- aka metro_code,
+             client.Geo.City, -- aka city,
+             client.Geo.AreaCode, -- aka area_code,
+             client.Geo.PostalCode, -- aka postal_code,
+             client.Geo.Latitude, -- aka latitude,
+             client.Geo.Longitude, -- aka longitude,
+             client.Geo.AccuracyRadiusKm -- aka radius
+             -- client.Geo.Missing -- Future
       ) AS Geo,
       STRUCT(
         -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
@@ -127,24 +127,25 @@ NDT7UploadModels AS (
             'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
       REGEXP_EXTRACT(NDT7parser.ArchiveURL,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
+      -- TODO reverse this mapping in all views (breaking?)
       STRUCT (  -- Map new geo into older production geo
-      	     client.Geo.ContinentCode, -- aka continent_code,
-	     client.Geo.CountryCode, -- aka country_code,
-	     client.Geo.CountryCode3, -- aka country_code3,
-	     client.Geo.CountryName, -- aka country_name,
-	     client.Geo.Region, -- aka region,
-	     -- client.Geo. Subdivision1ISOCode -- OMITED
-	     -- client.Geo. Subdivision1Name -- OMITED
-	     -- client.Geo.Subdivision2ISOCode -- OMITED
-	     -- client.Geo.Subdivision2Name -- OMITED
-	     client.Geo.MetroCode, -- aka metro_code,
-	     client.Geo.City, -- aka city,
-	     client.Geo.AreaCode, -- aka area_code,
-	     client.Geo.PostalCode, -- aka postal_code,
-	     client.Geo.Latitude, -- aka latitude,
-	     client.Geo.Longitude, -- aka longitude,
-	     client.Geo.AccuracyRadiusKm -- aka radius
-	     -- client.Geo.Missing -- Future
+             client.Geo.ContinentCode, -- aka continent_code,
+             client.Geo.CountryCode, -- aka country_code,
+             client.Geo.CountryCode3, -- aka country_code3,
+             client.Geo.CountryName, -- aka country_name,
+             client.Geo.Region, -- aka region,
+             -- client.Geo. Subdivision1ISOCode -- OMITED
+             -- client.Geo. Subdivision1Name -- OMITED
+             -- client.Geo.Subdivision2ISOCode -- OMITED
+             -- client.Geo.Subdivision2Name -- OMITED
+             client.Geo.MetroCode, -- aka metro_code,
+             client.Geo.City, -- aka city,
+             client.Geo.AreaCode, -- aka area_code,
+             client.Geo.PostalCode, -- aka postal_code,
+             client.Geo.Latitude, -- aka latitude,
+             client.Geo.Longitude, -- aka longitude,
+             client.Geo.AccuracyRadiusKm -- aka radius
+             -- client.Geo.Missing -- Future
       ) AS Geo,
       STRUCT(
         CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber

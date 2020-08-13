@@ -39,7 +39,7 @@
 SELECT *
 EXCEPT (filter)
 FROM (
-    -- NB: reording UNION clauses may cause breaking changes to field names
+    -- NB: reordering UNION clauses will cause breaking changes to field names
     -- 2019-07-18 to present
     SELECT id, test_date AS date, a, filter, node, client, server, test_date
     FROM `{{.ProjectID}}.library.ndt_unified_ndt5_downloads`
