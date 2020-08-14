@@ -99,7 +99,7 @@ NDT5UploadModels AS (
         -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
         -- includes this information yet.
         -- NOTE: Select the first ASN b/c standard columns defines a single field.
-        CAST (Client.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+        CAST (Client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS client,
     STRUCT (
@@ -111,7 +111,7 @@ NDT5UploadModels AS (
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
       Server.Geo,
       STRUCT(
-        CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+        CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
     PreCleanNDT5 AS _internal202006  -- Not stable and subject to breaking changes

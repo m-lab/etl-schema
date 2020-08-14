@@ -117,7 +117,7 @@ NDT7UploadModels AS (
         -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
         -- includes this information yet.
         -- NOTE: Select the first ASN b/c standard columns defines a single field.
-        CAST (Client.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+        CAST (Client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS client,
     STRUCT (
@@ -148,7 +148,7 @@ NDT7UploadModels AS (
              -- client.Geo.Missing -- Future
       ) AS Geo,
       STRUCT(
-        CAST (Server.Network.Systems[OFFSET(0)].ASNs[OFFSET(0)] AS STRING) AS ASNumber
+        CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
       ) AS Network
     ) AS server,
     date AS test_date,
