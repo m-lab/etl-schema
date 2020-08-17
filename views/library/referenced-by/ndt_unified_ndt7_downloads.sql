@@ -136,23 +136,23 @@ NDT7DownloadModels AS (
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
       -- TODO reverse this mapping in all views (breaking?)
       STRUCT (  -- Map new geo into older production geo
-             client.Geo.ContinentCode, -- aka continent_code,
-             client.Geo.CountryCode, -- aka country_code,
-             client.Geo.CountryCode3, -- aka country_code3,
-             client.Geo.CountryName, -- aka country_name,
-             client.Geo.Region, -- aka region,
-             -- client.Geo. Subdivision1ISOCode -- OMITED
-             -- client.Geo. Subdivision1Name -- OMITED
-             -- client.Geo.Subdivision2ISOCode -- OMITED
-             -- client.Geo.Subdivision2Name -- OMITED
-             client.Geo.MetroCode, -- aka metro_code,
-             client.Geo.City, -- aka city,
-             client.Geo.AreaCode, -- aka area_code,
-             client.Geo.PostalCode, -- aka postal_code,
-             client.Geo.Latitude, -- aka latitude,
-             client.Geo.Longitude, -- aka longitude,
-             client.Geo.AccuracyRadiusKm -- aka radius
-             -- client.Geo.Missing -- Future
+             server.Geo.ContinentCode, -- aka continent_code,
+             server.Geo.CountryCode, -- aka country_code,
+             server.Geo.CountryCode3, -- aka country_code3,
+             server.Geo.CountryName, -- aka country_name,
+             server.Geo.Region, -- aka region,
+             -- server.Geo. Subdivision1ISOCode -- OMITED
+             -- server.Geo. Subdivision1Name -- OMITED
+             -- server.Geo.Subdivision2ISOCode -- OMITED
+             -- server.Geo.Subdivision2Name -- OMITED
+             server.Geo.MetroCode, -- aka metro_code,
+             server.Geo.City, -- aka city,
+             server.Geo.AreaCode, -- aka area_code,
+             server.Geo.PostalCode, -- aka postal_code,
+             server.Geo.Latitude, -- aka latitude,
+             server.Geo.Longitude, -- aka longitude,
+             server.Geo.AccuracyRadiusKm -- aka radius
+             -- server.Geo.Missing -- Future
       ) AS Geo,
       STRUCT(
         CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
