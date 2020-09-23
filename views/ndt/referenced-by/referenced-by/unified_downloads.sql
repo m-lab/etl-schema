@@ -1,13 +1,9 @@
 --
 -- This view, ndt_unified_downloads, is our current best understanding
--- of all MLab upload data across the entire platform over all time.
+-- of all M-Lab download data across the entire platform over all time.
 -- The schema uses the Standard Top-level Columns design.
 --
--- THIS VIEW IS "PREPUBLICATION", we may make changes in response to
--- additional reviews prior to final publication.
---
--- This view is intended to receive long term support by the M-Lab
--- team.
+-- This view receives long term support by the M-Lab team.
 --
 -- It is our intent to avoid any changes to this view that might break
 -- dependent queries.  We expect to add columns in the future, but
