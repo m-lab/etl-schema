@@ -1,5 +1,5 @@
 --
--- NDT7 download data in standard columns plus additional annotations.
+-- NDT7 download data in standard columns
 -- This contributes one portion of the data used by MLab Unified Standard Views.
 --
 -- This view is only intended to accessed by a MLab Standard views: breaking changes
@@ -14,7 +14,8 @@ WITH ndt7downloads AS (
 # (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
   TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MICROSECOND) AS connection_duration
-  FROM   `mlab-oti.raw_ndt.ndt7`
+ FROM   `mlab-oti.ndt.ndt7`
+#  FROM `mlab-sandbox.ndt.ndt7`
   -- Limit to valid S2C results
   WHERE raw.Download IS NOT NULL
   AND raw.Download.UUID IS NOT NULL
@@ -23,9 +24,9 @@ WITH ndt7downloads AS (
 
 PreCleanNDT7 AS (
   SELECT
-    downloads.id, downloads.date, downloads.a, downloads.IsErrored, downloads.lastsample,
-    downloads.connection_duration, downloads.raw,
-    annotation.client, annotation.server,
+    id, date, a, IsErrored, lastsample,
+    connection_duration, raw,
+    client, server,
     -- Any loss implys a netowork bottleneck
     (lastSample.TCPInfo.TotalRetrans > 0) AS IsCongested,
     -- Final RTT sample twice the minimum and above 1 second means bloated
@@ -48,15 +49,9 @@ PreCleanNDT7 AS (
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
     ) AS IsOAM,  -- Data is not from valid clients
-    downloads.parser AS NDT7parser,
-    annotation.parser AS Annoparser
+    parser AS NDT7parser,
   FROM
-    -- Use a left join to allow NDT test without matching annotations. TODO test
-    ndt7downloads AS downloads
-    LEFT JOIN `mlab-oti.raw_ndt.annotation` AS annotation
-    ON
-      downloads.date = annotation.date AND
-      downloads.id = annotation.id
+    ndt7downloads
 ),
 
 NDT7DownloadModels AS (
@@ -107,8 +102,8 @@ NDT7DownloadModels AS (
              client.Geo.CountryCode3, -- aka country_code3,
              client.Geo.CountryName, -- aka country_name,
              client.Geo.Region, -- aka region,
-             -- client.Geo. Subdivision1ISOCode -- OMITED
-             -- client.Geo. Subdivision1Name -- OMITED
+             -- client.Geo.Subdivision1ISOCode -- OMITED
+             -- client.Geo.Subdivision1Name -- OMITED
              -- client.Geo.Subdivision2ISOCode -- OMITED
              -- client.Geo.Subdivision2Name -- OMITED
              client.Geo.MetroCode, -- aka metro_code,
@@ -119,23 +114,17 @@ NDT7DownloadModels AS (
              client.Geo.Longitude, -- aka longitude,
              client.Geo.AccuracyRadiusKm -- aka radius
              -- client.Geo.Missing -- Future
-      ) AS Geo,
-      STRUCT(
-        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-        -- includes this information yet.
-        -- NOTE: Select the first ASN b/c standard columns defines a single field.
-        CAST (Client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
+      ) AS _Geo, -- Legacy
+      client.Geo, -- The entire new geo struct
+      client.Network
     ) AS client,
     STRUCT (
       raw.ServerIP AS IP,
       raw.ServerPort AS Port,
-      REGEXP_EXTRACT(NDT7parser.ArchiveURL,
-            'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
-      REGEXP_EXTRACT(NDT7parser.ArchiveURL,
-            '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
+      server.Site, -- e.g. lga02
+      server.Machine, -- e.g. mlab1
       -- TODO reverse this mapping in all views (breaking?)
-      STRUCT (  -- Map new geo into older production geo
+      STRUCT (  -- Map new geo into legacy production geo
              server.Geo.ContinentCode, -- aka continent_code,
              server.Geo.CountryCode, -- aka country_code,
              server.Geo.CountryCode3, -- aka country_code3,
@@ -153,13 +142,12 @@ NDT7DownloadModels AS (
              server.Geo.Longitude, -- aka longitude,
              server.Geo.AccuracyRadiusKm -- aka radius
              -- server.Geo.Missing -- Future
-      ) AS Geo,
-      STRUCT(
-        CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
+      ) AS _Geo, -- Legacy
+      server.Geo,
+      server.Network
     ) AS server,
-    date AS test_date,
-#    PreCleanNDT7 AS _internal202008  -- Not stable and subject to breaking changes
+    raw, -- The entire raw record -- may be subject to breaking changes
+    PreCleanNDT7 AS _internal202009  -- Not stable and subject to breaking changes
 
   FROM PreCleanNDT7
 )
