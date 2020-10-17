@@ -19,7 +19,7 @@ FROM (
     FROM `{{.ProjectID}}.library.ndt_unified_ndt7_downloads`
   UNION ALL
     -- 2009-02-18 to 2019-11-20
-    SELECT id, test_date AS date, a, filter, node, client, server, test_date
+    SELECT id, date, a, filter, node, client, server, date AS test_date
     FROM `{{.ProjectID}}.library.ndt_unified_web100_downloads`
 )
 WHERE
