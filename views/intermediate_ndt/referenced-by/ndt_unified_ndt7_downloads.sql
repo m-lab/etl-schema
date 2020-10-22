@@ -1,5 +1,5 @@
 --
--- NDT7 download data in standard columns
+-- NDT7 download data in standard columns plus additional annotations.
 -- This contributes one portion of the data used by MLab Unified Standard Views.
 --
 -- This view is only intended to accessed by a MLab Standard views: breaking changes
@@ -14,8 +14,7 @@ WITH ndt7downloads AS (
 # (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
   TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MICROSECOND) AS connection_duration
- FROM   `mlab-oti.ndt.ndt7`
-#  FROM `mlab-sandbox.ndt.ndt7`
+ FROM   `mlab-oti.ndt.ndt7` -- TODO move to `mlab-oti.intermediate_ndt.joined_ndt7`
   -- Limit to valid S2C results
   WHERE raw.Download IS NOT NULL
   AND raw.Download.UUID IS NOT NULL
@@ -32,7 +31,7 @@ PreCleanNDT7 AS (
     -- Final RTT sample twice the minimum and above 1 second means bloated
     ((lastSample.TCPInfo.RTT > 2*lastSample.TCPInfo.MinRTT) AND
        (lastSample.TCPInfo.RTT > 1000)) AS IsBloated,
-    (
+    ( -- IsOAM
       raw.ClientIP IN
          -- TODO(m-lab/etl/issues/893): move to parser configuration.
         ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
@@ -95,7 +94,7 @@ NDT7DownloadModels AS (
     STRUCT (
       raw.ClientIP AS IP,
       raw.ClientPort AS Port,
-      -- TODO reverse this mapping in all views (breaking?)
+      -- TODO Remove legacy _Geo from all views
       STRUCT (  -- Map new geo into older production geo
              client.Geo.ContinentCode, -- aka continent_code,
              client.Geo.CountryCode, -- aka country_code,
@@ -123,7 +122,7 @@ NDT7DownloadModels AS (
       raw.ServerPort AS Port,
       server.Site, -- e.g. lga02
       server.Machine, -- e.g. mlab1
-      -- TODO reverse this mapping in all views (breaking?)
+      -- TODO Remove legacy _Geo from all views
       STRUCT (  -- Map new geo into legacy production geo
              server.Geo.ContinentCode, -- aka continent_code,
              server.Geo.CountryCode, -- aka country_code,
@@ -147,7 +146,7 @@ NDT7DownloadModels AS (
       server.Network
     ) AS server,
     raw, -- The entire raw record -- may be subject to breaking changes
-    PreCleanNDT7 AS _internal202009  -- Not stable and subject to breaking changes
+    PreCleanNDT7 AS _internal202010  -- Not stable and subject to breaking changes
 
   FROM PreCleanNDT7
 )

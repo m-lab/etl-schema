@@ -59,8 +59,8 @@ WITH PreCleanWeb100 AS (
 
 Web100DownloadModels AS (
   SELECT
-     pseudoUUID as id,
-     date,
+    pseudoUUID as id,
+    date,
     -- Struct a models various TCP behaviors
     STRUCT(
       pseudoUUID as UUID,
@@ -97,7 +97,7 @@ Web100DownloadModels AS (
     STRUCT (
       web100_log_entry.connection_spec.remote_ip AS IP,
       web100_log_entry.connection_spec.remote_port AS Port,
-      STRUCT(   -- Legacy Geo is first
+      STRUCT(   -- Legacy Geo is first, to be removed
         -- NOTE: it's necessary to enumerate each field because the new Server.Geo
         -- fields are in a different order. Here reorder the web100 fields because
         -- we accept the newer tables as the canonical ordering.
@@ -113,7 +113,7 @@ Web100DownloadModels AS (
         connection_spec.client_geolocation.latitude,
         connection_spec.client_geolocation.longitude,
         connection_spec.client_geolocation.radius
-      ) AS Geo, -- Legacy Geo is first
+      ) AS Geo, -- Legacy Geo
       STRUCT( -- Future primary Geo
         -- NOTE: it's necessary to enumerate each field because the new Server.Geo
         -- fields are in a different order. Here reorder the web100 fields because
@@ -151,7 +151,7 @@ Web100DownloadModels AS (
             'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
       REGEXP_EXTRACT(task_filename,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      STRUCT(
+      STRUCT(   -- Legacy Geo is first, to be removed
         connection_spec.server_geolocation.continent_code,
         connection_spec.server_geolocation.country_code,
         connection_spec.server_geolocation.country_code3,
@@ -164,7 +164,7 @@ Web100DownloadModels AS (
         connection_spec.server_geolocation.latitude,
         connection_spec.server_geolocation.longitude,
         connection_spec.server_geolocation.radius
-      ) AS Geo,
+      ) AS Geo,  -- Legacy Geo
       STRUCT( -- Future primary Geo
         -- NOTE: it's necessary to enumerate each field because the new Server.Geo
         -- fields are in a different order. Here reorder the web100 fields because
@@ -195,7 +195,7 @@ Web100DownloadModels AS (
         ARRAY[ STRUCT( ARRAY[ SAFE_CAST(connection_spec.server.network.asn AS INT64) ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS server,
-    PreCleanWeb100 AS _internal202006  -- Not stable and subject to breaking changes
+    PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
   FROM PreCleanWeb100
   WHERE
     measurement_duration > 0 AND connection_duration > 0
