@@ -8,4 +8,4 @@
 -- encourage you start from the unified views.
 
 SELECT *
-FROM  `mlab-oti.ndt.ndt7` -- TODO move to `mlab-oti.intermediate_ndt.joined_ndt7`
+FROM  `mlab-oti.ndt.ndt7` -- TODO move to mlab-oti.intermediate_ndt.joined_ndt7

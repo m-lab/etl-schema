@@ -14,7 +14,7 @@ WITH ndt7uploads AS (
 # (raw.Upload.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
   TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MICROSECOND) AS connection_duration
-  FROM   `mlab-oti.ndt.ndt7` -- TODO move to `mlab-oti.intermediate_ndt.joined_ndt7`
+  FROM   `mlab-oti.ndt.ndt7` -- TODO move to mlab-oti.intermediate_ndt.joined_ndt7
   -- Limit to valid S2C results
   WHERE raw.Upload IS NOT NULL
   AND raw.Upload.UUID IS NOT NULL

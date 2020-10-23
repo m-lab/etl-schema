@@ -14,7 +14,7 @@ WITH ndt7downloads AS (
 # (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
   TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MICROSECOND) AS connection_duration
- FROM   `mlab-oti.ndt.ndt7` -- TODO move to `mlab-oti.intermediate_ndt.joined_ndt7`
+ FROM   `mlab-oti.ndt.ndt7` -- TODO move to mlab-oti.intermediate_ndt.joined_ndt7
   -- Limit to valid S2C results
   WHERE raw.Download IS NOT NULL
   AND raw.Download.UUID IS NOT NULL
