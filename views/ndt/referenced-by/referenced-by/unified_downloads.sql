@@ -3,9 +3,6 @@
 -- of all MLab upload data across the entire platform over all time.
 -- The schema uses the Standard Top-level Columns design.
 --
--- THIS VIEW IS "PREPUBLICATION", we may make changes in response to
--- additional reviews prior to final publication.
---
 -- This view is intended to receive long term support by the M-Lab
 -- team.
 --
@@ -22,35 +19,37 @@
 -- dates.  These views are intended to be useful to test how our
 -- processing changed might affect research results.
 --
--- Researchers are strongly encouraged to use one of our _unified_
--- views.
---
--- If you must to create your own unified view, we strongly suggest
--- layering your queries such that data preening is done in sub-queries
--- or views, distinct from the research queries, such that the data
--- preening can be updated to follow changes to the constituent views
--- without refactoring the research.
---
--- We do not consider changes to our constituent views to be breaking
+-- Researchers are strongly encouraged to use our _unified_ views
+-- directly or alternatively copy them to private views or subqueries
+-- and editing or augmenmting them to as needed to support your
+-- research.
+
+-- Your research can be updated more easily your queries are
+-- layered: a private version of our unified views (as a view or
+-- subquery) to preen and marshial our data acording to your needs;
+-- and your research query which only uses columns from your private
+-- unified view or our standard columns.
+
+
+-- We do not consider changes to our intermediate views to be breaking
 -- changes if the changes are fully masked by our unified views.
 --
--- NB: deprecate test_date in favor of date
 --
 SELECT *
 EXCEPT (filter)
 FROM (
-    -- NB: reordering UNION clauses will cause breaking changes to field names
-    -- 2019-07-18 to present
-    SELECT id, test_date AS date, a, filter, node, client, server, test_date
-    FROM `{{.ProjectID}}.library.ndt_unified_ndt5_downloads`
-  UNION ALL
+    -- NB: reordering UNION clauses may cause breaking changes to field names
     -- 2020-03-12 to present
-    SELECT id, test_date AS date, a, filter, node, client, server, test_date
-    FROM `{{.ProjectID}}.library.ndt_unified_ndt7_downloads`
+    SELECT id, date, a, filter, node, client, server,
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt7_downloads`
+  UNION ALL
+    -- 2019-07-18 to present
+    SELECT id, date, a, filter, node, client, server,
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt5_downloads`
   UNION ALL
     -- 2009-02-18 to 2019-11-20
-    SELECT id, test_date AS date, a, filter, node, client, server, test_date
-    FROM `{{.ProjectID}}.library.ndt_unified_web100_downloads`
+    SELECT id, date, a, filter, node, client, server,
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_web100_downloads`
 )
 WHERE
   filter.IsValidBest
