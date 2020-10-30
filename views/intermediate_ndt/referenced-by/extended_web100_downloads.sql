@@ -135,7 +135,7 @@ Web100DownloadModels AS (
         connection_spec.client_geolocation.longitude,
         connection_spec.client_geolocation.radius,
         True AS Missing -- Future missing record flag
-      ) AS new_Geo,  -- Future primary Geo
+      ) AS _new_Geo,  -- Do not use, switch to new unified view
       STRUCT(
         '' AS CIDR,
         SAFE_CAST(connection_spec.client.network.asn AS INT64) AS ASNumber,
@@ -186,7 +186,7 @@ Web100DownloadModels AS (
         connection_spec.server_geolocation.longitude,
         connection_spec.server_geolocation.radius,
         True AS Missing -- Future missing record flag
-      ) AS new_Geo,  -- Future primary Geo
+      ) AS _new_Geo,  -- Do not use, switch to new unified view
       STRUCT(
         '' AS CIDR,
         SAFE_CAST(connection_spec.server.network.asn AS INT64) AS ASNumber,
