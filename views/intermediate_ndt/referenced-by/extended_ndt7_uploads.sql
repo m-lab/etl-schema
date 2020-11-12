@@ -109,20 +109,13 @@ NDT7UploadModels AS (
              client.Geo.AccuracyRadiusKm -- aka radius
              -- client.Geo.Missing -- Future
       ) AS Geo,
-      STRUCT(
-        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-        -- includes this information yet.
-        -- NOTE: Select the first ASN b/c standard columns defines a single field.
-        CAST (Client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
+      client.Network
     ) AS client,
     STRUCT (
       raw.ServerIP AS IP,
       raw.ServerPort AS Port,
-      REGEXP_EXTRACT(NDT7parser.ArchiveURL,
-            'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
-      REGEXP_EXTRACT(NDT7parser.ArchiveURL,
-            '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
+      server.Site, -- e.g. lga02
+      server.Machine, -- e.g. mlab1
       -- TODO reverse this mapping in all views (breaking?)
       STRUCT (  -- Map new geo into older production geo
              server.Geo.ContinentCode, -- aka continent_code,
@@ -143,9 +136,7 @@ NDT7UploadModels AS (
              server.Geo.AccuracyRadiusKm -- aka radius
              -- server.Geo.Missing -- Future
       ) AS Geo,
-      STRUCT(
-        CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
+      server.Network
     ) AS server,
     date AS test_date,
     PreCleanNDT7 AS _internal202010  -- Not stable and subject to breaking changes

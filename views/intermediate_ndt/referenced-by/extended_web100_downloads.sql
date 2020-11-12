@@ -115,7 +115,11 @@ Web100DownloadModels AS (
         connection_spec.client_geolocation.radius
       ) AS Geo,
       STRUCT(
-        connection_spec.client.network.asn AS ASNumber
+        '' AS CIDR,
+        SAFE_CAST(connection_spec.client.network.asn AS INT64) AS ASNumber,
+        '' AS ASName,
+        False AS Missing,
+        ARRAY[ STRUCT( ARRAY[ SAFE_CAST(connection_spec.client.network.asn AS INT64) ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS client,
     STRUCT (
@@ -140,10 +144,14 @@ Web100DownloadModels AS (
         connection_spec.server_geolocation.radius
       ) AS Geo,
       STRUCT(
-        connection_spec.server.network.asn AS ASNumber
+        '' AS CIDR,
+        SAFE_CAST(connection_spec.server.network.asn AS INT64) AS ASNumber,
+        '' AS ASName,
+        False AS Missing,
+        ARRAY[ STRUCT( ARRAY[ SAFE_CAST(connection_spec.server.network.asn AS INT64) ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS server,
-    PreCleanWeb100 AS _internal202006  -- Not stable and subject to breaking changes
+    PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
   FROM PreCleanWeb100
   WHERE
     measurement_duration > 0 AND connection_duration > 0

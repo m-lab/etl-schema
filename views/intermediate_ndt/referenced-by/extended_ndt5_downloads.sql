@@ -102,11 +102,12 @@ NDT5DownloadModels AS (
       S2C.ClientIP AS IP,
       S2C.ClientPort AS Port,
       Client.Geo,
-      STRUCT(
-        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-        -- includes this information yet.
-        -- NOTE: Select the first ASN b/c standard columns defines a single field.
-        CAST (Client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
+      STRUCT (
+        client.Network.IPPrefix AS CIDR,
+        client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
+        '' AS ASName, -- MISSING
+        False AS Missing, -- MISSING
+        client.Network.Systems -- Includes ASNs, etc
       ) AS Network
     ) AS client,
     STRUCT (
@@ -117,11 +118,15 @@ NDT5DownloadModels AS (
       REGEXP_EXTRACT(ParseInfo.TaskFileName,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
       Server.Geo,
-      STRUCT(
-        CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
+      STRUCT (
+        server.Network.IPPrefix AS CIDR,
+        server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
+        '' AS ASName, -- MISSING
+        False AS Missing, -- MISSING
+        server.Network.Systems -- Includes ASNs, etc
       ) AS Network
     ) AS server,
-    PreCleanNDT5 AS _internal202006  -- Not stable and subject to breaking changes
+    PreCleanNDT5 AS _internal202010  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
 )
 
