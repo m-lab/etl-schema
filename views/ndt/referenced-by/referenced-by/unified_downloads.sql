@@ -42,15 +42,15 @@ FROM (
     -- NB: reordering UNION clauses will cause breaking changes to field names
     -- 2019-07-18 to present
     SELECT id, test_date AS date, a, filter, node, client, server, test_date
-    FROM `{{.ProjectID}}.library.ndt_unified_ndt5_downloads`
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt5_downloads`
   UNION ALL
     -- 2020-03-12 to present
     SELECT id, test_date AS date, a, filter, node, client, server, test_date
-    FROM `{{.ProjectID}}.library.ndt_unified_ndt7_downloads`
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt7_downloads`
   UNION ALL
     -- 2009-02-18 to 2019-11-20
     SELECT id, test_date AS date, a, filter, node, client, server, test_date
-    FROM `{{.ProjectID}}.library.ndt_unified_web100_downloads`
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_web100_downloads`
 )
 WHERE
   filter.IsValidBest
