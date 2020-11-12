@@ -14,7 +14,7 @@ WITH ndt7downloads AS (
 # (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
   TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MICROSECOND) AS connection_duration
-  FROM   `mlab-oti.raw_ndt.ndt7`
+ FROM   `mlab-oti.ndt.ndt7` -- TODO move to mlab-oti.intermediate_ndt.joined_ndt7
   -- Limit to valid S2C results
   WHERE raw.Download IS NOT NULL
   AND raw.Download.UUID IS NOT NULL
@@ -23,15 +23,15 @@ WITH ndt7downloads AS (
 
 PreCleanNDT7 AS (
   SELECT
-    downloads.id, downloads.date, downloads.a, downloads.IsErrored, downloads.lastsample,
-    downloads.connection_duration, downloads.raw,
-    annotation.client, annotation.server,
+    id, date, a, IsErrored, lastsample,
+    connection_duration, raw,
+    client, server,
     -- Any loss implys a netowork bottleneck
     (lastSample.TCPInfo.TotalRetrans > 0) AS IsCongested,
     -- Final RTT sample twice the minimum and above 1 second means bloated
     ((lastSample.TCPInfo.RTT > 2*lastSample.TCPInfo.MinRTT) AND
        (lastSample.TCPInfo.RTT > 1000)) AS IsBloated,
-    (
+    ( -- IsOAM
       raw.ClientIP IN
          -- TODO(m-lab/etl/issues/893): move to parser configuration.
         ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
@@ -48,15 +48,9 @@ PreCleanNDT7 AS (
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
     ) AS IsOAM,  -- Data is not from valid clients
-    downloads.parser AS NDT7parser,
-    annotation.parser AS Annoparser
+    parser AS NDT7parser,
   FROM
-    -- Use a left join to allow NDT test without matching annotations. TODO test
-    ndt7downloads AS downloads
-    LEFT JOIN `mlab-oti.raw_ndt.annotation` AS annotation
-    ON
-      downloads.date = annotation.date AND
-      downloads.id = annotation.id
+    ndt7downloads
 ),
 
 NDT7DownloadModels AS (
@@ -159,7 +153,7 @@ NDT7DownloadModels AS (
       ) AS Network
     ) AS server,
     date AS test_date,
-#    PreCleanNDT7 AS _internal202008  -- Not stable and subject to breaking changes
+    PreCleanNDT7 AS _internal202010  -- Not stable and subject to breaking changes
 
   FROM PreCleanNDT7
 )
