@@ -104,13 +104,18 @@ Web100UploadModels AS (
         connection_spec.client_geolocation.country_code3,
         connection_spec.client_geolocation.country_name,
         connection_spec.client_geolocation.region,
+        '' AS Subdivision1ISOCode, -- MISSING
+        '' AS Subdivision1Name, -- MISSING
+        '' AS Subdivision2ISOCode, -- MISSING
+        '' AS Subdivision2Name, -- MISSING
         connection_spec.client_geolocation.metro_code,
         connection_spec.client_geolocation.city,
         connection_spec.client_geolocation.area_code,
         connection_spec.client_geolocation.postal_code,
         connection_spec.client_geolocation.latitude,
         connection_spec.client_geolocation.longitude,
-        connection_spec.client_geolocation.radius
+        connection_spec.client_geolocation.radius,
+        True AS Missing -- Future missing record flag
       ) AS Geo,
       STRUCT(
         '' AS CIDR,
@@ -128,18 +133,26 @@ Web100UploadModels AS (
       REGEXP_EXTRACT(task_filename,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
       STRUCT(
+        -- NOTE: it's necessary to enumerate each field because the new Server.Geo
+        -- fields are in a different order. Here reorder the web100 fields because
+        -- we accept the newer tables as the canonical ordering.
         connection_spec.server_geolocation.continent_code,
         connection_spec.server_geolocation.country_code,
         connection_spec.server_geolocation.country_code3,
         connection_spec.server_geolocation.country_name,
         connection_spec.server_geolocation.region,
+        '' AS Subdivision1ISOCode, -- MISSING
+        '' AS Subdivision1Name, -- MISSING
+        '' AS Subdivision2ISOCode, -- MISSING
+        '' AS Subdivision2Name, -- MISSING
         connection_spec.server_geolocation.metro_code,
         connection_spec.server_geolocation.city,
         connection_spec.server_geolocation.area_code,
         connection_spec.server_geolocation.postal_code,
         connection_spec.server_geolocation.latitude,
         connection_spec.server_geolocation.longitude,
-        connection_spec.server_geolocation.radius
+        connection_spec.server_geolocation.radius,
+        True AS Missing -- Future missing record flag
       ) AS Geo,
       STRUCT(
         '' AS CIDR,

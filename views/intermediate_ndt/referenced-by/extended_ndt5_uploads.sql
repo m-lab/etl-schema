@@ -94,7 +94,27 @@ NDT5UploadModels AS (
     STRUCT (
       C2S.ClientIP AS IP,
       C2S.ClientPort AS Port,
-      Client.Geo,
+      -- Legacy Geo approximates dev.maxmind.com/geoip/geoip2/geoip2-city-country-csv-databases/
+      STRUCT (
+             client.Geo.continent_code, -- aka ContinentCode
+             client.Geo.country_code, -- aka CountryCode
+             client.Geo.country_code3, -- aka CountryCode3
+             client.Geo.country_name, -- aka CountryName
+             client.Geo.region, -- aka Region
+             '' AS Subdivision1ISOCode, -- MISSING
+             '' AS Subdivision1Name, -- MISSING
+             '' AS Subdivision2ISOCode, -- MISSING
+             '' AS Subdivision2Name, -- MISSING
+             client.Geo.metro_code, -- aka MetroCode
+             client.Geo.city, -- aka City
+             client.Geo.area_code, -- aka AreaCode
+             client.Geo.postal_code, -- aka PostalCode
+             client.Geo.latitude, -- aka Latitude
+             client.Geo.longitude, -- aka Longitude
+             client.Geo.radius, -- aka AccuracyRadiusKm
+             FALSE AS Missing -- Future missing record flag
+      ) AS Geo,
+#      Client.Network -- BUG still old schema
       STRUCT (
         client.Network.IPPrefix AS CIDR,
         client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
@@ -110,7 +130,26 @@ NDT5UploadModels AS (
             'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
       REGEXP_EXTRACT(ParseInfo.TaskFileName,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      Server.Geo,
+      STRUCT (
+             server.Geo.continent_code, -- aka ContinentCode
+             server.Geo.country_code, -- aka CountryCode
+             server.Geo.country_code3, -- aka CountryCode3
+             server.Geo.country_name, -- aka CountryName
+             server.Geo.region, -- aka Region
+             '' AS Subdivision1ISOCode, -- MISSING
+             '' AS Subdivision1Name, -- MISSING
+             '' AS Subdivision2ISOCode, -- MISSING
+             '' AS Subdivision2Name, -- MISSING
+             server.Geo.metro_code, -- aka MetroCode
+             server.Geo.city, -- aka City
+             server.Geo.area_code, -- aka AreaCode
+             server.Geo.postal_code, -- aka PostalCode
+             server.Geo.latitude, -- aka Latitude
+             server.Geo.longitude, -- aka Longitude
+             server.Geo.radius, -- aka AccuracyRadiusKm
+             FALSE AS Missing -- Future missing record flag
+      ) AS Geo,
+#     Server.Network -- BUG still old schema
       STRUCT (
         server.Network.IPPrefix AS CIDR,
         server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
