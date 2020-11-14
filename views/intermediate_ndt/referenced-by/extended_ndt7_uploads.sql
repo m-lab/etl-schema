@@ -89,7 +89,27 @@ NDT7UploadModels AS (
     STRUCT (
       raw.ClientIP AS IP,
       raw.ClientPort AS Port,
-      client.Geo,
+      -- TODO Remove legacy _Geo from all views
+      STRUCT (  -- Map new geo into older production geo
+             client.Geo.ContinentCode, -- aka continent_code,
+             client.Geo.CountryCode, -- aka country_code,
+             client.Geo.CountryCode3, -- aka country_code3,
+             client.Geo.CountryName, -- aka country_name,
+             client.Geo.Region, -- aka region,
+             -- client.Geo.Subdivision1ISOCode -- OMITED
+             -- client.Geo.Subdivision1Name -- OMITED
+             -- client.Geo.Subdivision2ISOCode -- OMITED
+             -- client.Geo.Subdivision2Name -- OMITED
+             client.Geo.MetroCode, -- aka metro_code,
+             client.Geo.City, -- aka city,
+             client.Geo.AreaCode, -- aka area_code,
+             client.Geo.PostalCode, -- aka postal_code,
+             client.Geo.Latitude, -- aka latitude,
+             client.Geo.Longitude, -- aka longitude,
+             client.Geo.AccuracyRadiusKm -- aka radius
+             -- client.Geo.Missing -- Future
+      ) AS _Geo, -- Legacy
+      client.Geo, -- The entire new geo struct
       client.Network
     ) AS client,
     STRUCT (
@@ -97,6 +117,26 @@ NDT7UploadModels AS (
       raw.ServerPort AS Port,
       server.Site, -- e.g. lga02
       server.Machine, -- e.g. mlab1
+      -- TODO Remove legacy _Geo from all views
+      STRUCT (  -- Map new geo into legacy production geo
+             server.Geo.ContinentCode, -- aka continent_code,
+             server.Geo.CountryCode, -- aka country_code,
+             server.Geo.CountryCode3, -- aka country_code3,
+             server.Geo.CountryName, -- aka country_name,
+             server.Geo.Region, -- aka region,
+             -- server.Geo. Subdivision1ISOCode -- OMITED
+             -- server.Geo. Subdivision1Name -- OMITED
+             -- server.Geo.Subdivision2ISOCode -- OMITED
+             -- server.Geo.Subdivision2Name -- OMITED
+             server.Geo.MetroCode, -- aka metro_code,
+             server.Geo.City, -- aka city,
+             server.Geo.AreaCode, -- aka area_code,
+             server.Geo.PostalCode, -- aka postal_code,
+             server.Geo.Latitude, -- aka latitude,
+             server.Geo.Longitude, -- aka longitude,
+             server.Geo.AccuracyRadiusKm -- aka radius
+             -- server.Geo.Missing -- Future
+      ) AS _Geo, -- Legacy
       server.Geo,
       server.Network
     ) AS server,
