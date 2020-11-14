@@ -145,7 +145,6 @@ NDT7DownloadModels AS (
       server.Geo,
       server.Network
     ) AS server,
-    date AS test_date,
     PreCleanNDT7 AS _internal202010  -- Not stable and subject to breaking changes
 
   FROM PreCleanNDT7

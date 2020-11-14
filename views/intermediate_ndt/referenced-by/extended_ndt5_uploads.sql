@@ -59,7 +59,7 @@ PreCleanNDT5 AS (
 NDT5UploadModels AS (
   SELECT
     C2S.UUID AS id,
-    partition_date as test_date, -- rename to date
+    partition_date as date,
     STRUCT (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       C2S.UUID,

@@ -12,7 +12,7 @@ WITH PreCleanWeb100 AS (
   SELECT
     -- NOTE: we name the partition_date to test_date to prevent exposing
     -- implementation details that are expected to change.
-    partition_date AS test_date,
+    partition_date AS date,
     CONCAT(
       web100_log_entry.connection_spec.local_ip,
       CAST (web100_log_entry.connection_spec.local_port AS STRING),
@@ -60,7 +60,7 @@ WITH PreCleanWeb100 AS (
 Web100UploadModels AS (
   SELECT
     pseudoUUID as id,
-    test_date, -- Rename to date
+    date,
     -- Struct a models various TCP behaviors
     STRUCT(
       pseudoUUID as UUID,

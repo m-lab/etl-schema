@@ -33,22 +33,21 @@
 -- We do not consider changes to our intermediate views to be breaking
 -- changes if the changes are fully masked by our unified views.
 --
--- NB: deprecate test_date in favor of date
 --
 SELECT *
 EXCEPT (filter)
 FROM (
     -- NB: reordering UNION clauses may cause breaking changes to field names
     -- 2020-03-12 to present
-    SELECT id, test_date AS date, a, filter, node, client, server, test_date
+    SELECT id, date, a, filter, node, client, server,
     FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt7_downloads`
   UNION ALL
     -- 2019-07-18 to present
-    SELECT id, test_date AS date, a, filter, node, client, server, test_date
+    SELECT id, date, a, filter, node, client, server,
     FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt5_downloads`
   UNION ALL
     -- 2009-02-18 to 2019-11-20
-    SELECT id, test_date AS date, a, filter, node, client, server, test_date
+    SELECT id, date, a, filter, node, client, server,
     FROM `{{.ProjectID}}.intermediate_ndt.extended_web100_downloads`
 )
 WHERE
