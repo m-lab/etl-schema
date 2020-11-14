@@ -1,5 +1,6 @@
 #standardSQL
--- This is the root view that all other views in the ndt dataset are derived from.
+-- This was the root view under the old parser.
+-- It is now obsolete, and will be deprecated once the new parser is fully in production.
 --
 -- TODO(https://github.com/m-lab/etl-schema/issues/49)
 -- The traceroute data ought to be partitioned on a per-experiment basis. Right now this links to a
