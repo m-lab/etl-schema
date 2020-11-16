@@ -14,21 +14,23 @@ WITH ndt7uploads AS (
 # (raw.Upload.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
   TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MICROSECOND) AS connection_duration
-  FROM   `mlab-oti.raw_ndt.ndt7`
+  FROM   `mlab-oti.ndt.ndt7` -- TODO move to mlab-oti.intermediate_ndt.joined_ndt7
   -- Limit to valid S2C results
   WHERE raw.Upload IS NOT NULL
   AND raw.Upload.UUID IS NOT NULL
   AND raw.Upload.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
+#  AND client IS NOT NULL -- Check this
 ),
 
 PreCleanNDT7 AS (
   SELECT
-    uploads.id, uploads.date, uploads.a, uploads.IsErrored, uploads.lastsample,
-    uploads.connection_duration, uploads.raw,
-    annotation.Client, annotation.Server,
+    id, date, a, IsErrored, lastsample,
+    connection_duration, raw,
+    client, server,
     -- Receiver side can not compute IsCongested
     -- Receiver side can not directly compute IsBloated
-    ( raw.ClientIP IN
+    ( -- IsOAM
+      raw.ClientIP IN
          -- TODO(m-lab/etl/issues/893): move to parser configuration.
         ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
           "35.225.75.192", -- script-exporter VM in GCE, staging.
@@ -44,15 +46,9 @@ PreCleanNDT7 AS (
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
     ) AS IsOAM,  -- Data is not from valid clients
-    uploads.parser AS NDT7parser,
-    annotation.parser AS Annoparser
+    parser AS NDT7parser,
   FROM
-    -- Use a left join to allow NDT test without matching annotations. TODO test
-    ndt7uploads AS uploads
-    LEFT JOIN `mlab-oti.raw_ndt.annotation` AS annotation
-    ON
-      uploads.date = annotation.date AND
-      uploads.id = annotation.id
+    ndt7uploads
 ),
 
 NDT7UploadModels AS (
@@ -69,7 +65,7 @@ NDT7UploadModels AS (
     ) AS a,
     STRUCT (
      -- "Instruments" is not quite the right concept
-     "ndt7" AS _DataSilo -- TODO THIS WILL CHANGE
+     "ndt7" AS _Instruments -- THIS WILL CHANGE
     ) AS node,
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
@@ -93,15 +89,15 @@ NDT7UploadModels AS (
     STRUCT (
       raw.ClientIP AS IP,
       raw.ClientPort AS Port,
-      -- TODO reverse this mapping in all views (breaking?)
+      -- TODO Remove legacy _Geo from all views
       STRUCT (  -- Map new geo into older production geo
              client.Geo.ContinentCode, -- aka continent_code,
              client.Geo.CountryCode, -- aka country_code,
              client.Geo.CountryCode3, -- aka country_code3,
              client.Geo.CountryName, -- aka country_name,
              client.Geo.Region, -- aka region,
-             -- client.Geo. Subdivision1ISOCode -- OMITED
-             -- client.Geo. Subdivision1Name -- OMITED
+             -- client.Geo.Subdivision1ISOCode -- OMITED
+             -- client.Geo.Subdivision1Name -- OMITED
              -- client.Geo.Subdivision2ISOCode -- OMITED
              -- client.Geo.Subdivision2Name -- OMITED
              client.Geo.MetroCode, -- aka metro_code,
@@ -112,23 +108,17 @@ NDT7UploadModels AS (
              client.Geo.Longitude, -- aka longitude,
              client.Geo.AccuracyRadiusKm -- aka radius
              -- client.Geo.Missing -- Future
-      ) AS Geo,
-      STRUCT(
-        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-        -- includes this information yet.
-        -- NOTE: Select the first ASN b/c standard columns defines a single field.
-        CAST (Client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
+      ) AS _Geo, -- Legacy
+      client.Geo, -- The entire new geo struct
+      client.Network
     ) AS client,
     STRUCT (
       raw.ServerIP AS IP,
       raw.ServerPort AS Port,
-      REGEXP_EXTRACT(NDT7parser.ArchiveURL,
-            'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
-      REGEXP_EXTRACT(NDT7parser.ArchiveURL,
-            '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      -- TODO reverse this mapping in all views (breaking?)
-      STRUCT (  -- Map new geo into older production geo
+      server.Site, -- e.g. lga02
+      server.Machine, -- e.g. mlab1
+      -- TODO Remove legacy _Geo from all views
+      STRUCT (  -- Map new geo into legacy production geo
              server.Geo.ContinentCode, -- aka continent_code,
              server.Geo.CountryCode, -- aka country_code,
              server.Geo.CountryCode3, -- aka country_code3,
@@ -146,13 +136,11 @@ NDT7UploadModels AS (
              server.Geo.Longitude, -- aka longitude,
              server.Geo.AccuracyRadiusKm -- aka radius
              -- server.Geo.Missing -- Future
-      ) AS Geo,
-      STRUCT(
-        CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
-      ) AS Network
+      ) AS _Geo, -- Legacy
+      server.Geo,
+      server.Network
     ) AS server,
-    date AS test_date,
-#    PreCleanNDT7 AS _internal202008  -- Not stable and subject to breaking changes
+    PreCleanNDT7 AS _internal202010  -- Not stable and subject to breaking changes
 
   FROM PreCleanNDT7
 )

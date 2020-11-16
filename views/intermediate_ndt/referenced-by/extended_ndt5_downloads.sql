@@ -64,7 +64,7 @@ PreCleanNDT5 AS (
 NDT5DownloadModels AS (
   SELECT
     S2C.UUID AS id,
-    partition_date as test_date, -- rename to date
+    partition_date as date,
     STRUCT (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       S2C.UUID,
@@ -101,12 +101,34 @@ NDT5DownloadModels AS (
     STRUCT (
       S2C.ClientIP AS IP,
       S2C.ClientPort AS Port,
-      Client.Geo,
-      STRUCT(
-        -- NOTE: Omit the NetBlock field because neither web100 nor ndt5 tables
-        -- includes this information yet.
-        -- NOTE: Select the first ASN b/c standard columns defines a single field.
-        CAST (Client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
+      Client.Geo,  -- Legacy Geo is first, to be removed
+      -- Legacy Geo approximates dev.maxmind.com/geoip/geoip2/geoip2-city-country-csv-databases/
+      STRUCT ( -- Future primary Geo
+             client.Geo.continent_code, -- aka ContinentCode
+             client.Geo.country_code, -- aka CountryCode
+             client.Geo.country_code3, -- aka CountryCode3
+             client.Geo.country_name, -- aka CountryName
+             client.Geo.region, -- aka Region
+             '' AS Subdivision1ISOCode, -- MISSING
+             '' AS Subdivision1Name, -- MISSING
+             '' AS Subdivision2ISOCode, -- MISSING
+             '' AS Subdivision2Name, -- MISSING
+             client.Geo.metro_code, -- aka MetroCode
+             client.Geo.city, -- aka City
+             client.Geo.area_code, -- aka AreaCode
+             client.Geo.postal_code, -- aka PostalCode
+             client.Geo.latitude, -- aka Latitude
+             client.Geo.longitude, -- aka Longitude
+             client.Geo.radius, -- aka AccuracyRadiusKm
+             FALSE AS Missing -- Future missing record flag
+      ) AS _new_Geo,  -- Do not use, switch to new unified view
+#      Client.Network -- BUG still old schema
+      STRUCT (
+        client.Network.IPPrefix AS CIDR,
+        client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
+        '' AS ASName, -- MISSING
+        False AS Missing, -- MISSING
+        client.Network.Systems -- Includes ASNs, etc
       ) AS Network
     ) AS client,
     STRUCT (
@@ -116,12 +138,36 @@ NDT5DownloadModels AS (
             'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
       REGEXP_EXTRACT(ParseInfo.TaskFileName,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      Server.Geo,
-      STRUCT(
-        CAST (Server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS STRING) AS ASNumber
+      Server.Geo, -- Legacy Geo is first, to be removed
+      STRUCT ( -- Future primary Geo
+             server.Geo.continent_code, -- aka ContinentCode
+             server.Geo.country_code, -- aka CountryCode
+             server.Geo.country_code3, -- aka CountryCode3
+             server.Geo.country_name, -- aka CountryName
+             server.Geo.region, -- aka Region
+             '' AS Subdivision1ISOCode, -- MISSING
+             '' AS Subdivision1Name, -- MISSING
+             '' AS Subdivision2ISOCode, -- MISSING
+             '' AS Subdivision2Name, -- MISSING
+             server.Geo.metro_code, -- aka MetroCode
+             server.Geo.city, -- aka City
+             server.Geo.area_code, -- aka AreaCode
+             server.Geo.postal_code, -- aka PostalCode
+             server.Geo.latitude, -- aka Latitude
+             server.Geo.longitude, -- aka Longitude
+             server.Geo.radius, -- aka AccuracyRadiusKm
+             FALSE AS Missing -- Future missing record flag
+      ) AS _new_Geo, -- Do not use, switch to new unified view
+#     Server.Network -- BUG still old schema
+      STRUCT (
+        server.Network.IPPrefix AS CIDR,
+        server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
+        '' AS ASName, -- MISSING
+        False AS Missing, -- MISSING
+        server.Network.Systems -- Includes ASNs, etc
       ) AS Network
     ) AS server,
-    PreCleanNDT5 AS _internal202006  -- Not stable and subject to breaking changes
+    PreCleanNDT5 AS _internal202010  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
 )
 
