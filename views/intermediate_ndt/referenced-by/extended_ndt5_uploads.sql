@@ -94,9 +94,8 @@ NDT5UploadModels AS (
     STRUCT (
       C2S.ClientIP AS IP,
       C2S.ClientPort AS Port,
-      Client.Geo,  -- Legacy Geo is first, to be removed
       -- Legacy Geo approximates dev.maxmind.com/geoip/geoip2/geoip2-city-country-csv-databases/
-      STRUCT ( -- Future primary Geo
+      STRUCT (
              client.Geo.continent_code, -- aka ContinentCode
              client.Geo.country_code, -- aka CountryCode
              client.Geo.country_code3, -- aka CountryCode3
@@ -114,7 +113,7 @@ NDT5UploadModels AS (
              client.Geo.longitude, -- aka Longitude
              client.Geo.radius, -- aka AccuracyRadiusKm
              FALSE AS Missing -- Future missing record flag
-      ) AS _new_Geo,  -- Do not use, switch to new unified view
+      ) AS Geo,
 #      Client.Network -- BUG still old schema
       STRUCT (
         client.Network.IPPrefix AS CIDR,
@@ -131,8 +130,7 @@ NDT5UploadModels AS (
             'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
       REGEXP_EXTRACT(ParseInfo.TaskFileName,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      Server.Geo, -- Legacy Geo is first, to be removed
-      STRUCT ( -- Future primary Geo
+      STRUCT (
              server.Geo.continent_code, -- aka ContinentCode
              server.Geo.country_code, -- aka CountryCode
              server.Geo.country_code3, -- aka CountryCode3
@@ -150,7 +148,7 @@ NDT5UploadModels AS (
              server.Geo.longitude, -- aka Longitude
              server.Geo.radius, -- aka AccuracyRadiusKm
              FALSE AS Missing -- Future missing record flag
-      ) AS _new_Geo,  -- Do not use, switch to new unified view
+      ) AS Geo,
 #     Server.Network -- BUG still old schema
       STRUCT (
         server.Network.IPPrefix AS CIDR,

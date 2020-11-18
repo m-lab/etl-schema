@@ -97,24 +97,7 @@ Web100DownloadModels AS (
     STRUCT (
       web100_log_entry.connection_spec.remote_ip AS IP,
       web100_log_entry.connection_spec.remote_port AS Port,
-      STRUCT(   -- Legacy Geo is first, to be removed
-        -- NOTE: it's necessary to enumerate each field because the new Server.Geo
-        -- fields are in a different order. Here reorder the web100 fields because
-        -- we accept the newer tables as the canonical ordering.
-        connection_spec.client_geolocation.continent_code,
-        connection_spec.client_geolocation.country_code,
-        connection_spec.client_geolocation.country_code3,
-        connection_spec.client_geolocation.country_name,
-        connection_spec.client_geolocation.region,
-        connection_spec.client_geolocation.metro_code,
-        connection_spec.client_geolocation.city,
-        connection_spec.client_geolocation.area_code,
-        connection_spec.client_geolocation.postal_code,
-        connection_spec.client_geolocation.latitude,
-        connection_spec.client_geolocation.longitude,
-        connection_spec.client_geolocation.radius
-      ) AS Geo, -- Legacy Geo
-      STRUCT( -- Future primary Geo
+      STRUCT(
         -- NOTE: it's necessary to enumerate each field because the new Server.Geo
         -- fields are in a different order. Here reorder the web100 fields because
         -- we accept the newer tables as the canonical ordering.
@@ -135,7 +118,7 @@ Web100DownloadModels AS (
         connection_spec.client_geolocation.longitude,
         connection_spec.client_geolocation.radius,
         True AS Missing -- Future missing record flag
-      ) AS _new_Geo,  -- Do not use, switch to new unified view
+      ) AS Geo,
       STRUCT(
         '' AS CIDR,
         SAFE_CAST(connection_spec.client.network.asn AS INT64) AS ASNumber,
@@ -151,21 +134,7 @@ Web100DownloadModels AS (
             'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
       REGEXP_EXTRACT(task_filename,
             '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      STRUCT(   -- Legacy Geo is first, to be removed
-        connection_spec.server_geolocation.continent_code,
-        connection_spec.server_geolocation.country_code,
-        connection_spec.server_geolocation.country_code3,
-        connection_spec.server_geolocation.country_name,
-        connection_spec.server_geolocation.region,
-        connection_spec.server_geolocation.metro_code,
-        connection_spec.server_geolocation.city,
-        connection_spec.server_geolocation.area_code,
-        connection_spec.server_geolocation.postal_code,
-        connection_spec.server_geolocation.latitude,
-        connection_spec.server_geolocation.longitude,
-        connection_spec.server_geolocation.radius
-      ) AS Geo,  -- Legacy Geo
-      STRUCT( -- Future primary Geo
+      STRUCT(
         -- NOTE: it's necessary to enumerate each field because the new Server.Geo
         -- fields are in a different order. Here reorder the web100 fields because
         -- we accept the newer tables as the canonical ordering.
@@ -186,7 +155,7 @@ Web100DownloadModels AS (
         connection_spec.server_geolocation.longitude,
         connection_spec.server_geolocation.radius,
         True AS Missing -- Future missing record flag
-      ) AS _new_Geo,  -- Do not use, switch to new unified view
+      ) AS Geo,
       STRUCT(
         '' AS CIDR,
         SAFE_CAST(connection_spec.server.network.asn AS INT64) AS ASNumber,
