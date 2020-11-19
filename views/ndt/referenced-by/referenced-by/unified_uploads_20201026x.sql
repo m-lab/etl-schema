@@ -27,21 +27,57 @@
 --       longitude to Longitude
 --          radius to AccuracyRadiusKm
 --
-SELECT *
-EXCEPT (filter)
-FROM (
-    -- NB: reordering UNION clauses may cause breaking changes to field names
-    -- 2019-07-18 to present
-    SELECT id, date, a, filter, node, client, server, date AS test_date
-    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt5_uploads`
-  UNION ALL
-    -- 2020-03-12 to present
-    SELECT id, date, a, filter, node, client, server, date AS test_date
-    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt7_uploads`
-  UNION ALL
-    -- 2009-02-18 to 2019-11-20
-    SELECT id, date, a, filter, node, client, server, date AS test_date
-    FROM `{{.ProjectID}}.intermediate_ndt.extended_web100_uploads`
-)
-WHERE
-  filter.IsValidBest
+SELECT
+  id, date, a, node,
+  STRUCT (
+    client.IP,
+    client.Port,
+    STRUCT (  -- Map new geo into older production geo
+      client.Geo.ContinentCode AS continent_code,
+      client.Geo.CountryCode AS country_code,
+      client.Geo.CountryCode3 AS country_code3,
+      client.Geo.CountryName AS country_name,
+      client.Geo.Region AS region,
+      -- client.Geo. Subdivision1ISOCode -- OMITED
+      -- client.Geo. Subdivision1Name -- OMITED
+      -- client.Geo.Subdivision2ISOCode -- OMITED
+      -- client.Geo.Subdivision2Name -- OMITED
+      client.Geo.MetroCode AS metro_code,
+      client.Geo.City AS city,
+      client.Geo.AreaCode AS area_code,
+      client.Geo.PostalCode AS postal_code,
+      client.Geo.Latitude AS latitude,
+      client.Geo.Longitude AS longitude,
+      client.Geo.AccuracyRadiusKm AS radius
+      -- client.Geo.Missing -- Future
+    ) AS Geo,
+    client.Network
+  ) as client,
+  STRUCT (
+    server.IP,
+    server.Port,
+    server.Site,
+    server.Machine,
+    STRUCT (  -- Map new geo into older production geo
+      server.Geo.ContinentCode AS continent_code,
+      server.Geo.CountryCode AS country_code,
+      server.Geo.CountryCode3 AS country_code3,
+      server.Geo.CountryName AS country_name,
+      server.Geo.Region AS region,
+      -- server.Geo. Subdivision1ISOCode -- OMITED
+      -- server.Geo. Subdivision1Name -- OMITED
+      -- server.Geo.Subdivision2ISOCode -- OMITED
+      -- server.Geo.Subdivision2Name -- OMITED
+      server.Geo.MetroCode AS metro_code,
+      server.Geo.City AS city,
+      server.Geo.AreaCode AS area_code,
+      server.Geo.PostalCode AS postal_code,
+      server.Geo.Latitude AS latitude,
+      server.Geo.Longitude AS longitude,
+      server.Geo.AccuracyRadiusKm AS radius
+      -- server.Geo.Missing -- Future
+    ) AS Geo,
+    server.Network
+  ) as server,
+  date as test_date
+FROM `{{.ProjectID}}.ndt.unified_uploads`
