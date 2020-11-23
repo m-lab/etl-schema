@@ -120,7 +120,7 @@ NDT5DownloadModels AS (
              client.Geo.longitude, -- aka Longitude
              client.Geo.radius, -- aka AccuracyRadiusKm
              FALSE AS Missing -- Future missing record flag
-      ) AS _new_Geo,  -- Do not use, switch to new unified view
+      ) AS Geo,
 #      Client.Network -- BUG still old schema
       STRUCT (
         client.Network.IPPrefix AS CIDR,
@@ -155,7 +155,7 @@ NDT5DownloadModels AS (
              server.Geo.longitude, -- aka Longitude
              server.Geo.radius, -- aka AccuracyRadiusKm
              FALSE AS Missing -- Future missing record flag
-      ) AS _new_Geo, -- Do not use, switch to new unified view
+      ) AS Geo,
 #     Server.Network -- BUG still old schema
       STRUCT (
         server.Network.IPPrefix AS CIDR,
