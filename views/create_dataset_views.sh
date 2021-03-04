@@ -22,6 +22,13 @@ DST_PROJECT=${3:?Please provide destination project: $USAGE}
 BASEDIR=$( realpath $( dirname "${BASH_SOURCE[0]}" ) )
 cd ${BASEDIR}
 
+# Git info is nominally exported from the caller
+if [ -z "${TAG_NAME-}" -o -z "${COMMIT_SHA-}" ]; then
+  echo "Not Git"
+  export TAG_NAME="manual"
+  export COMMIT_SHA="undefined"
+fi
+
 if [[ "${KEYNAME}" != "self" ]] ; then
   echo "${!KEYNAME}" > /tmp/sa.json
   export GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json
@@ -49,7 +56,7 @@ function create_view() {
 
   # Strip filename down to view name.
   view="${template%%.sql}"
-  view="${view##./}"
+  view="${view##*/}"
 
   echo -n "Creating "${dst_project}.${dataset}.${view}" using "${template}
 
@@ -61,30 +68,46 @@ function create_view() {
       -editor "${USER}"
 }
 
+# Build all views
+# Top level views always have src_project=dst_project=DST_PROJECT
+# Non top level views can access alternate SRC_PROJECT
 
-# For each directory in the current directory.
-for DATASET_DIR in $( find -maxdepth 1 -type d -a -not -name "." | sort ) ; do
-  pushd $DATASET_DIR &> /dev/null
+# NDT raw (legacy parser)
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt5.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/tcpinfo.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/traceroute.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/web100.sql
 
-    DATASET=${DATASET_DIR##./}
+# NDT extended (mixed parsers)
+create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt5_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt5_uploads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt7_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt7_uploads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_web100_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_web100_uploads.sql
 
-    # Create top level views. These reference tables in the "SRC_PROJECT".
-    for TEMPLATE in $( find -maxdepth 1 -name "*.sql" | sort ) ; do
+# NDT Unified
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_downloads_20201026x.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_uploads_20201026x.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_uploads.sql
 
-      create_view "${SRC_PROJECT}" "${DST_PROJECT}" "${DATASET}" "${TEMPLATE}"
-    done
+# traceroute (legacy parser)
+create_view ${SRC_PROJECT} ${DST_PROJECT} aggregate ./aggregate/traceroute.sql
 
-    # Create all views that reference the top level views. These always
-    # reference the same DST_PROJECT.
-    while [[ -d "referenced-by" ]] ; do
+# global web100 sidestream (legacy parser)
+create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100.sql
 
-      cd referenced-by
-      # TODO(etl-schema/issues/78) - dont us sort
-      for TEMPLATE in $( find -maxdepth 1 -name "*.sql" | sort ) ; do
+# switch telemetry (legacy parser)
+create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch.sql
 
-        create_view "${DST_PROJECT}" "${DST_PROJECT}" "${DATASET}" "${TEMPLATE}"
-      done
-    done
+# website examples
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_downloads_dedup_daily_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_downloads_dedup_daily_before.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_uploads_dedup_daily_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_uploads_dedup_daily_before.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_downloads_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_downloads_before.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_uploads_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_uploads_before.sql
 
-  popd &> /dev/null
-done
