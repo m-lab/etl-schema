@@ -36,6 +36,7 @@ WITH PreCleanWeb100 AS (
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
+	OR REGEXP_EXTRACT(task_filename, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
      ) AS IsOAM,  -- Data is not from valid clients
      web100_log_entry.snap.OctetsRetrans > 0 AS IsCongested,
      (  web100_log_entry.snap.SmoothedRTT > 2*web100_log_entry.snap.MinRTT AND

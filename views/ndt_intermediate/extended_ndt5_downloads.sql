@@ -49,6 +49,7 @@ PreCleanNDT5 AS (
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(downloads.S2C.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
+      OR REGEXP_EXTRACT(downloads.ParseInfo.TaskFileName, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
     ) AS IsOAM,  -- Data is not from valid clients
     tcpinfo.ParseInfo AS TCPparser,
     downloads.ParseInfo AS NDT5parser,
