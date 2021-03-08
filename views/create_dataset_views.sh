@@ -53,6 +53,7 @@ function create_view() {
     awk '/^--/ {print substr($0, 3)} /^SELECT/ {exit(0)}' ${template} )
   description+=$'\n'$'\n'"Release tag: $TAG_NAME Commit: $COMMIT_SHA"
   description+=$'\n'"View of data from '${src_project}'."
+  description+=$'\n'"Using: github.com/m-lab/..${template}"
 
   # Strip filename down to view name.
   view="${template%%.sql}"
@@ -69,22 +70,22 @@ function create_view() {
 }
 
 # Build all views
-# Top level views always have src_project=dst_project=DST_PROJECT
-# Non top level views can access alternate SRC_PROJECT
+# Upper level views always have src_project=dst_project=DST_PROJECT
+# The bottom level views can access an alternate SRC_PROJECT
 
 # NDT raw (legacy parser)
-create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt5.sql
-create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/tcpinfo.sql
-create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/traceroute.sql
-create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/web100.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/web100_legacy.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt5_legacy.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/tcpinfo_legacy.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/traceroute_legacy.sql
 
 # NDT extended (mixed parsers)
-create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt5_downloads.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt5_uploads.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt7_downloads.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_ndt7_uploads.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_web100_downloads.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} intermediate_ndt ./intermediate_ndt/referenced-by/extended_web100_uploads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt5_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt5_uploads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt7_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt7_uploads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_web100_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_web100_uploads.sql
 
 # NDT Unified
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_downloads_20201026x.sql
@@ -111,3 +112,4 @@ create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry0
 create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_uploads_after.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_uploads_before.sql
 
+echo "All views created successfully"

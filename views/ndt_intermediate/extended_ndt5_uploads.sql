@@ -1,18 +1,18 @@
 --
 -- NDT5 upload data in standard columns plus additional annotations.
--- This contributes one portion of the data used by MLab Unified Standard Views.
+-- This contributes one portion of the data used by MLab standard Unified Views.
 --
--- This view is only intended to accessed by a MLab Standard views: breaking changes
--- here will be offset by changes to the Published Standard views.
+-- Anything here that is not visible in the unified views is subject to
+-- breaking changes.  Use with caution!
 --
--- Anything here not visible in a standard view is subject to breaking changes.
+-- See the documentation on creating custom unified views.
 --
 
 WITH ndt5uploads AS (
   SELECT partition_date, ParseInfo, result.C2S,
   (result.C2S.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MICROSECOND) AS connection_duration
-  FROM   `mlab-oti.ndt.ndt5`
+  FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
   -- Limit to valid C2S results
   WHERE  result.C2S IS NOT NULL
   AND result.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
@@ -20,7 +20,7 @@ WITH ndt5uploads AS (
 
 tcpinfo AS (
   SELECT * EXCEPT (snapshots)
-  FROM `mlab-oti.ndt.tcpinfo`
+  FROM `{{.ProjectID}}.ndt.tcpinfo` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (

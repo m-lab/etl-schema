@@ -12,7 +12,7 @@ WITH ndt5downloads AS (
   SELECT partition_date, ParseInfo, result.S2C,
   (result.S2C.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MICROSECOND) AS connection_duration
-  FROM   `mlab-oti.ndt.ndt5`
+  FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
   -- Limit to valid S2C results
   WHERE result.S2C IS NOT NULL
   AND result.S2C.UUID IS NOT NULL
@@ -21,7 +21,7 @@ WITH ndt5downloads AS (
 
 tcpinfo AS (
   SELECT * EXCEPT (snapshots)
-  FROM `mlab-oti.ndt.tcpinfo`
+  FROM `{{.ProjectID}}.ndt.tcpinfo` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (

@@ -1,24 +1,25 @@
 --
--- NDT7 download data in standard columns plus additional annotations.
--- This contributes one portion of the data used by MLab Unified Standard Views.
+-- NDT7 upload data in standard columns plus additional annotations.
+-- This contributes one portion of the data used by MLab standard Unified Views.
 --
--- This view is only intended to accessed by a MLab Standard views: breaking changes
--- here will be offset by changes to the Published Standard views.
+-- Anything here that is not visible in the unified views is subject to
+-- breaking changes.  Use with caution!
 --
--- Anything here not visible in a standard view is subject to breaking changes.
+-- See the documentation on creating custom unified views.
 --
 
-WITH ndt7downloads AS (
+WITH ndt7uploads AS (
   SELECT *,
-  raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))] AS lastSample,
-# (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
+  raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Upload.ServerMeasurements))] AS lastSample,
+# (raw.Upload.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
-  TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MICROSECOND) AS connection_duration
- FROM   `mlab-oti.ndt.ndt7` -- TODO move to mlab-oti.intermediate_ndt.joined_ndt7
+  TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MICROSECOND) AS connection_duration
+  FROM   `{{.ProjectID}}.ndt.ndt7` -- TODO move to intermediate_ndt
   -- Limit to valid S2C results
-  WHERE raw.Download IS NOT NULL
-  AND raw.Download.UUID IS NOT NULL
-  AND raw.Download.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
+  WHERE raw.Upload IS NOT NULL
+  AND raw.Upload.UUID IS NOT NULL
+  AND raw.Upload.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
+#  AND client IS NOT NULL -- Check this
 ),
 
 PreCleanNDT7 AS (
@@ -26,11 +27,8 @@ PreCleanNDT7 AS (
     id, date, a, IsErrored, lastsample,
     connection_duration, raw,
     client, server,
-    -- Any loss implys a netowork bottleneck
-    (lastSample.TCPInfo.TotalRetrans > 0) AS IsCongested,
-    -- Final RTT sample twice the minimum and above 1 second means bloated
-    ((lastSample.TCPInfo.RTT > 2*lastSample.TCPInfo.MinRTT) AND
-       (lastSample.TCPInfo.RTT > 1000)) AS IsBloated,
+    -- Receiver side can not compute IsCongested
+    -- Receiver side can not directly compute IsBloated
     ( -- IsOAM
       raw.ClientIP IN
          -- TODO(m-lab/etl/issues/893): move to parser configuration.
@@ -50,10 +48,10 @@ PreCleanNDT7 AS (
     ) AS IsOAM,  -- Data is not from valid clients
     parser AS NDT7parser,
   FROM
-    ndt7downloads
+    ndt7uploads
 ),
 
-NDT7DownloadModels AS (
+NDT7UploadModels AS (
   SELECT
     id,
     date,
@@ -63,7 +61,7 @@ NDT7DownloadModels AS (
       a.CongestionControl,
       a.MeanThroughputMbps,
       a.MinRTT,  -- mS
-      a.LossRate
+      Null AS LossRate  -- Receiver can not disambiguate reordering and loss
     ) AS a,
     STRUCT (
      -- "Instruments" is not quite the right concept
@@ -71,21 +69,18 @@ NDT7DownloadModels AS (
     ) AS node,
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
-      (
+      (  -- No S2C test for client vs network bottleneck
         NOT IsOAM AND NOT IsErrored
-        AND lastSample.TCPInfo.BytesAcked IS NOT NULL
-        AND lastSample.TCPInfo.BytesAcked >= 8192
+        AND lastSample.TCPInfo.BytesReceived IS NOT NULL
+        AND lastSample.TCPInfo.BytesReceived >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000
-        -- Tests without network bottlenecks are presumed to have bottlenecks elsewhere
-        AND ( IsCongested OR IsBloated ) -- Loss or excess queueing indicates congestion
       ) AS IsValidBest,
-      (
+      (  -- No S2C test for client vs network bottleneck
         NOT IsOAM AND NOT IsErrored
-        AND lastSample.TCPInfo.BytesAcked IS NOT NULL
-        AND lastSample.TCPInfo.BytesAcked >= 8192
+        AND lastSample.TCPInfo.BytesReceived IS NOT NULL
+        AND lastSample.TCPInfo.BytesReceived >= 8192
         AND connection_duration BETWEEN 9000000 AND 60000000
-        AND ( IsCongested ) -- Only consides loss as a congestion signal
-      ) AS IsValid2019
+      ) AS IsValid2019  -- Same as row_valid_best
     ) AS filter,
     -- NOTE: standard columns for views exclude the parseInfo struct because
     -- multiple tables are used to create a derived view. Users that want the
@@ -94,7 +89,7 @@ NDT7DownloadModels AS (
     STRUCT (
       raw.ClientIP AS IP,
       raw.ClientPort AS Port,
-      client.Geo, -- The entire new geo struct
+      client.Geo,
       client.Network
     ) AS client,
     STRUCT (
@@ -110,4 +105,4 @@ NDT7DownloadModels AS (
   FROM PreCleanNDT7
 )
 
-SELECT * FROM NDT7DownloadModels
+SELECT * FROM NDT7UploadModels
