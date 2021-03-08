@@ -65,7 +65,7 @@ Web100UploadModels AS (
     STRUCT(
       pseudoUUID as UUID,
       log_time AS TestTime,
-      "reno" AS CongestionControl,
+      '' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
       web100_log_entry.snap.HCThruOctetsReceived * 8.0 / connection_duration AS MeanThroughputMbps,
       web100_log_entry.snap.MinRTT * 1.0 AS MinRTT,  -- Note: download side measurement (ms)
       Null AS LossRate -- Receiver can not measure loss

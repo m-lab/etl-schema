@@ -58,7 +58,7 @@ NDT7UploadModels AS (
     STRUCT (
       a.UUID,
       a.TestTime,
-      a.CongestionControl,
+      '' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
       a.MeanThroughputMbps,
       a.MinRTT,  -- mS
       Null AS LossRate  -- Receiver can not disambiguate reordering and loss

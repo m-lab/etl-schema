@@ -64,7 +64,7 @@ NDT5UploadModels AS (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       C2S.UUID,
       C2S.StartTime AS TestTime,
-      FinalSnapshot.CongestionAlgorithm AS CongestionControl,
+      '' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
       C2S.MeanThroughputMbps AS MeanThroughputMbps,
       FinalSnapshot.TCPInfo.MinRTT/1000.0 AS MinRTT, -- Sender's MinRTT (ms)
       Null AS LossRate  -- Receiver can not disambiguate reordering and loss
