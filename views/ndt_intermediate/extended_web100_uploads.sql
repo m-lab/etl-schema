@@ -123,7 +123,9 @@ Web100UploadModels AS (
         SAFE_CAST(connection_spec.client.network.asn AS INT64) AS ASNumber,
         '' AS ASName,
         False AS Missing,
-        ARRAY[ STRUCT( ARRAY[ SAFE_CAST(connection_spec.client.network.asn AS INT64) ] AS ASNs ) ] AS Systems
+        ARRAY[ STRUCT( ARRAY[
+	       IFNULL(SAFE_CAST(connection_spec.client.network.asn AS INT64),0 )
+	       ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS client,
     STRUCT (
@@ -160,7 +162,9 @@ Web100UploadModels AS (
         SAFE_CAST(connection_spec.server.network.asn AS INT64) AS ASNumber,
         '' AS ASName,
         False AS Missing,
-        ARRAY[ STRUCT( ARRAY[ SAFE_CAST(connection_spec.server.network.asn AS INT64) ] AS ASNs ) ] AS Systems
+        ARRAY[ STRUCT( ARRAY[
+	       IFNULL(SAFE_CAST(connection_spec.server.network.asn AS INT64), 0)
+	       ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS server,
     PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
