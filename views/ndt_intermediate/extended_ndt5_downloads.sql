@@ -2,10 +2,10 @@
 -- NDT5 download data in standard columns plus additional annotations.
 -- This contributes one portion of the data used by MLab Unified Standard Views.
 --
--- This view is only intended to accessed by a MLab Standard views: breaking changes
--- here will be offset by changes to the Published Standard views.
+-- Anything here that is not visible in the unified views is subject to
+-- breaking changes.  Use with caution!
 --
--- Anything here not visible in a standard view is subject to breaking changes.
+-- See the documentation on creating custom unified views.
 --
 
 WITH ndt5downloads AS (
