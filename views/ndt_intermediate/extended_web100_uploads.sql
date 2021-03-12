@@ -36,7 +36,7 @@ WITH PreCleanWeb100 AS (
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
-	OR REGEXP_EXTRACT(task_filename, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
+        OR REGEXP_EXTRACT(task_filename, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
      ) AS IsOAM,  -- Data is not from valid clients
      ( -- Eliminate some clearly bogus data
        web100_log_entry.snap.HCThruOctetsReceived > 1E14 -- approximately 10Gb/s for 24 hours
@@ -124,8 +124,8 @@ Web100UploadModels AS (
         '' AS ASName,
         False AS Missing,
         ARRAY[ STRUCT( ARRAY[
-	       IFNULL(SAFE_CAST(connection_spec.client.network.asn AS INT64),0 )
-	       ] AS ASNs ) ] AS Systems
+               IFNULL(SAFE_CAST(connection_spec.client.network.asn AS INT64),0 )
+               ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS client,
     STRUCT (
@@ -163,8 +163,8 @@ Web100UploadModels AS (
         '' AS ASName,
         False AS Missing,
         ARRAY[ STRUCT( ARRAY[
-	       IFNULL(SAFE_CAST(connection_spec.server.network.asn AS INT64), 0)
-	       ] AS ASNs ) ] AS Systems
+               IFNULL(SAFE_CAST(connection_spec.server.network.asn AS INT64), 0)
+               ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS server,
     PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
