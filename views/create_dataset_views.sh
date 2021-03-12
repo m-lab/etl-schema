@@ -92,10 +92,10 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/ex
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_web100_uploads.sql
 
 # NDT Unified
-create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_downloads_20201026x.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_downloads.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_uploads_20201026x.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/referenced-by/referenced-by/unified_uploads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads_20201026x.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_20201026x.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
 
 # traceroute (legacy parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} aggregate ./aggregate/traceroute.sql
@@ -107,13 +107,13 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch.sql
 
 # website examples
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_downloads_dedup_daily_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_downloads_dedup_daily_before.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_uploads_dedup_daily_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_decile_uploads_dedup_daily_before.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_downloads_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_downloads_before.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_uploads_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/referenced-by/entry07_platform_hourly_uploads_before.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_downloads_dedup_daily_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_downloads_dedup_daily_before.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_uploads_dedup_daily_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_uploads_dedup_daily_before.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_downloads_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_downloads_before.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_uploads_after.sql
+create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_uploads_before.sql
 
 echo "All views created successfully"
