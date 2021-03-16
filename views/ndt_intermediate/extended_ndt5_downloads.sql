@@ -2,17 +2,17 @@
 -- NDT5 download data in standard columns plus additional annotations.
 -- This contributes one portion of the data used by MLab Unified Standard Views.
 --
--- This view is only intended to accessed by a MLab Standard views: breaking changes
--- here will be offset by changes to the Published Standard views.
+-- Anything here that is not visible in the unified views is subject to
+-- breaking changes.  Use with caution!
 --
--- Anything here not visible in a standard view is subject to breaking changes.
+-- See the documentation on creating custom unified views.
 --
 
 WITH ndt5downloads AS (
   SELECT partition_date, ParseInfo, result.S2C,
   (result.S2C.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MICROSECOND) AS connection_duration
-  FROM   `mlab-oti.ndt.ndt5`
+  FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
   -- Limit to valid S2C results
   WHERE result.S2C IS NOT NULL
   AND result.S2C.UUID IS NOT NULL
@@ -21,7 +21,7 @@ WITH ndt5downloads AS (
 
 tcpinfo AS (
   SELECT * EXCEPT (snapshots)
-  FROM `mlab-oti.ndt.tcpinfo`
+  FROM `{{.ProjectID}}.ndt.tcpinfo` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (
@@ -49,6 +49,7 @@ PreCleanNDT5 AS (
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(downloads.S2C.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
+      OR REGEXP_EXTRACT(downloads.ParseInfo.TaskFileName, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
     ) AS IsOAM,  -- Data is not from valid clients
     tcpinfo.ParseInfo AS TCPparser,
     downloads.ParseInfo AS NDT5parser,

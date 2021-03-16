@@ -1,11 +1,11 @@
 --
 -- Legacy NDT/web100 downloads data in standard columns plus additional annotations.
--- This contributes one portion of the data used by MLab Unified Standard Views.
+-- This contributes one portion of the data used by MLab standard Unified Views.
 --
--- This view is only intended to accessed by a MLab Standard views: breaking changes
--- here will be offset by changes to the Standard views.
+-- Anything here that is not visible in the unified views is subject to
+-- breaking changes.  Use with caution!
 --
--- Anything here not visible in a standard view is subject to breaking changes.
+-- See the documentation on creating custom unified views.
 --
 
 WITH PreCleanWeb100 AS (
@@ -36,6 +36,7 @@ WITH PreCleanWeb100 AS (
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(web100_log_entry.connection_spec.local_ip),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
+        OR REGEXP_EXTRACT(task_filename, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
      ) AS IsOAM,  -- Data is not from valid clients
      web100_log_entry.snap.OctetsRetrans > 0 AS IsCongested,
      (  web100_log_entry.snap.SmoothedRTT > 2*web100_log_entry.snap.MinRTT AND
@@ -46,7 +47,7 @@ WITH PreCleanWeb100 AS (
       task_filename AS ArchiveURL,
       "web100" AS Filename
     ) AS Web100parser,
-  FROM `mlab-oti.ndt.web100`
+  FROM `{{.ProjectID}}.ndt.web100` -- TODO move to intermediate_ndt
   WHERE
     web100_log_entry.snap.Duration IS NOT NULL
     AND web100_log_entry.snap.State IS NOT NULL
@@ -124,7 +125,9 @@ Web100DownloadModels AS (
         SAFE_CAST(connection_spec.client.network.asn AS INT64) AS ASNumber,
         '' AS ASName,
         False AS Missing,
-        ARRAY[ STRUCT( ARRAY[ SAFE_CAST(connection_spec.client.network.asn AS INT64) ] AS ASNs ) ] AS Systems
+        ARRAY[ STRUCT( ARRAY[
+               IFNULL(SAFE_CAST(connection_spec.client.network.asn AS INT64),0)
+               ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS client,
     STRUCT (
@@ -161,7 +164,9 @@ Web100DownloadModels AS (
         SAFE_CAST(connection_spec.server.network.asn AS INT64) AS ASNumber,
         '' AS ASName,
         False AS Missing,
-        ARRAY[ STRUCT( ARRAY[ SAFE_CAST(connection_spec.server.network.asn AS INT64) ] AS ASNs ) ] AS Systems
+        ARRAY[ STRUCT( ARRAY[
+               IFNULL(SAFE_CAST(connection_spec.server.network.asn AS INT64), 0)
+               ] AS ASNs ) ] AS Systems
       ) AS Network
     ) AS server,
     PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
