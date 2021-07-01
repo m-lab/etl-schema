@@ -1,6 +1,6 @@
 --
 -- This view, ndt_unified_downloads, is our current best understanding
--- of all MLab upload data across the entire platform over all time.
+-- of all NDT upload data across the entire platform over all time.
 -- The schema uses the Standard Top-level Columns design.
 --
 -- This view is intended to receive long term support by the M-Lab
