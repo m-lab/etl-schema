@@ -117,18 +117,18 @@ create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hou
 create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_uploads_before.sql
 
 # stats-pipeline
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_global_asn.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_continents.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_continents_asn.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_countries.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_countries_asn.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_regions.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_regions_asn.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_cities.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_cities_asn.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_us_states.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_us_states_asn.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_us_counties.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} ./statistics/v0_us_counties_asn.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_global_asn.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_continents.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_continents_asn.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_countries.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_countries_asn.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_regions.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_regions_asn.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_cities.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_cities_asn.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_us_states.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_us_states_asn.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_us_counties.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ./statistics/v0_us_counties_asn.sql
 
 echo "All views created successfully"
