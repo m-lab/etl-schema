@@ -55,7 +55,7 @@ function create_view() {
   description+=$'\n'"View of data from '${src_project}'."
   description+=$'\n'"Using: github.com/m-lab/..${template}"
   description+=$'\n'"On :"`date`
-  
+
   # Strip filename down to view name.
   view="${template%%.sql}"
   view="${view##*/}"
@@ -82,6 +82,7 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/traceroute_legacy.sq
 # NDT raw - NB: the raw tables are currently in mlab-oti.raw_ndt.
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/annotation.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt7.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/pcap.sql
 
 # NDT extended (mixed parsers)
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt5_downloads.sql
