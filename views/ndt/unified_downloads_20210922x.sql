@@ -1,5 +1,5 @@
 --
--- This view, ndt_unified_uploads, is our current best understanding
+-- This view, ndt_unified_downloads, is our current best understanding
 -- of all NDT upload data across the entire platform over all time.
 -- The schema uses the Standard Top-level Columns design.
 --
@@ -14,7 +14,7 @@
 -- data under this view will change.  This view will isolate
 -- constituent changes from users.
 --
--- Views of the form ndt_unified_uploads_XXXX reflect our
+-- Views of the form ndt_unified_downloads_XXXX reflect our
 -- understanding of the data under different assumptions or at earlier
 -- dates.  These views are intended to be useful to test how our
 -- processing changed might affect research results.
@@ -40,15 +40,15 @@ FROM (
     -- NB: reordering UNION clauses may cause breaking changes to field names
     -- 2020-03-12 to present
     SELECT id, date, a, filter, node, client, server,
-    FROM `{{.ProjectID}}.ndt_intermediate.extended_ndt7_uploads`
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt7_downloads`
   UNION ALL
     -- 2019-07-18 to present
     SELECT id, date, a, filter, node, client, server,
-    FROM `{{.ProjectID}}.ndt_intermediate.extended_ndt5_uploads`
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_ndt5_downloads`
   UNION ALL
     -- 2009-02-18 to 2019-11-20
     SELECT id, date, a, filter, node, client, server,
-    FROM `{{.ProjectID}}.ndt_intermediate.extended_web100_uploads`
+    FROM `{{.ProjectID}}.intermediate_ndt.extended_web100_downloads`
 )
 WHERE
   filter.IsValidBest
