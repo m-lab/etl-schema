@@ -31,7 +31,7 @@ hops AS (
 annotated AS (
     SELECT hops.id,
 	STRUCT(hops.Hop.hop_id, hops.Hop.addr, hops.Hop.name, hops.Hop.q_ttl, hops.Hop.linkc, hops.Hop.links, ann.raw.Annotations AS annotations) as hop
-    FROM hops JOIN `{{.ProjectID}}.raw_ndt.hopannotation1` as ann ON (hops.hop.hop_id = ann.id)
+    FROM hops LEFT JOIN `{{.ProjectID}}.raw_ndt.hopannotation1` as ann ON (hops.hop.hop_id = ann.id)
 ),
 
 -- Now reassemble the Hop arrays.
