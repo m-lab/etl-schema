@@ -17,7 +17,7 @@ go:
 - '1.13'
 
 env:
-- GO111MODULE=on
+- GO111MODULE=off
 
 go_import_path: github.com/m-lab/etl-schema
 
