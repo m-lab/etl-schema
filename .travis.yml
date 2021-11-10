@@ -15,6 +15,10 @@ language: go
 
 go:
 - '1.13'
+
+env:
+- GO111MODULE=on
+
 go_import_path: github.com/m-lab/etl-schema
 
 before_install:
