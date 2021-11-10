@@ -38,7 +38,7 @@ mash AS (
     SELECT id, ARRAY_AGG(hop) as hop
     FROM annotated
     GROUP BY id
-),
+)
 
 # Recombine the hop arrays with top level fields.
 SELECT scamper1.* REPLACE (
