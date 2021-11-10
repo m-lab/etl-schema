@@ -15,6 +15,7 @@
 -- Researchers are strongly encouraged to use this view
 -- to support their research and provide feedback.
 --
+
 WITH scamper1 AS (
     SELECT * FROM `{{.ProjectID}}.ndt.scamper1`
     WHERE date BETWEEN "2021-11-01" AND "2021-11-07"
@@ -26,21 +27,21 @@ hops AS (
 	WHERE date BETWEEN "2021-11-01" AND "2021-11-07"
 ),
 
-# Annotate.
+-- Annotate.
 annotated AS (
     SELECT hops.id,
 	STRUCT(hops.Hop.hop_id, hops.Hop.addr, hops.Hop.name, hops.Hop.q_ttl, hops.Hop.linkc, hops.Hop.links, ann.raw.Annotations AS annotations) as hop
     FROM hops JOIN `{{.ProjectID}}.raw_ndt.hopannotation1` as ann ON (hops.hop.hop_id = ann.id)
 ),
 
-# Now reassemble the Hop arrays.
+-- Now reassemble the Hop arrays.
 mash AS (
     SELECT id, ARRAY_AGG(hop) as hop
     FROM annotated
     GROUP BY id
 )
 
-# Recombine the hop arrays with top level fields.
+-- Recombine the hop arrays with top level fields.
 SELECT scamper1.* REPLACE (
     (SELECT AS STRUCT scamper1.raw.* REPLACE (
         (SELECT AS STRUCT raw.Tracelb.* EXCEPT (nodes), mash.hop AS nodes
