@@ -48,5 +48,5 @@ SELECT scamper1.* REPLACE (
         ) AS Tracelb)
     ) AS raw
 )
-FROM scamper1 JOIN mash ON (scamper.id = mash.id)
+FROM scamper1 JOIN mash ON (scamper1.id = mash.id)
 
