@@ -83,6 +83,8 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/traceroute_legacy.sq
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/annotation.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt7.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/pcap.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/hopannotation1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/scamper1.sql
 
 # NDT extended (mixed parsers)
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt5_downloads.sql
