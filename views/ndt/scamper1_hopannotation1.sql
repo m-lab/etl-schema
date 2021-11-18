@@ -40,7 +40,7 @@ annotated AS (
 ),
 
 -- Now reassemble the Hop arrays.
-mash AS (
+aggregated AS (
     SELECT id, ARRAY_AGG(exp_hop) as exp_hop
     FROM annotated
     GROUP BY id
@@ -49,9 +49,9 @@ mash AS (
 -- Recombine the hop arrays with top level fields.
 SELECT scamper1.* REPLACE (
     (SELECT AS STRUCT scamper1.raw.* REPLACE (
-        (SELECT AS STRUCT raw.Tracelb.* EXCEPT (nodes), mash.exp_hop AS exp_nodes
+        (SELECT AS STRUCT raw.Tracelb.* EXCEPT (nodes), aggregated.exp_hop AS exp_nodes
         ) AS Tracelb)
     ) AS raw
 )
-FROM scamper1 JOIN mash ON (scamper1.id = mash.id)
+FROM scamper1 JOIN aggregated ON (scamper1.id = aggregated.id)
 
