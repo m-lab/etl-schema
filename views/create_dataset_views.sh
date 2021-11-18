@@ -99,6 +99,7 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads_20201026x.
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_20201026x.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
 
 # traceroute (legacy parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} aggregate ./aggregate/traceroute.sql
