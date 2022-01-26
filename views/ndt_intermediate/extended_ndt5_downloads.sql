@@ -58,7 +58,7 @@ PreCleanNDT5 AS (
     ndt5downloads AS downloads
     LEFT JOIN tcpinfo
     ON
-#     downloads.date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
+      downloads.date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
       downloads.S2C.UUID = tcpinfo.UUID
 ),
 
