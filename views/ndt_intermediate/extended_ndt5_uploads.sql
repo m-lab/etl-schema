@@ -95,9 +95,8 @@ NDT5UploadModels AS (
     STRUCT (
       C2S.ClientIP AS IP,
       C2S.ClientPort AS Port,
-      -- Legacy Geo approximates dev.maxmind.com/geoip/geoip2/geoip2-city-country-csv-databases/
       client.Geo,
-      client.Network,
+      client.Network
     ) AS client,
     STRUCT (
       C2S.ServerIP AS IP,
@@ -105,7 +104,7 @@ NDT5UploadModels AS (
       server.Site,
       server.Machine,
       server.Geo,
-      server.Network,
+      server.Network
     ) AS server,
     PreCleanNDT5 AS _internal202010  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
