@@ -100,14 +100,14 @@ NDT5DownloadModels AS (
     -- underlying parseInfo values should refer to the corresponding tables
     -- using the shared UUID.
     STRUCT (
-      C2S.ClientIP AS IP,
-      C2S.ClientPort AS Port,
+      S2C.ClientIP AS IP,
+      S2C.ClientPort AS Port,
       client.Geo,
       client.Network
     ) AS client,
     STRUCT (
-      C2S.ServerIP AS IP,
-      C2S.ServerPort AS Port,
+      S2C.ServerIP AS IP,
+      S2C.ServerPort AS Port,
       server.Site,
       server.Machine,
       server.Geo,
