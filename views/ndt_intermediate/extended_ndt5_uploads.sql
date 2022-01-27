@@ -106,7 +106,7 @@ NDT5UploadModels AS (
       server.Geo,
       server.Network
     ) AS server,
-    PreCleanNDT5 AS _internal202010  -- Not stable and subject to breaking changes
+    PreCleanNDT5 AS _internal202201  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
 )
 
