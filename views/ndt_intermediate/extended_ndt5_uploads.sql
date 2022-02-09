@@ -12,7 +12,7 @@ WITH ndt5uploads AS (
   SELECT partition_date, ParseInfo, result.C2S,
   (result.C2S.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MICROSECOND) AS connection_duration
-  FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
+  FROM   `{{.ProjectID}}.ndt_raw.ndt5_legacy` -- TODO move to intermediate_ndt
   -- Limit to valid C2S results
   WHERE  result.C2S IS NOT NULL
   AND result.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
