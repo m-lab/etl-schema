@@ -12,7 +12,7 @@ WITH ndt5downloads AS (
   SELECT partition_date, ParseInfo, result.S2C,
   (result.S2C.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MICROSECOND) AS connection_duration
-  FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
+  FROM   `{{.ProjectID}}.ndt_raw.ndt5_legacy` -- TODO move to intermediate_ndt
   -- Limit to valid S2C results
   WHERE result.S2C IS NOT NULL
   AND result.S2C.UUID IS NOT NULL
