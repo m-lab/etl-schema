@@ -105,10 +105,10 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} aggregate ./aggregate/traceroute.sql
 
 # global web100 sidestream (legacy parser)
-create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100_legacy.sql
 
 # switch telemetry (legacy parser)
-create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch_legacy.sql
 
 # website examples
 create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_downloads_dedup_daily_after.sql
