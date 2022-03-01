@@ -82,6 +82,7 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/traceroute_legacy.sq
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/paris1_legacy.sql
 # NDT raw - NB: the raw tables are currently in mlab-oti.raw_ndt.
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/annotation.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt5.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt7.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/pcap.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/hopannotation1.sql
