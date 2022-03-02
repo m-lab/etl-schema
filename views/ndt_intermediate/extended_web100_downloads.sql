@@ -47,7 +47,7 @@ WITH PreCleanWeb100 AS (
       task_filename AS ArchiveURL,
       "web100" AS Filename
     ) AS Web100parser,
-  FROM `{{.ProjectID}}.ndt.web100` -- TODO move to intermediate_ndt
+  FROM `{{.ProjectID}}.ndt_raw.web100_legacy` -- TODO move to intermediate_ndt
   WHERE
     web100_log_entry.snap.Duration IS NOT NULL
     AND web100_log_entry.snap.State IS NOT NULL
