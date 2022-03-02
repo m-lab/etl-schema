@@ -112,6 +112,9 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100_legacy.
 # switch telemetry (legacy parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch_legacy.sql
 
+# switch telemetry (v2 parser)
+create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch.sql
+
 # website examples
 create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_downloads_dedup_daily_after.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_downloads_dedup_daily_before.sql
