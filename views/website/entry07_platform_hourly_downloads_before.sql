@@ -17,7 +17,7 @@ WITH raw_web100 AS (
       web100_log_entry.snap.SndLimTimeCwnd +
         web100_log_entry.snap.SndLimTimeSnd) / 1000000.0 AS duration
 
-FROM `{{.ProjectID}}.ndt.web100`
+FROM `{{.ProjectID}}.ndt_raw.web100_legacy`
 
 WHERE
       partition_date BETWEEN DATE("2019-07-10") AND DATE("2019-07-16")
@@ -54,7 +54,7 @@ WHERE
     REPLACE(REGEXP_EXTRACT(ParseInfo.TaskFileName, "-(mlab[1-4]-[a-z]{3}[0-9]{2})-"), "-", ".") AS hostname,
     TIMESTAMP_DIFF(result.S2C.EndTime, result.S2C.StartTime, MILLISECOND)/1000 AS duration
 
-  FROM `{{.ProjectID}}.ndt.ndt5`
+  FROM `{{.ProjectID}}.ndt_raw.ndt5_legacy`
 
   WHERE
       DATE(result.StartTime) BETWEEN DATE("2019-07-10") AND DATE("2019-07-16")

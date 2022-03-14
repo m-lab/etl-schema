@@ -9,23 +9,23 @@
 --
 
 WITH ndt5uploads AS (
-  SELECT partition_date, ParseInfo, result.C2S,
-  (result.C2S.Error != "") AS IsErrored,
-  TIMESTAMP_DIFF(result.C2S.EndTime, result.C2S.StartTime, MICROSECOND) AS connection_duration
+  SELECT date, parser, raw.C2S, client, server,
+  (raw.C2S.Error != "") AS IsErrored,
+  TIMESTAMP_DIFF(raw.C2S.EndTime, raw.C2S.StartTime, MICROSECOND) AS connection_duration
   FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
   -- Limit to valid C2S results
-  WHERE  result.C2S IS NOT NULL
-  AND result.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
+  WHERE  raw.C2S IS NOT NULL
+  AND raw.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
 ),
 
 tcpinfo AS (
   SELECT * EXCEPT (snapshots)
-  FROM `{{.ProjectID}}.ndt.tcpinfo` -- TODO move to intermediate_ndt
+  FROM `{{.ProjectID}}.ndt_raw.tcpinfo_legacy` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (
   SELECT
-    uploads.*, tcpinfo.Client, tcpinfo.Server,
+    uploads.*,
     tcpinfo.FinalSnapshot AS FinalSnapshot,
     -- Receiver side can not compute IsCongested
     -- Receiver side can not directly compute IsBloated
@@ -44,23 +44,23 @@ PreCleanNDT5 AS (
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
-      OR REGEXP_EXTRACT(uploads.ParseInfo.TaskFileName, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
+      OR REGEXP_EXTRACT(uploads.parser.ArchiveURL, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
     ) AS IsOAM,  -- Data is not from valid clients
     tcpinfo.ParseInfo AS TCPparser,
-    uploads.ParseInfo AS NDT5parser,
+    uploads.parser AS NDT5parser,
   FROM
     -- Use a left join to allow NDT test without matching tcpinfo rows.
     ndt5uploads AS uploads
     LEFT JOIN tcpinfo
     ON
-#     uploads.partition_date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
+      uploads.date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
       uploads.C2S.UUID = tcpinfo.UUID
 ),
 
 NDT5UploadModels AS (
   SELECT
     C2S.UUID AS id,
-    partition_date as date,
+    date,
     STRUCT (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       C2S.UUID,
@@ -95,71 +95,18 @@ NDT5UploadModels AS (
     STRUCT (
       C2S.ClientIP AS IP,
       C2S.ClientPort AS Port,
-      -- Legacy Geo approximates dev.maxmind.com/geoip/geoip2/geoip2-city-country-csv-databases/
-      STRUCT (
-             client.Geo.continent_code, -- aka ContinentCode
-             client.Geo.country_code, -- aka CountryCode
-             client.Geo.country_code3, -- aka CountryCode3
-             client.Geo.country_name, -- aka CountryName
-             client.Geo.region, -- aka Region
-             '' AS Subdivision1ISOCode, -- MISSING
-             '' AS Subdivision1Name, -- MISSING
-             '' AS Subdivision2ISOCode, -- MISSING
-             '' AS Subdivision2Name, -- MISSING
-             client.Geo.metro_code, -- aka MetroCode
-             client.Geo.city, -- aka City
-             client.Geo.area_code, -- aka AreaCode
-             client.Geo.postal_code, -- aka PostalCode
-             client.Geo.latitude, -- aka Latitude
-             client.Geo.longitude, -- aka Longitude
-             client.Geo.radius, -- aka AccuracyRadiusKm
-             FALSE AS Missing -- Future missing record flag
-      ) AS Geo,
-#      Client.Network -- BUG still old schema
-      STRUCT (
-        client.Network.IPPrefix AS CIDR,
-        client.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
-        '' AS ASName, -- MISSING
-        False AS Missing, -- MISSING
-        client.Network.Systems -- Includes ASNs, etc
-      ) AS Network
+      client.Geo,
+      client.Network
     ) AS client,
     STRUCT (
       C2S.ServerIP AS IP,
       C2S.ServerPort AS Port,
-      REGEXP_EXTRACT(ParseInfo.TaskFileName,
-            'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
-      REGEXP_EXTRACT(ParseInfo.TaskFileName,
-            '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      STRUCT (
-             server.Geo.continent_code, -- aka ContinentCode
-             server.Geo.country_code, -- aka CountryCode
-             server.Geo.country_code3, -- aka CountryCode3
-             server.Geo.country_name, -- aka CountryName
-             server.Geo.region, -- aka Region
-             '' AS Subdivision1ISOCode, -- MISSING
-             '' AS Subdivision1Name, -- MISSING
-             '' AS Subdivision2ISOCode, -- MISSING
-             '' AS Subdivision2Name, -- MISSING
-             server.Geo.metro_code, -- aka MetroCode
-             server.Geo.city, -- aka City
-             server.Geo.area_code, -- aka AreaCode
-             server.Geo.postal_code, -- aka PostalCode
-             server.Geo.latitude, -- aka Latitude
-             server.Geo.longitude, -- aka Longitude
-             server.Geo.radius, -- aka AccuracyRadiusKm
-             FALSE AS Missing -- Future missing record flag
-      ) AS Geo,
-#     Server.Network -- BUG still old schema
-      STRUCT (
-        server.Network.IPPrefix AS CIDR,
-        server.Network.Systems[SAFE_OFFSET(0)].ASNs[SAFE_OFFSET(0)] AS ASNumber,
-        '' AS ASName, -- MISSING
-        False AS Missing, -- MISSING
-        server.Network.Systems -- Includes ASNs, etc
-      ) AS Network
+      server.Site,
+      server.Machine,
+      server.Geo,
+      server.Network
     ) AS server,
-    PreCleanNDT5 AS _internal202010  -- Not stable and subject to breaking changes
+    PreCleanNDT5 AS _internal202201  -- Not stable and subject to breaking changes
   FROM PreCleanNDT5
 )
 

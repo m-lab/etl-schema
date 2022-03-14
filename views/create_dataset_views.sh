@@ -79,10 +79,14 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/web100_legacy.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt5_legacy.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/tcpinfo_legacy.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/traceroute_legacy.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/paris1_legacy.sql
 # NDT raw - NB: the raw tables are currently in mlab-oti.raw_ndt.
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/annotation.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt5.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/ndt7.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/pcap.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/hopannotation1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/scamper1.sql
 
 # NDT extended (mixed parsers)
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt5_downloads.sql
@@ -97,14 +101,18 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads_20201026x.
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_20201026x.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
 
 # traceroute (legacy parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} aggregate ./aggregate/traceroute.sql
 
 # global web100 sidestream (legacy parser)
-create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100_legacy.sql
 
 # switch telemetry (legacy parser)
+create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch_legacy.sql
+
+# switch telemetry (v2 parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch.sql
 
 # website examples
