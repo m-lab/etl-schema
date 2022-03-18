@@ -13,13 +13,6 @@ WITH PreCleanWeb100 AS (
     -- NOTE: we name the partition_date to test_date to prevent exposing
     -- implementation details that are expected to change.
     partition_date AS date,
-    CONCAT(
-      web100_log_entry.connection_spec.local_ip,
-      CAST (web100_log_entry.connection_spec.local_port AS STRING),
-      web100_log_entry.connection_spec.remote_ip,
-      CAST (web100_log_entry.connection_spec.remote_port AS STRING),
-      CAST (partition_date AS STRING)
-    ) AS pseudoUUID,
     *,
     web100_log_entry.snap.Duration AS connection_duration, -- SYN to FIN total time
     (web100_log_entry.snap.SndLimTimeRwin +
@@ -60,11 +53,11 @@ WITH PreCleanWeb100 AS (
 
 Web100DownloadModels AS (
   SELECT
-    pseudoUUID as id,
+    id,
     date,
     -- Struct a models various TCP behaviors
     STRUCT(
-      pseudoUUID as UUID,
+      id as UUID,
       log_time AS TestTime,
       "reno" AS CongestionControl,
       web100_log_entry.snap.HCThruOctetsAcked * 8.0 / measurement_duration AS MeanThroughputMbps,
@@ -98,76 +91,16 @@ Web100DownloadModels AS (
     STRUCT (
       web100_log_entry.connection_spec.remote_ip AS IP,
       web100_log_entry.connection_spec.remote_port AS Port,
-      STRUCT(
-        -- NOTE: it's necessary to enumerate each field because the new Server.Geo
-        -- fields are in a different order. Here reorder the web100 fields because
-        -- we accept the newer tables as the canonical ordering.
-        connection_spec.client_geolocation.continent_code,
-        connection_spec.client_geolocation.country_code,
-        connection_spec.client_geolocation.country_code3,
-        connection_spec.client_geolocation.country_name,
-        connection_spec.client_geolocation.region,
-        '' AS Subdivision1ISOCode, -- MISSING
-        '' AS Subdivision1Name, -- MISSING
-        '' AS Subdivision2ISOCode, -- MISSING
-        '' AS Subdivision2Name, -- MISSING
-        connection_spec.client_geolocation.metro_code,
-        connection_spec.client_geolocation.city,
-        connection_spec.client_geolocation.area_code,
-        connection_spec.client_geolocation.postal_code,
-        connection_spec.client_geolocation.latitude,
-        connection_spec.client_geolocation.longitude,
-        connection_spec.client_geolocation.radius,
-        True AS Missing -- Future missing record flag
-      ) AS Geo,
-      STRUCT(
-        '' AS CIDR,
-        SAFE_CAST(connection_spec.client.network.asn AS INT64) AS ASNumber,
-        '' AS ASName,
-        False AS Missing,
-        ARRAY[ STRUCT( ARRAY[
-               IFNULL(SAFE_CAST(connection_spec.client.network.asn AS INT64),0)
-               ] AS ASNs ) ] AS Systems
-      ) AS Network
+      connection_spec.ClientX.Geo,
+      connection_spec.ClientX.Network,
     ) AS client,
     STRUCT (
       web100_log_entry.connection_spec.local_ip AS IP,
       web100_log_entry.connection_spec.local_port AS Port,
-      REGEXP_EXTRACT(task_filename,
-            'mlab[1-4]-([a-z][a-z][a-z][0-9][0-9t])') AS Site, -- e.g. lga02
-      REGEXP_EXTRACT(task_filename,
-            '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') AS Machine, -- e.g. mlab1
-      STRUCT(
-        -- NOTE: it's necessary to enumerate each field because the new Server.Geo
-        -- fields are in a different order. Here reorder the web100 fields because
-        -- we accept the newer tables as the canonical ordering.
-        connection_spec.server_geolocation.continent_code,
-        connection_spec.server_geolocation.country_code,
-        connection_spec.server_geolocation.country_code3,
-        connection_spec.server_geolocation.country_name,
-        connection_spec.server_geolocation.region,
-        '' AS Subdivision1ISOCode, -- MISSING
-        '' AS Subdivision1Name, -- MISSING
-        '' AS Subdivision2ISOCode, -- MISSING
-        '' AS Subdivision2Name, -- MISSING
-        connection_spec.server_geolocation.metro_code,
-        connection_spec.server_geolocation.city,
-        connection_spec.server_geolocation.area_code,
-        connection_spec.server_geolocation.postal_code,
-        connection_spec.server_geolocation.latitude,
-        connection_spec.server_geolocation.longitude,
-        connection_spec.server_geolocation.radius,
-        True AS Missing -- Future missing record flag
-      ) AS Geo,
-      STRUCT(
-        '' AS CIDR,
-        SAFE_CAST(connection_spec.server.network.asn AS INT64) AS ASNumber,
-        '' AS ASName,
-        False AS Missing,
-        ARRAY[ STRUCT( ARRAY[
-               IFNULL(SAFE_CAST(connection_spec.server.network.asn AS INT64), 0)
-               ] AS ASNs ) ] AS Systems
-      ) AS Network
+      connection_spec.ServerX.Site,
+      connection_spec.ServerX.Machine,
+      connection_spec.ServerX.Geo,
+      connection_spec.ServerX.Network,
     ) AS server,
     PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
   FROM PreCleanWeb100
