@@ -60,7 +60,7 @@ function create_view() {
   view="${template%%.sql}"
   view="${view##*/}"
 
-  echo -n "Creating "${dst_project}.${dataset}.${view}" using "${template}
+  echo "Creating "${dst_project}.${dataset}.${view}" using "${template}
 
   ${BQ_CREATE_VIEW} \
       -src-project "${src_project}" \
