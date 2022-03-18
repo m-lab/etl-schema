@@ -90,7 +90,7 @@ Web100UploadModels AS (
       web100_log_entry.connection_spec.remote_ip AS IP,
       web100_log_entry.connection_spec.remote_port AS Port,
       connection_spec.ClientX.Geo,
-      connection_spec.ClientX.Network,
+      connection_spec.ClientX.Network
     ) AS client,
     STRUCT (
       web100_log_entry.connection_spec.local_ip AS IP,
@@ -98,7 +98,7 @@ Web100UploadModels AS (
       connection_spec.ServerX.Site,
       connection_spec.ServerX.Machine,
       connection_spec.ServerX.Geo,
-      connection_spec.ServerX.Network,
+      connection_spec.ServerX.Network
     ) AS server,
     PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
   FROM PreCleanWeb100
