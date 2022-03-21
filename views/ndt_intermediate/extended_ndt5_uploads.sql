@@ -10,7 +10,7 @@
 
 WITH ndt5uploads AS (
   SELECT date, parser, raw.C2S, client, server,
-  (raw.C2S.Error != "") AS IsErrored,
+  (raw.C2S.Error IS NOT NULL AND raw.S2C.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(raw.C2S.EndTime, raw.C2S.StartTime, MICROSECOND) AS connection_duration
   FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
   -- Limit to valid C2S results
