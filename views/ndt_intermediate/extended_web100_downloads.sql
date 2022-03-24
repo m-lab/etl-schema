@@ -91,7 +91,26 @@ Web100DownloadModels AS (
     STRUCT (
       web100_log_entry.connection_spec.remote_ip AS IP,
       web100_log_entry.connection_spec.remote_port AS Port,
-      connection_spec.ClientX.Geo,
+      -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
+      STRUCT(
+        connection_spec.ClientX.Geo.ContinentCode,
+        connection_spec.ClientX.Geo.CountryCode,
+        connection_spec.ClientX.Geo.CountryCode3,
+        connection_spec.ClientX.Geo.CountryName,
+        "", -- mask out region.
+        connection_spec.ClientX.Geo.Subdivision1ISOCode,
+        connection_spec.ClientX.Geo.Subdivision1Name,
+        connection_spec.ClientX.Geo.Subdivision2ISOCode,
+        connection_spec.ClientX.Geo.Subdivision2Name,
+        connection_spec.ClientX.Geo.MetroCode,
+        connection_spec.ClientX.Geo.City,
+        connection_spec.ClientX.Geo.AreaCode,
+        connection_spec.ClientX.Geo.PostalCode,
+        connection_spec.ClientX.Geo.Latitude,
+        connection_spec.ClientX.Geo.Longitude,
+        connection_spec.ClientX.Geo.AccuracyRadiusKm,
+        connection_spec.ClientX.Geo.Missing
+      ) AS Geo,
       connection_spec.ClientX.Network
     ) AS client,
     STRUCT (
@@ -99,7 +118,26 @@ Web100DownloadModels AS (
       web100_log_entry.connection_spec.local_port AS Port,
       connection_spec.ServerX.Site,
       connection_spec.ServerX.Machine,
-      connection_spec.ServerX.Geo,
+      -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
+      STRUCT(
+        connection_spec.ServerX.Geo.ContinentCode,
+        connection_spec.ServerX.Geo.CountryCode,
+        connection_spec.ServerX.Geo.CountryCode3,
+        connection_spec.ServerX.Geo.CountryName,
+        "", -- mask out region.
+        connection_spec.ServerX.Geo.Subdivision1ISOCode,
+        connection_spec.ServerX.Geo.Subdivision1Name,
+        connection_spec.ServerX.Geo.Subdivision2ISOCode,
+        connection_spec.ServerX.Geo.Subdivision2Name,
+        connection_spec.ServerX.Geo.MetroCode,
+        connection_spec.ServerX.Geo.City,
+        connection_spec.ServerX.Geo.AreaCode,
+        connection_spec.ServerX.Geo.PostalCode,
+        connection_spec.ServerX.Geo.Latitude,
+        connection_spec.ServerX.Geo.Longitude,
+        connection_spec.ServerX.Geo.AccuracyRadiusKm,
+        connection_spec.ServerX.Geo.Missing
+      ) AS Geo,
       connection_spec.ServerX.Network
     ) AS server,
     PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
