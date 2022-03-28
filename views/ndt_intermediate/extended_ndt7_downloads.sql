@@ -94,7 +94,26 @@ NDT7DownloadModels AS (
     STRUCT (
       raw.ClientIP AS IP,
       raw.ClientPort AS Port,
-      client.Geo, -- The entire new geo struct
+      -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
+      STRUCT(
+        client.Geo.ContinentCode,
+        client.Geo.CountryCode,
+        client.Geo.CountryCode3,
+        client.Geo.CountryName,
+        "", -- mask out region.
+        client.Geo.Subdivision1ISOCode,
+        client.Geo.Subdivision1Name,
+        client.Geo.Subdivision2ISOCode,
+        client.Geo.Subdivision2Name,
+        client.Geo.MetroCode,
+        client.Geo.City,
+        client.Geo.AreaCode,
+        client.Geo.PostalCode,
+        client.Geo.Latitude,
+        client.Geo.Longitude,
+        client.Geo.AccuracyRadiusKm,
+        client.Geo.Missing
+      ) AS Geo,
       client.Network
     ) AS client,
     STRUCT (
