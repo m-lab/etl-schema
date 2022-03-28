@@ -100,7 +100,7 @@ NDT7DownloadModels AS (
         client.Geo.CountryCode,
         client.Geo.CountryCode3,
         client.Geo.CountryName,
-        "", -- mask out region.
+        "" as Region, -- mask out region.
         client.Geo.Subdivision1ISOCode,
         client.Geo.Subdivision1Name,
         client.Geo.Subdivision2ISOCode,
@@ -121,7 +121,26 @@ NDT7DownloadModels AS (
       raw.ServerPort AS Port,
       server.Site, -- e.g. lga02
       server.Machine, -- e.g. mlab1
-      server.Geo,
+      -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
+      STRUCT(
+        server.Geo.ContinentCode,
+        server.Geo.CountryCode,
+        server.Geo.CountryCode3,
+        server.Geo.CountryName,
+        "" as Region, -- mask out region.
+        server.Geo.Subdivision1ISOCode,
+        server.Geo.Subdivision1Name,
+        server.Geo.Subdivision2ISOCode,
+        server.Geo.Subdivision2Name,
+        server.Geo.MetroCode,
+        server.Geo.City,
+        server.Geo.AreaCode,
+        server.Geo.PostalCode,
+        server.Geo.Latitude,
+        server.Geo.Longitude,
+        server.Geo.AccuracyRadiusKm,
+        server.Geo.Missing
+      ) AS Geo,
       server.Network
     ) AS server,
     PreCleanNDT7 AS _internal202010  -- Not stable and subject to breaking changes
