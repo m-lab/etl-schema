@@ -108,7 +108,7 @@ NDT5DownloadModels AS (
         client.Geo.CountryCode,
         client.Geo.CountryCode3,
         client.Geo.CountryName,
-        "", -- mask out region.
+        NULL as Region, -- mask out region.
         client.Geo.Subdivision1ISOCode,
         client.Geo.Subdivision1Name,
         client.Geo.Subdivision2ISOCode,
@@ -135,7 +135,7 @@ NDT5DownloadModels AS (
         server.Geo.CountryCode,
         server.Geo.CountryCode3,
         server.Geo.CountryName,
-        "", -- mask out region.
+        NULL as Region, -- mask out region.
         server.Geo.Subdivision1ISOCode,
         server.Geo.Subdivision1Name,
         server.Geo.Subdivision2ISOCode,
