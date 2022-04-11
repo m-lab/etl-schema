@@ -113,8 +113,9 @@ if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1.sql
 fi
 
-# traceroute (legacy parser)
-create_view ${SRC_PROJECT} ${DST_PROJECT} aggregate ./aggregate/traceroute.sql
+# traceroute.
+create_view ${SRC_PROJECT} ${DST_PROJECT} traceroute ./traceroute/scamper1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} traceroute ./traceroute/paris1_legacy.sql
 
 # global web100 sidestream (legacy parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} sidestream ./sidestream/web100_legacy.sql
