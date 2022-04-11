@@ -102,6 +102,17 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_20201026x.sq
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
 
+# Public pass-through views for joined tables.
+if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
+    # NOTE: these steps can only be applied in the public measurement-lab
+    # project because in other M-Lab projects, these targets are actual
+    # tables. Only in measurement-lab can we create these views.
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt5.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/tcpinfo.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1.sql
+fi
+
 # traceroute (legacy parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} aggregate ./aggregate/traceroute.sql
 
