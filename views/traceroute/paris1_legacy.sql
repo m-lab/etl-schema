@@ -3,4 +3,4 @@
 -- In the future, it can be combined with other experiments.
 --
 SELECT CAST(_PARTITIONTIME AS DATE) AS partition_date, *
-FROM `{{.ProjectID}}.base_tables.traceroute
+FROM `{{.ProjectID}}.base_tables.traceroute`
