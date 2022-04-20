@@ -20,13 +20,13 @@ WITH ndt5uploads AS (
 
 tcpinfo AS (
   SELECT * EXCEPT (snapshots)
-  FROM `{{.ProjectID}}.ndt_raw.tcpinfo_legacy` -- TODO move to intermediate_ndt
+  FROM `{{.ProjectID}}.ndt_raw.tcpinfo` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (
   SELECT
     uploads.*,
-    tcpinfo.FinalSnapshot AS FinalSnapshot,
+    tcpinfo.a.FinalSnapshot AS FinalSnapshot,
     -- Receiver side can not compute IsCongested
     -- Receiver side can not directly compute IsBloated
     ( uploads.C2S.ClientIP IN
@@ -46,29 +46,29 @@ PreCleanNDT5 AS (
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
       OR REGEXP_EXTRACT(uploads.parser.ArchiveURL, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
     ) AS IsOAM,  -- Data is not from valid clients
-    tcpinfo.ParseInfo AS TCPparser,
+    tcpinfo.parser AS TCPparser,
     uploads.parser AS NDT5parser,
   FROM
     -- Use a left join to allow NDT test without matching tcpinfo rows.
     ndt5uploads AS uploads
     LEFT JOIN tcpinfo
     ON
-      uploads.date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
-      uploads.C2S.UUID = tcpinfo.UUID
+      uploads.date = tcpinfo.date AND -- This may exclude a few rows issue:#63
+      uploads.id = tcpinfo.id
 ),
 
 NDT5UploadModels AS (
   SELECT
-    C2S.UUID AS id,
+    id,
     date,
     STRUCT (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
-      C2S.UUID,
-      C2S.StartTime AS TestTime,
+      a.UUID,
+      a.TestTime,
       '' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
-      C2S.MeanThroughputMbps AS MeanThroughputMbps,
-      FinalSnapshot.TCPInfo.MinRTT/1000.0 AS MinRTT, -- Sender's MinRTT (ms)
-      Null AS LossRate  -- Receiver can not disambiguate reordering and loss
+      a.MeanThroughputMbps,
+      a.MinRTT, -- Sender's MinRTT (ms)
+      NULL AS LossRate  -- Receiver can not disambiguate reordering and loss
     ) AS a,
     STRUCT (
      "tcpinfo" AS _Instruments -- THIS WILL CHANGE
