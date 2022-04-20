@@ -19,8 +19,7 @@ WITH ndt5uploads AS (
 ),
 
 tcpinfo AS (
-  SELECT * EXCEPT (snapshots)
-  FROM `{{.ProjectID}}.ndt_raw.tcpinfo` -- TODO move to intermediate_ndt
+  SELECT * FROM `{{.ProjectID}}.ndt_raw.tcpinfo` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (
