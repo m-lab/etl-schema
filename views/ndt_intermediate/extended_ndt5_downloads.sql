@@ -20,13 +20,13 @@ WITH ndt5downloads AS (
 ),
 
 tcpinfo AS (
-  SELECT * FROM `{{.ProjectID}}.ndt_raw.tcpinfo` -- TODO move to intermediate_ndt
+  SELECT *, a.FinalSnapshot EXCEPT(a) FROM `{{.ProjectID}}.ndt_raw.tcpinfo` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (
   SELECT
     downloads.*,
-    tcpinfo.a.FinalSnapshot AS FinalSnapshot,
+    FinalSnapshot,
     -- Any loss implys a netowork bottleneck
     (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS IsCongested,
     -- Final RTT sample twice the minimum and above 1 second means bloated
