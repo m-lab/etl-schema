@@ -9,7 +9,7 @@
 --
 
 WITH ndt5downloads AS (
-  SELECT id, date, parser, raw.S2C, client, server,
+  SELECT id, date, parser, raw.S2C, client, server, a,
   (raw.S2C.Error IS NOT NULL AND raw.S2C.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(raw.S2C.EndTime, raw.S2C.StartTime, MICROSECOND) AS connection_duration
   FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
