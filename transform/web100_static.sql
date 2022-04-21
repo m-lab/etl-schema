@@ -5,7 +5,7 @@
 -- for queries.
 --
 -- Always create within local project.
-CREATE TABLE ndt.web100_static
+CREATE TABLE IF NOT EXISTS ndt.web100_static
 PARTITION BY date
 OPTIONS (
   require_partition_filter=true
@@ -30,8 +30,50 @@ SELECT
 	  0              AS Priority,
 	  ""             AS GitCommit
    ) AS parser,
-   connection_spec.ServerX AS server,
-   connection_spec.ClientX AS client,
+   STRUCT(
+      STRUCT(
+        connection_spec.ServerX.Geo.ContinentCode,
+        connection_spec.ServerX.Geo.CountryCode,
+        connection_spec.ServerX.Geo.CountryCode3,
+        connection_spec.ServerX.Geo.CountryName,
+        CAST(NULL AS STRING) AS Region, -- mask out region.
+        connection_spec.ServerX.Geo.Subdivision1ISOCode,
+        connection_spec.ServerX.Geo.Subdivision1Name,
+        connection_spec.ServerX.Geo.Subdivision2ISOCode,
+        connection_spec.ServerX.Geo.Subdivision2Name,
+        connection_spec.ServerX.Geo.MetroCode,
+        connection_spec.ServerX.Geo.City,
+        connection_spec.ServerX.Geo.AreaCode,
+        connection_spec.ServerX.Geo.PostalCode,
+        connection_spec.ServerX.Geo.Latitude,
+        connection_spec.ServerX.Geo.Longitude,
+        connection_spec.ServerX.Geo.AccuracyRadiusKm,
+        connection_spec.ServerX.Geo.Missing
+      ) AS Geo,
+      connection_spec.ServerX.Network
+   ) AS server,
+   STRUCT(
+      STRUCT(
+        connection_spec.ClientX.Geo.ContinentCode,
+        connection_spec.ClientX.Geo.CountryCode,
+        connection_spec.ClientX.Geo.CountryCode3,
+        connection_spec.ClientX.Geo.CountryName,
+        CAST(NULL AS STRING) AS Region, -- mask out region.
+        connection_spec.ClientX.Geo.Subdivision1ISOCode,
+        connection_spec.ClientX.Geo.Subdivision1Name,
+        connection_spec.ClientX.Geo.Subdivision2ISOCode,
+        connection_spec.ClientX.Geo.Subdivision2Name,
+        connection_spec.ClientX.Geo.MetroCode,
+        connection_spec.ClientX.Geo.City,
+        connection_spec.ClientX.Geo.AreaCode,
+        connection_spec.ClientX.Geo.PostalCode,
+        connection_spec.ClientX.Geo.Latitude,
+        connection_spec.ClientX.Geo.Longitude,
+        connection_spec.ClientX.Geo.AccuracyRadiusKm,
+        connection_spec.ClientX.Geo.Missing
+      ) AS Geo,
+      connection_spec.ClientX.Network
+    ) AS client,
    IF(connection_spec.data_direction = 1,
      -- download.
      STRUCT(

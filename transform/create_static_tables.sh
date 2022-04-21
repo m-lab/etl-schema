@@ -21,13 +21,8 @@ function create_table() {
     local query_file=${1:?Please provide query file}
     local table=$( grep 'CREATE TABLE' $query_file | awk '{print $3}' )
 
-    if ! bq show $PROJECT:$table > /dev/null ; then
-      # Table does not exist yet.
-      bq query --project_id=$PROJECT --nouse_legacy_sql "$( cat $query_file )"
-      echo "Created table $PROJECT.$table successfully"
-    else
-      echo "Confirmed table $PROJECT.$table exists"
-    fi
+    bq query --project_id=$PROJECT --nouse_legacy_sql "$( cat $query_file )"
+    echo "Created table $PROJECT.$table successfully"
 }
 
 create_table ./web100_static.sql
