@@ -9,7 +9,7 @@
 --
 
 WITH ndt5downloads AS (
-  SELECT date, parser, raw.S2C, client, server,
+  SELECT id, date, parser, raw.S2C, client, server, a,
   (raw.S2C.Error IS NOT NULL AND raw.S2C.Error != "") AS IsErrored,
   TIMESTAMP_DIFF(raw.S2C.EndTime, raw.S2C.StartTime, MICROSECOND) AS connection_duration
   FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
@@ -20,14 +20,13 @@ WITH ndt5downloads AS (
 ),
 
 tcpinfo AS (
-  SELECT * EXCEPT (snapshots)
-  FROM `{{.ProjectID}}.ndt_raw.tcpinfo_legacy` -- TODO move to intermediate_ndt
+  SELECT * EXCEPT(a), a.FinalSnapshot FROM `{{.ProjectID}}.ndt_raw.tcpinfo` -- TODO move to intermediate_ndt
 ),
 
 PreCleanNDT5 AS (
   SELECT
     downloads.*,
-    tcpinfo.FinalSnapshot AS FinalSnapshot,
+    FinalSnapshot,
     -- Any loss implys a netowork bottleneck
     (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS IsCongested,
     -- Final RTT sample twice the minimum and above 1 second means bloated
@@ -51,28 +50,28 @@ PreCleanNDT5 AS (
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
       OR REGEXP_EXTRACT(downloads.parser.ArchiveURL, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
     ) AS IsOAM,  -- Data is not from valid clients
-    tcpinfo.ParseInfo AS TCPparser,
+    tcpinfo.parser AS TCPparser,
     downloads.parser AS NDT5parser,
   FROM
     -- Use a left join to allow NDT test without matching tcpinfo rows.
     ndt5downloads AS downloads
     LEFT JOIN tcpinfo
     ON
-      downloads.date = tcpinfo.partition_date AND -- This may exclude a few rows issue:#63
-      downloads.S2C.UUID = tcpinfo.UUID
+      downloads.date = tcpinfo.date AND -- This may exclude a few rows issue:#63
+      downloads.id = tcpinfo.id
 ),
 
 NDT5DownloadModels AS (
   SELECT
-    S2C.UUID AS id,
+    id,
     date,
     STRUCT (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
-      S2C.UUID,
-      S2C.StartTime AS TestTime,
+      a.UUID,
+      a.TestTime,
       FinalSnapshot.CongestionAlgorithm AS CongestionControl,
-      S2C.MeanThroughputMbps AS MeanThroughputMbps,
-      S2C.MinRTT/1000000.0 AS MinRTT, -- units are ms
+      a.MeanThroughputMbps AS MeanThroughputMbps,
+      a.MinRTT, -- units are ms
       SAFE_DIVIDE(FinalSnapshot.TCPInfo.BytesRetrans, FinalSnapshot.TCPInfo.BytesSent) AS LossRate
     ) AS a,
     STRUCT (
