@@ -100,7 +100,7 @@ NDT5UploadModels AS (
         client.Geo.CountryCode,
         client.Geo.CountryCode3,
         client.Geo.CountryName,
-        NULL as Region, -- mask out region.
+        CAST(NULL as STRING) as Region, -- mask out region.
         client.Geo.Subdivision1ISOCode,
         client.Geo.Subdivision1Name,
         client.Geo.Subdivision2ISOCode,
@@ -127,7 +127,7 @@ NDT5UploadModels AS (
         server.Geo.CountryCode,
         server.Geo.CountryCode3,
         server.Geo.CountryName,
-        NULL as Region, -- mask out region.
+        CAST(NULL as STRING) as Region, -- mask out region.
         server.Geo.Subdivision1ISOCode,
         server.Geo.Subdivision1Name,
         server.Geo.Subdivision2ISOCode,

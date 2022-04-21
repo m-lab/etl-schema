@@ -95,7 +95,7 @@ Web100UploadModels AS (
         connection_spec.ClientX.Geo.CountryCode,
         connection_spec.ClientX.Geo.CountryCode3,
         connection_spec.ClientX.Geo.CountryName,
-        NULL as Region, -- mask out region.
+        CAST(NULL as STRING) as Region, -- mask out region.
         connection_spec.ClientX.Geo.Subdivision1ISOCode,
         connection_spec.ClientX.Geo.Subdivision1Name,
         connection_spec.ClientX.Geo.Subdivision2ISOCode,
@@ -122,7 +122,7 @@ Web100UploadModels AS (
         connection_spec.ServerX.Geo.CountryCode,
         connection_spec.ServerX.Geo.CountryCode3,
         connection_spec.ServerX.Geo.CountryName,
-        NULL as Region, -- mask out region.
+        CAST(NULL as STRING) as Region, -- mask out region.
         connection_spec.ServerX.Geo.Subdivision1ISOCode,
         connection_spec.ServerX.Geo.Subdivision1Name,
         connection_spec.ServerX.Geo.Subdivision2ISOCode,
