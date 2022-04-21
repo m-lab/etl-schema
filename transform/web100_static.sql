@@ -75,4 +75,3 @@ SELECT
        web100_log_entry AS web100
    ) AS raw,
 FROM `mlab-oti.base_tables.ndt`
-WHERE _PARTITIONTIME = "2019-01-01"
