@@ -23,6 +23,7 @@ steps:
     - PROJECT_IN=mlab-sandbox,mlab-staging
   args:
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
+    - /workspace/transform/create_static_tables.sh $PROJECT_ID
 
 # Deployments to oti and measurement-lab.
 - name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif
@@ -31,4 +32,5 @@ steps:
     - PROJECT_IN=mlab-oti
   args:
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
+    - /workspace/transform/create_static_tables.sh $PROJECT_ID
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID measurement-lab
