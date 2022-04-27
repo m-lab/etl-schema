@@ -12,9 +12,9 @@ WITH PreCleanWeb100 AS (
   SELECT
     *,
     raw.web100.snap.Duration AS connection_duration, -- SYN to FIN total time
-    IF(raw.web100.snap.Duration > 12000000,   /* 12 sec */
-       raw.web100.snap.Duration - 2000000,
-       raw.web100.snap.Duration) AS measurement_duration, -- Time transfering data
+    (raw.web100.snap.SndLimTimeRwin +
+         raw.web100.snap.SndLimTimeCwnd +
+         raw.web100.snap.SndLimTimeSnd) AS measurement_duration, -- Time transfering data
     -- TODO: restore when blacklist flags (or alternate name) is restored.
     -- (blacklist_flags IS NOT NULL and blacklist_flags != 0
     --    OR anomalies.blacklist_flags IS NOT NULL ) AS IsErrored,
@@ -29,16 +29,16 @@ WITH PreCleanWeb100 AS (
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
         OR REGEXP_EXTRACT(parser.ArchiveURL, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
      ) AS IsOAM,  -- Data is not from valid clients
-     ( -- Eliminate some clearly bogus data
-       raw.web100.snap.HCThruOctetsReceived > 1E14 -- approximately 10Gb/s for 24 hours
-     ) AS IsCorrupted,
+     raw.web100.snap.OctetsRetrans > 0 AS IsCongested,
+     (  raw.web100.snap.SmoothedRTT > 2*raw.web100.snap.MinRTT AND
+        raw.web100.snap.SmoothedRTT > 1000 ) AS IsBloated,
     STRUCT (
       parser.Version,
       parser.Time,
       parser.ArchiveURL,
       parser.Filename
     ) AS Web100parser,
-  FROM `{{.ProjectID}}.ndt.web100_static` -- TODO move to intermediate_ndt
+  FROM `{{.ProjectID}}.ndt.web100_static`
   WHERE
     raw.web100.snap.Duration IS NOT NULL
     AND raw.web100.snap.State IS NOT NULL
@@ -49,40 +49,41 @@ WITH PreCleanWeb100 AS (
     AND raw.web100.snap.SndLimTimeSnd IS NOT NULL
 ),
 
-Web100UploadModels AS (
+Web100DownloadModels AS (
   SELECT
     id,
     date,
     -- Struct a models various TCP behaviors
     STRUCT(
       id as UUID,
-      a.TestTime AS TestTime,
-      '' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
-      raw.web100.snap.HCThruOctetsReceived * 8.0 / connection_duration AS MeanThroughputMbps,
-      raw.web100.snap.MinRTT * 1.0 AS MinRTT,  -- Note: download side measurement (ms)
-      Null AS LossRate -- Receiver can not measure loss
+      a.TestTime,
+      "reno" AS CongestionControl,
+      raw.web100.snap.HCThruOctetsAcked * 8.0 / measurement_duration AS MeanThroughputMbps,
+      raw.web100.snap.MinRTT * 1.0 AS MinRTT,
+      SAFE_DIVIDE(raw.web100.snap.SegsRetrans, raw.web100.snap.SegsOut) AS LossRate
     ) AS a,
     STRUCT (
      "web100" AS _Instruments -- THIS WILL CHANGE
     ) AS node,
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
-      ( -- Upload only, >8kB transfered, 9-60 seconds
-        NOT IsOAM -- AND NOT IsErrored
-        AND NOT IsCorrupted
-        AND raw.connection.data_direction IS NOT NULL
-        AND raw.connection.data_direction = 0
-        AND raw.web100.snap.HCThruOctetsReceived IS NOT NULL
-        AND raw.web100.snap.HCThruOctetsReceived >= 8192
-        AND connection_duration BETWEEN 9000000 AND 60000000
-        ) AS IsValidBest,
-      ( -- Upload only, >8kB transfered, 9-60 seconds
+      ( -- Download only, >8kB transfered, 9-60 seconds, network bottlenck
         NOT IsOAM -- AND NOT IsErrored
         AND raw.connection.data_direction IS NOT NULL
-        AND raw.connection.data_direction = 0
-        AND raw.web100.snap.HCThruOctetsReceived IS NOT NULL
-        AND raw.web100.snap.HCThruOctetsReceived >= 8192
-        AND connection_duration BETWEEN 9000000 AND 60000000
+        AND raw.connection.data_direction = 1
+        AND raw.web100.snap.HCThruOctetsAcked IS NOT NULL
+        AND raw.web100.snap.HCThruOctetsAcked >= 8192
+        AND measurement_duration BETWEEN 9000000 AND 60000000
+        AND (IsCongested OR IsBloated)
+      ) AS IsValidBest,
+      ( -- Download only, >kB transfered, 9-60 seconds, network bottlenck
+        NOT IsOAM -- AND NOT IsErrored
+        AND raw.connection.data_direction IS NOT NULL
+        AND raw.connection.data_direction = 1
+        AND raw.web100.snap.HCThruOctetsAcked IS NOT NULL
+        AND raw.web100.snap.HCThruOctetsAcked >= 8192
+        AND measurement_duration BETWEEN 9000000 AND 60000000
+        AND (IsCongested) -- Does not include buffer bloat
       ) AS IsValid2019
     ) AS filter,
     STRUCT (
@@ -107,4 +108,4 @@ Web100UploadModels AS (
     measurement_duration > 0 AND connection_duration > 0
 )
 
-SELECT * FROM Web100UploadModels
+SELECT * FROM Web100DownloadModels
