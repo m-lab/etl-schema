@@ -85,55 +85,19 @@ Web100UploadModels AS (
       ) AS IsValid2019
     ) AS filter,
     STRUCT (
+      -- TODO(soltesz): eliminate ip / port from server/client records.
       raw.web100.connection_spec.remote_ip AS IP,
       raw.web100.connection_spec.remote_port AS Port,
-      -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
-      STRUCT(
-        client.Geo.ContinentCode,
-        client.Geo.CountryCode,
-        client.Geo.CountryCode3,
-        client.Geo.CountryName,
-        CAST(NULL as STRING) as Region, -- mask out region.
-        client.Geo.Subdivision1ISOCode,
-        client.Geo.Subdivision1Name,
-        client.Geo.Subdivision2ISOCode,
-        client.Geo.Subdivision2Name,
-        client.Geo.MetroCode,
-        client.Geo.City,
-        client.Geo.AreaCode,
-        client.Geo.PostalCode,
-        client.Geo.Latitude,
-        client.Geo.Longitude,
-        client.Geo.AccuracyRadiusKm,
-        client.Geo.Missing
-      ) AS Geo,
+      client.Geo,
       client.Network
     ) AS client,
     STRUCT (
+      -- TODO(soltesz): eliminate ip / port from server/client records.
       raw.web100.connection_spec.local_ip AS IP,
       raw.web100.connection_spec.local_port AS Port,
       server.Site,
       server.Machine,
-      -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
-      STRUCT(
-        server.Geo.ContinentCode,
-        server.Geo.CountryCode,
-        server.Geo.CountryCode3,
-        server.Geo.CountryName,
-        CAST(NULL as STRING) as Region, -- mask out region.
-        server.Geo.Subdivision1ISOCode,
-        server.Geo.Subdivision1Name,
-        server.Geo.Subdivision2ISOCode,
-        server.Geo.Subdivision2Name,
-        server.Geo.MetroCode,
-        server.Geo.City,
-        server.Geo.AreaCode,
-        server.Geo.PostalCode,
-        server.Geo.Latitude,
-        server.Geo.Longitude,
-        server.Geo.AccuracyRadiusKm,
-        server.Geo.Missing
-      ) AS Geo,
+      server.Geo,
       server.Network
     ) AS server,
     PreCleanWeb100 AS _internal202010  -- Not stable and subject to breaking changes
