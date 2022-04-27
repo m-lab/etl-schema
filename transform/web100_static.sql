@@ -31,6 +31,8 @@ SELECT
 	  ""             AS GitCommit
    ) AS parser,
    STRUCT(
+      connection_spec.ServerX.Site,
+      connection_spec.ServerX.Machine,
       STRUCT(
         connection_spec.ServerX.Geo.ContinentCode,
         connection_spec.ServerX.Geo.CountryCode,
