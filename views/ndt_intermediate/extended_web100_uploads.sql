@@ -38,7 +38,7 @@ WITH PreCleanWeb100 AS (
       parser.ArchiveURL,
       parser.Filename
     ) AS Web100parser,
-  FROM `{{.ProjectID}}.ndt.web100_static`
+  FROM `{{.ProjectID}}.ndt.web100`
   WHERE
     raw.web100.snap.Duration IS NOT NULL
     AND raw.web100.snap.State IS NOT NULL
