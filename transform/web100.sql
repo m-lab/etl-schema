@@ -5,7 +5,7 @@
 -- for queries.
 --
 -- Always create within local project.
-CREATE TABLE IF NOT EXISTS ndt.web100_static
+CREATE TABLE IF NOT EXISTS ndt.web100
 PARTITION BY date
 OPTIONS (
   require_partition_filter=true

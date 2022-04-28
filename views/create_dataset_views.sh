@@ -88,6 +88,18 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/hopannotation1.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/scamper1.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/tcpinfo.sql
 
+# Public pass-through views for joined tables.
+if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
+    # NOTE: these steps can only be applied in the public measurement-lab
+    # project because in other M-Lab projects, these targets are actual
+    # tables. Only in measurement-lab can we create these views.
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt5.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/tcpinfo.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/web100.sql
+fi
+
 # NDT extended (mixed parsers)
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt5_downloads.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/extended_ndt5_uploads.sql
@@ -102,17 +114,6 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_20201026x.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
-
-# Public pass-through views for joined tables.
-if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
-    # NOTE: these steps can only be applied in the public measurement-lab
-    # project because in other M-Lab projects, these targets are actual
-    # tables. Only in measurement-lab can we create these views.
-    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt5.sql
-    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7.sql
-    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/tcpinfo.sql
-    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1.sql
-fi
 
 # traceroute.
 create_view ${SRC_PROJECT} ${DST_PROJECT} traceroute ./traceroute/scamper1.sql
