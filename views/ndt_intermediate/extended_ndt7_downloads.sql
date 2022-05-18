@@ -8,31 +8,33 @@
 -- See the documentation on creating custom unified views.
 --
 
-WITH ndt7downloads AS (
+WITH
+
+ndt7downloads AS (
   SELECT *,
-  raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))] AS lastSample,
+  raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))] AS FinalSnapshot,
 # (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
   False AS IsErrored,
-  TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MICROSECOND) AS connection_duration
- FROM   `{{.ProjectID}}.ndt.ndt7` -- TODO move to intermediate_ndt
+  TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, SECOND) AS test_duration
+ FROM   `{{.ProjectID}}.ndt.ndt7`
   -- Limit to valid S2C results
-  WHERE raw.Download IS NOT NULL
-  AND raw.Download.UUID IS NOT NULL
-  AND raw.Download.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
+  WHERE
+    raw.Download IS NOT NULL
+    AND raw.Download.UUID IS NOT NULL
+    AND raw.Download.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )  -- TODO clear IsComplete instead
 ),
 
-PreCleanNDT7 AS (
+PreComputeNDT7 AS (
   SELECT
-    id, date, a, IsErrored, lastsample,
-    connection_duration, raw,
-    client, server,
-    -- Any loss implys a netowork bottleneck
-    (lastSample.TCPInfo.TotalRetrans > 0) AS IsCongested,
-    -- Final RTT sample twice the minimum and above 1 second means bloated
-    ((lastSample.TCPInfo.RTT > 2*lastSample.TCPInfo.MinRTT) AND
-       (lastSample.TCPInfo.RTT > 1000)) AS IsBloated,
-    ( -- IsOAM
-      raw.ClientIP IN
+
+    -- All std columns top levels
+    id, date, parser, server, client, a, raw,
+
+    -- Computed above, due to sequential dependencies
+    IsErrored, FinalSnapshot, test_duration,
+
+    -- IsOAM
+    ( raw.ClientIP IN
          -- TODO(m-lab/etl/issues/893): move to parser configuration.
         ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
           "35.225.75.192", -- script-exporter VM in GCE, staging.
@@ -40,52 +42,71 @@ PreCleanNDT7 AS (
           "23.228.128.99", "2605:a601:f1ff:fffe::99", -- ks addresses.
           "45.56.98.222", "2600:3c03::f03c:91ff:fe33:819", -- eb addresses.
           "35.202.153.90", "35.188.150.110" -- Static IPs from GKE VMs for e2e tests.
-        )
-      OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ServerIP),
+        ) ) AS IsOAM, -- TODO Generalize
+
+     -- _IsRFC1918  XXX deprecate?
+     ( (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ClientIP),
                 8) = NET.IP_FROM_STRING("10.0.0.0"))
-      OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ServerIP),
+      OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ClientIP),
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
-      OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ServerIP),
-                16) = NET.IP_FROM_STRING("192.168.0.0"))
-    ) AS IsOAM,  -- Data is not from valid clients
-    parser AS NDT7parser,
+      OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ClientIP),
+                16) = NET.IP_FROM_STRING("192.168.0.0")) ) AS _IsRFC1918, -- TODO does this matter?
+
+    -- IsProduction TODO Check Server Metadata(?)
+    REGEXP_CONTAINS(parser.ArchiveURL,
+           'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
+
+    -- Obsolete IsCongested and IsBloated, used by IsValid2021
+    (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS IsCongested,
+    ((FinalSnapshot.TCPInfo.RTT > 2*FinalSnapshot.TCPInfo.MinRTT) AND
+       (FinalSnapshot.TCPInfo.RTT > 1000)) AS IsBloated,
+
   FROM
     ndt7downloads
 ),
 
-NDT7DownloadModels AS (
+-- This must exactly match the Unified Download Schema
+UnifiedDownloadSchema AS (
   SELECT
     id,
     date,
     STRUCT (
       a.UUID,
       a.TestTime,
+      'Download' AS Direction,
       a.CongestionControl,
       a.MeanThroughputMbps,
       a.MinRTT,  -- mS
       a.LossRate
     ) AS a,
+
     STRUCT (
-     -- "Instruments" is not quite the right concept
-     "ndt7" AS _Instruments -- THIS WILL CHANGE
-    ) AS node,
+      'extended_ndt7_downloads' AS viewSource,
+      CONCAT("ndt7",
+            IF(raw.ClientIP LIKE "%:%", "-IPv6", "-IPv4"),
+            CASE raw.ServerPort
+                 WHEN 443 THEN "-WSS"
+                 WHEN 80 THEN "-WS"
+                 ELSE "-UNK" END ) AS NDTprotocol,
+      raw.Download.ClientMetadata AS ClientMetadata,
+      raw.Download.ServerMetadata AS ServerMetadata,
+      [ parser ] AS Sources -- TODO add AnnotatonParser
+    ) AS Metadata,
+
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
-      (
-        NOT IsOAM AND NOT IsErrored
-        AND lastSample.TCPInfo.BytesAcked IS NOT NULL
-        AND lastSample.TCPInfo.BytesAcked >= 8192
-        AND connection_duration BETWEEN 9000000 AND 60000000
-        -- Tests without network bottlenecks are presumed to have bottlenecks elsewhere
-        AND ( IsCongested OR IsBloated ) -- Loss or excess queueing indicates congestion
-      ) AS IsValidBest,
-      (
-        NOT IsOAM AND NOT IsErrored
-        AND lastSample.TCPInfo.BytesAcked IS NOT NULL
-        AND lastSample.TCPInfo.BytesAcked >= 8192
-        AND connection_duration BETWEEN 9000000 AND 60000000
-        AND ( IsCongested ) -- Only consides loss as a congestion signal
-      ) AS IsValid2019
+      FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+      IsProduction,     -- Not mlab4, abc0t, or other pre production servers
+      IsErrored,                  -- Server reported a problem
+      IsOAM,               -- internal testing and monitoring
+      _IsRFC1918,            -- Not a real client (deprecate?)
+      False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
+      NULL AS WhatPlatformAnomaly,  -- FUTURE, what happened?
+      (FinalSnapshot.TCPInfo.BytesAcked < 8192) AS IsShort, -- not enough data
+      (test_duration < 9) AS IsAborted,   -- Did not run for enough time
+      (test_duration > 60) AS IsHung,    -- Ran for too long
+      IsCongested AS _IsCongested, -- XXX Deprecate?
+      IsBloated AS _IsBloated -- XXX Deprecate?
     ) AS filter,
     -- NOTE: standard columns for views exclude the parseInfo struct because
     -- multiple tables are used to create a derived view. Users that want the
@@ -143,9 +164,9 @@ NDT7DownloadModels AS (
       ) AS Geo,
       server.Network
     ) AS server,
-    PreCleanNDT7 AS _internal202010  -- Not stable and subject to breaking changes
+    PreComputeNDT7 AS _internal202205  -- Not stable and subject to breaking changes
 
-  FROM PreCleanNDT7
+  FROM PreComputeNDT7
 )
 
-SELECT * FROM NDT7DownloadModels
+SELECT * FROM UnifiedDownloadSchema
