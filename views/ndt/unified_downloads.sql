@@ -53,8 +53,8 @@ UnifiedExtendedDownloads AS (
       AND NOT filter.IsShort # less than 8kB data
       AND NOT filter.IsAborted # insufficient duration
       AND NOT filter.IsHung # excessive duraton
---    AND NOT filter._IsRFC1918 # XXX Why traffic from RFC1918 addresses?
---    AND  ( filter._IsCongested OR filter._IsBloated )
+      AND NOT filter._IsRFC1918 # XXX Why traffic from RFC1918 addresses?
+--    AND  ( filter._IsCongested OR filter._IsBloated ) Delta relative to IsValid2021
     ) AS IsValidBest,
 
     -- IsValid2021 was our understading prior to 2022-04-01
@@ -85,7 +85,7 @@ UnifiedExtendedDownloads AS (
   )
 )
 
--- Remove this code to create your own CustomUnifiedView
+-- Remove the code below to create your own Custom Unified View
 SELECT * EXCEPT ( filter )
 FROM UnifiedExtendedDownloads
 WHERE IsValidBest

@@ -12,21 +12,20 @@ WITH
 
 ndt7downloads AS (
   SELECT *,
-  raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))] AS FinalSnapshot,
-# (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
-  False AS IsErrored,
-  TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, SECOND) AS test_duration
- FROM   `{{.ProjectID}}.ndt.ndt7`
-  -- Limit to valid S2C results
+    raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))] AS FinalSnapshot,
+#   (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
+    False AS IsErrored,
+    TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND)*1.0 AS test_duration
+  FROM `{{.ProjectID}}.ndt.ndt7`
+    -- Limit to rows with valid S2C
   WHERE
     raw.Download IS NOT NULL
     AND raw.Download.UUID IS NOT NULL
-    AND raw.Download.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )  -- TODO clear IsComplete instead
+    AND raw.Download.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
 ),
 
 PreComputeNDT7 AS (
   SELECT
-
     -- All std columns top levels
     id, date, parser, server, client, a, raw,
 
@@ -91,7 +90,7 @@ UnifiedDownloadSchema AS (
       raw.Download.ClientMetadata AS ClientMetadata,
       raw.Download.ServerMetadata AS ServerMetadata,
       [ parser ] AS Sources -- TODO add AnnotatonParser
-    ) AS Metadata,
+    ) AS metadata,
 
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
@@ -103,18 +102,15 @@ UnifiedDownloadSchema AS (
       False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
       NULL AS WhatPlatformAnomaly,  -- FUTURE, what happened?
       (FinalSnapshot.TCPInfo.BytesAcked < 8192) AS IsShort, -- not enough data
-      (test_duration < 9) AS IsAborted,   -- Did not run for enough time
-      (test_duration > 60) AS IsHung,    -- Ran for too long
+      (test_duration < 9000.0) AS IsAborted,   -- Did not run for enough time
+      (test_duration > 60000.0) AS IsHung,    -- Ran for too long
       IsCongested AS _IsCongested, -- XXX Deprecate?
       IsBloated AS _IsBloated -- XXX Deprecate?
     ) AS filter,
-    -- NOTE: standard columns for views exclude the parseInfo struct because
-    -- multiple tables are used to create a derived view. Users that want the
-    -- underlying parseInfo values should refer to the corresponding tables
-    -- using the shared UUID.
+
     STRUCT (
-      raw.ClientIP AS IP,
-      raw.ClientPort AS Port,
+      raw.ClientIP AS IP, -- TODO relocate and/or redact this field
+      raw.ClientPort AS Port, -- TODO relocate this field
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
       STRUCT(
         client.Geo.ContinentCode,
@@ -137,9 +133,10 @@ UnifiedDownloadSchema AS (
       ) AS Geo,
       client.Network
     ) AS client,
+
     STRUCT (
-      raw.ServerIP AS IP,
-      raw.ServerPort AS Port,
+      raw.ServerIP AS IP, -- TODO relocate this field
+      raw.ServerPort AS Port, -- TODO relocate this field
       server.Site, -- e.g. lga02
       server.Machine, -- e.g. mlab1
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
@@ -164,6 +161,7 @@ UnifiedDownloadSchema AS (
       ) AS Geo,
       server.Network
     ) AS server,
+
     PreComputeNDT7 AS _internal202205  -- Not stable and subject to breaking changes
 
   FROM PreComputeNDT7

@@ -15,7 +15,7 @@ PreComputeWeb100 AS (
     *,
     -- TODO: restore when blacklist flags (or alternate name) is restored.
     -- (blacklist_flags IS NOT NULL and blacklist_flags != 0
-    --   OR anomalies.blacklist_flags IS NOT NULL )
+    --   OR anomalies.blacklist_flags IS NOT NULL ) AS IsPlatformAnomaly,
     False AS IsPlatformAnomaly,
     ( raw.web100.snap.Duration IS NOT NULL
       AND raw.web100.snap.State IS NOT NULL
@@ -27,7 +27,7 @@ PreComputeWeb100 AS (
     ) AS IsComplete,
     False AS IsErrored,
 
-    raw.web100.snap.Duration AS connection_duration, -- SYN to final snap time (may include SSL)
+    raw.web100.snap.Duration AS connection_duration, -- SYN to final snap time (includes setup)
     (raw.web100.snap.SndLimTimeRwin +
          raw.web100.snap.SndLimTimeCwnd +
          raw.web100.snap.SndLimTimeSnd) AS measurement_duration, -- Time transfering data
@@ -58,10 +58,10 @@ PreComputeWeb100 AS (
     -- IsOAM.  Note that this list only include early OAM devices
     (raw.web100.connection_spec.remote_ip IN
           ("45.56.98.222", "35.192.37.249", "35.225.75.192", "23.228.128.99",
-          "2600:3c03::f03c:91ff:fe33:819", "2605:a601:f1ff:fffe::99"
-    ) ) AS IsOAM, -- TODO Generalize
+          "2600:3c03::f03c:91ff:fe33:819", "2605:a601:f1ff:fffe::99")
+    ) AS IsOAM, -- TODO Generalize
 
-     -- _IsRFC1918  XXX deprecate?
+    -- _IsRFC1918  XXX deprecate?
     ( (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.web100.connection_spec.remote_ip),
                 8) = NET.IP_FROM_STRING("10.0.0.0"))
         OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.web100.connection_spec.remote_ip),
@@ -70,7 +70,7 @@ PreComputeWeb100 AS (
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
      ) AS _IsRFC1918, -- TODO does this matter?
 
-     -- IsProduction TODO Check Server Metadata(?)
+    -- IsProduction TODO Check Server Metadata(?)
     REGEXP_CONTAINS(parser.ArchiveURL,
            'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
 
@@ -79,10 +79,7 @@ PreComputeWeb100 AS (
      (  raw.web100.snap.SmoothedRTT > 2*raw.web100.snap.MinRTT AND
         raw.web100.snap.SmoothedRTT > 1000 ) AS IsBloated,
 
-     parser AS Web100parser
-
-#  FROM `{{.ProjectID}}.ndt_raw.web100_legacy` -- TODO move to intermediate_ndt
-   FROM `mlab-oti.ndt.web100_static`  -- XXX debugging code
+  FROM `{{.ProjectID}}.ndt.web100`
 ),
 
 -- Standard cols must exactly match the Unified Download Schema
@@ -107,7 +104,7 @@ UnifiedDownloadSchema AS (
       ClientMetadata,
       ServerMetadata,
       [ parser ] AS Sources
-    ) AS Metadata,
+    ) AS metadata,
 
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
@@ -124,9 +121,10 @@ UnifiedDownloadSchema AS (
       IsCongested AS _IsCongested, -- XXX Deprecate?
       IsBloated AS _IsBloated -- XXX Deprecate?
     ) AS filter,
+
     STRUCT (
-      raw.web100.connection_spec.remote_ip AS IP,
-      raw.web100.connection_spec.remote_port AS Port,
+      raw.web100.connection_spec.remote_ip AS IP, -- TODO relocate and/or redact this field
+      raw.web100.connection_spec.remote_port AS Port, -- TODO relocate this field
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
       STRUCT(
         client.Geo.ContinentCode,
@@ -150,8 +148,8 @@ UnifiedDownloadSchema AS (
       client.Network
     ) AS client,
     STRUCT (
-      raw.web100.connection_spec.local_ip AS IP,
-      raw.web100.connection_spec.local_port AS Port,
+      raw.web100.connection_spec.local_ip AS IP, -- TODO relocate this field
+      raw.web100.connection_spec.local_port AS Port, -- TODO relocate this field
       REGEXP_EXTRACT(raw.connection.server_hostname, 'mlab[1-4].([a-z][a-z][a-z][0-9][0-9t])') AS Site,
       REGEXP_EXTRACT(raw.connection.server_hostname, '(mlab[1-4])') AS Machine,
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
@@ -176,7 +174,9 @@ UnifiedDownloadSchema AS (
       ) AS Geo,
       server.Network
     ) AS server,
+
     PreComputeWeb100 AS _internal202205  -- Not stable and subject to breaking changes
+
   FROM PreComputeWeb100
 )
 

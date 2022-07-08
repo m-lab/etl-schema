@@ -8,26 +8,42 @@
 -- See the documentation on creating custom unified views.
 --
 
-WITH ndt5uploads AS (
-  SELECT id, date, parser, raw.C2S, client, server, a,
-  (raw.C2S.Error IS NOT NULL AND raw.S2C.Error != "") AS IsErrored,
-  TIMESTAMP_DIFF(raw.C2S.EndTime, raw.C2S.StartTime, MICROSECOND) AS connection_duration
-  FROM   `{{.ProjectID}}.ndt.ndt5` -- TODO move to intermediate_ndt
+WITH
+
+ndt5uploads AS (
+  SELECT id, date, a, parser NDTparser, raw.C2S, raw, client, server,
+    (raw.C2S.Error IS NOT NULL AND raw.C2S.Error != "") AS IsErrored,
+    TIMESTAMP_DIFF(raw.C2S.EndTime, raw.C2S.StartTime, SECOND) AS test_duration
+  FROM   `{{.ProjectID}}.ndt.ndt5`
   -- Limit to valid C2S results
   WHERE  raw.C2S IS NOT NULL
-  AND raw.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
+  AND raw.C2S.UUID IS NOT NULL
+  AND raw.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )  -- TODO clear IsComplete instead
 ),
 
 tcpinfo AS (
-  SELECT * FROM `{{.ProjectID}}.ndt_raw.tcpinfo` -- TODO move to intermediate_ndt
+  SELECT * EXCEPT(a, parser, raw),
+    a.FinalSnapshot,
+    parser AS TCPparser,
+  FROM `{{.ProjectID}}.ndt_raw.tcpinfo`
 ),
 
-PreCleanNDT5 AS (
+PreComputeNDT5 AS (
   SELECT
     uploads.*,
-    tcpinfo.a.FinalSnapshot AS FinalSnapshot,
-    -- Receiver side can not compute IsCongested
-    -- Receiver side can not directly compute IsBloated
+    FinalSnapshot, raw.Control,
+    -- TODO (add Bug) capture StartSnapshot
+
+    CONCAT (
+      "ndt5-",
+      IF(C2S.ClientIP LIKE "%:%", "IPv6-", "IPv4-"),
+      raw.Control.Protocol,
+      if (raw.Control.Protocol = 'plain',
+          CONCAT('-',raw.Control.MessageProtocol),
+          '')
+    ) AS NDTprotocol,
+
+    -- IsOAM
     ( uploads.C2S.ClientIP IN
          -- TODO(m-lab/etl/issues/893): move to parser configuration.
         ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
@@ -37,26 +53,30 @@ PreCleanNDT5 AS (
           "45.56.98.222", "2600:3c03::f03c:91ff:fe33:819", -- eb addresses.
           "35.202.153.90", "35.188.150.110" -- Static IPs from GKE VMs for e2e tests.
         )
-      OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
+     ) AS IsOAM, -- refactored ToDO move to a BQ fuction
+
+     -- _IsRFC1918   XXX
+     ( (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 8) = NET.IP_FROM_STRING("10.0.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
-      OR REGEXP_EXTRACT(uploads.parser.ArchiveURL, '(mlab[1-4])-[a-z][a-z][a-z][0-9][0-9t]') = 'mlab4'
-    ) AS IsOAM,  -- Data is not from valid clients
-    tcpinfo.parser AS TCPparser,
-    uploads.parser AS NDT5parser,
+    ) AS _IsRFC1918, -- TODO does this matter?
+
+    -- IsProduction TODO Check Server Metadata(?)
+    REGEXP_CONTAINS(NDTparser.ArchiveURL,
+           'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
+
+    TCPparser
   FROM
-    -- Use a left join to allow NDT test without matching tcpinfo rows.
+    -- Use a left join to allow NDT tests without matching tcpinfo rows.
     ndt5uploads AS uploads
-    LEFT JOIN tcpinfo
-    ON
-      uploads.date = tcpinfo.date AND -- This may exclude a few rows issue:#63
-      uploads.id = tcpinfo.id
+    LEFT JOIN tcpinfo AS tcpinfo USING ( date, id ) -- This may exclude a few rows issue:#63
 ),
 
-NDT5UploadModels AS (
+-- Standard cols must exactly match the Unified Upload Schema
+UnifiedUploadSchema AS (
   SELECT
     id,
     date,
@@ -64,36 +84,40 @@ NDT5UploadModels AS (
       -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       a.UUID,
       a.TestTime,
-      '' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
+      'Upload' AS Direction,
+      'Unknown' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
       a.MeanThroughputMbps,
-      a.MinRTT, -- Sender's MinRTT (ms)
+      a.MinRTT, -- units are ms
       NULL AS LossRate  -- Receiver can not disambiguate reordering and loss
     ) AS a,
+
     STRUCT (
-     "tcpinfo" AS _Instruments -- THIS WILL CHANGE
-    ) AS node,
+      'extended_ndt5_uploads' AS viewSource,
+      NDTprotocol,
+      Control.ClientMetadata AS ClientMetadata,
+      Control.ServerMetadata AS ServerMetadata,
+      [NDTparser, TCPparser] AS Sources
+    ) AS metadata,
+
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
-      (  -- No C2S test for client vs network bottleneck
-        NOT IsOAM AND NOT IsErrored
-        AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
-        AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
-        AND connection_duration BETWEEN 9000000 AND 60000000
-      ) AS IsValidBest,
-      (  -- No C2S test for client vs network bottleneck
-        NOT IsOAM AND NOT IsErrored
-        AND FinalSnapshot.TCPInfo.BytesReceived IS NOT NULL
-        AND FinalSnapshot.TCPInfo.BytesReceived >= 8192
-        AND connection_duration BETWEEN 9000000 AND 60000000
-      ) AS IsValid2019  -- Same as row_valid_best
+      FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+      IsProduction,     -- Not mlab4, abc0t, or other pre production servers
+      IsErrored,                  -- Server reported a problem
+      IsOAM,               -- internal testing and monitoring
+      _IsRFC1918,            -- Not a real client (deprecate?)
+      False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
+      NULL AS WhatPlatformAnomaly,  -- FUTURE, what happened?
+      (FinalSnapshot.TCPInfo.BytesReceived < 8192) AS IsShort, -- not enough data
+      (test_duration < 9) AS IsAborted,   -- Did not run for enough time
+      (test_duration > 60) AS IsHung,    -- Ran for too long
+      False AS _IsCongested, -- XXX Deprecate?
+      False AS _IsBloated -- XXX Deprecate?
     ) AS filter,
-    -- NOTE: standard columns for views exclude the parseInfo struct because
-    -- multiple tables are used to create a derived view. Users that want the
-    -- underlying parseInfo values should refer to the corresponding tables
-    -- using the shared UUID.
+
     STRUCT (
-      C2S.ClientIP AS IP,
-      C2S.ClientPort AS Port,
+      C2S.ClientIP AS IP, -- TODO relocate and/or redact this field
+      C2S.ClientPort AS Port, -- TODO relocate this field
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
       STRUCT(
         client.Geo.ContinentCode,
@@ -116,9 +140,10 @@ NDT5UploadModels AS (
       ) AS Geo,
       client.Network
     ) AS client,
+
     STRUCT (
-      C2S.ServerIP AS IP,
-      C2S.ServerPort AS Port,
+      C2S.ServerIP AS IP, -- TODO relocate this field
+      C2S.ServerPort AS Port, -- TODO relocate this field
       server.Site,
       server.Machine,
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
@@ -143,8 +168,10 @@ NDT5UploadModels AS (
       ) AS Geo,
       server.Network
     ) AS server,
-    PreCleanNDT5 AS _internal202201  -- Not stable and subject to breaking changes
-  FROM PreCleanNDT5
+
+    PreComputeNDT5 AS _internal202205  -- Not stable and subject to breaking changes
+
+  FROM PreComputeNDT5
 )
 
-SELECT * FROM NDT5UploadModels
+SELECT * FROM UnifiedUploadSchema
