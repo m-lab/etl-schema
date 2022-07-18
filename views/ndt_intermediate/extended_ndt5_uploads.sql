@@ -12,13 +12,13 @@ WITH
 
 ndt5uploads AS (
   SELECT id, date, a, parser NDTparser, raw.C2S, raw, client, server,
-    (raw.C2S.Error IS NOT NULL AND raw.C2S.Error != "") AS IsErrored,
-    TIMESTAMP_DIFF(raw.C2S.EndTime, raw.C2S.StartTime, SECOND) AS test_duration
+    (raw.C2S.Error IS NOT NULL AND raw.C2S.Error != "") AS IsError,
+    TIMESTAMP_DIFF(raw.C2S.EndTime, raw.C2S.StartTime, MILLISECOND)*1.0 AS test_duration
   FROM   `{{.ProjectID}}.ndt.ndt5`
   -- Limit to valid C2S results
   WHERE  raw.C2S IS NOT NULL
   AND raw.C2S.UUID IS NOT NULL
-  AND raw.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )  -- TODO clear IsComplete instead
+  AND raw.C2S.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )  -- TODO(P3) clear IsComplete instead
 ),
 
 tcpinfo AS (
@@ -32,41 +32,38 @@ PreComputeNDT5 AS (
   SELECT
     uploads.*,
     FinalSnapshot, raw.Control,
-    -- TODO (add Bug) capture StartSnapshot
 
-    CONCAT (
-      "ndt5-",
+    FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+
+    -- Protocol
+    CONCAT ("ndt5-",
       IF(C2S.ClientIP LIKE "%:%", "IPv6-", "IPv4-"),
       raw.Control.Protocol,
       if (raw.Control.Protocol = 'plain',
           CONCAT('-',raw.Control.MessageProtocol),
-          '')
-    ) AS NDTprotocol,
+          '') ) AS Protocol,
 
-    -- IsOAM
+    -- TODO(https://github.com/m-lab/etl/issues/893) generalize IsOAM
     ( uploads.C2S.ClientIP IN
-         -- TODO(m-lab/etl/issues/893): move to parser configuration.
         ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
           "35.225.75.192", -- script-exporter VM in GCE, staging.
           "35.192.37.249", -- script-exporter VM in GCE, oti.
           "23.228.128.99", "2605:a601:f1ff:fffe::99", -- ks addresses.
           "45.56.98.222", "2600:3c03::f03c:91ff:fe33:819", -- eb addresses.
           "35.202.153.90", "35.188.150.110" -- Static IPs from GKE VMs for e2e tests.
-        )
-     ) AS IsOAM, -- refactored ToDO move to a BQ fuction
+        ) ) AS IsOAM,
 
-     -- _IsRFC1918   XXX
-     ( (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
+    -- TODO(https://github.com/m-lab/k8s-support/issues/668) deprecate? _IsRFC1918
+    ( (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 8) = NET.IP_FROM_STRING("10.0.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(uploads.C2S.ServerIP),
                 16) = NET.IP_FROM_STRING("192.168.0.0"))
-    ) AS _IsRFC1918, -- TODO does this matter?
+    ) AS _IsRFC1918,
 
-    -- IsProduction TODO Check Server Metadata(?)
     REGEXP_CONTAINS(NDTparser.ArchiveURL,
-           'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
+      'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
 
     TCPparser
   FROM
@@ -81,43 +78,42 @@ UnifiedUploadSchema AS (
     id,
     date,
     STRUCT (
-      -- NDT unified fields: Upload/Download/RTT/Loss/CCAlg + Geo + ASN
       a.UUID,
       a.TestTime,
       'Upload' AS Direction,
       'Unknown' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
       a.MeanThroughputMbps,
-      a.MinRTT, -- units are ms
-      NULL AS LossRate  -- Receiver can not disambiguate reordering and loss
+      a.MinRTT,  -- mS
+      Null AS LossRate  -- Receiver can not disambiguate reordering and loss
     ) AS a,
 
     STRUCT (
-      'extended_ndt5_uploads' AS viewSource,
-      NDTprotocol,
+      'extended_ndt5_uploads' AS View,
+      Protocol,
       Control.ClientMetadata AS ClientMetadata,
       Control.ServerMetadata AS ServerMetadata,
-      [NDTparser, TCPparser] AS Sources
+      [NDTparser, TCPparser] AS Tables
     ) AS metadata,
 
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
-      FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+      IsComplete, -- Not Missing any key fields
       IsProduction,     -- Not mlab4, abc0t, or other pre production servers
-      IsErrored,                  -- Server reported a problem
+      IsError,                  -- Server reported a problem
       IsOAM,               -- internal testing and monitoring
       _IsRFC1918,            -- Not a real client (deprecate?)
       False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
-      NULL AS WhatPlatformAnomaly,  -- FUTURE, what happened?
-      (FinalSnapshot.TCPInfo.BytesReceived < 8192) AS IsShort, -- not enough data
-      (test_duration < 9) AS IsAborted,   -- Did not run for enough time
-      (test_duration > 60) AS IsHung,    -- Ran for too long
-      False AS _IsCongested, -- XXX Deprecate?
-      False AS _IsBloated -- XXX Deprecate?
+      (FinalSnapshot.TCPInfo.BytesReceived < 8192) AS IsSmall, -- not enough data
+      (test_duration < 9000.0) AS IsShort,   -- Did not run for enough time
+      (test_duration > 60000.0) AS IsLong,    -- Ran for too long
+      False AS _IsCongested,
+      False AS _IsBloated
     ) AS filter,
 
     STRUCT (
-      C2S.ClientIP AS IP, -- TODO relocate and/or redact this field
-      C2S.ClientPort AS Port, -- TODO relocate this field
+      -- TODO(https://github.com/m-lab/etl-schema/issues/141) Relocate IP and port
+      C2S.ClientIP AS IP,
+      C2S.ClientPort AS Port,
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
       STRUCT(
         client.Geo.ContinentCode,
@@ -142,10 +138,11 @@ UnifiedUploadSchema AS (
     ) AS client,
 
     STRUCT (
-      C2S.ServerIP AS IP, -- TODO relocate this field
-      C2S.ServerPort AS Port, -- TODO relocate this field
-      server.Site,
-      server.Machine,
+      -- TODO(https://github.com/m-lab/etl-schema/issues/141) Relocate IP and port
+      C2S.ServerIP AS IP,
+      C2S.ServerPort AS Port,
+      server.Site, -- e.g. lga02
+      server.Machine, -- e.g. mlab1
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
       STRUCT(
         server.Geo.ContinentCode,
@@ -169,7 +166,7 @@ UnifiedUploadSchema AS (
       server.Network
     ) AS server,
 
-    PreComputeNDT5 AS _internal202205  -- Not stable and subject to breaking changes
+    PreComputeNDT5 AS _internal202207  -- Not stable and subject to breaking changes
 
   FROM PreComputeNDT5
 )

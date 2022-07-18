@@ -12,12 +12,15 @@ WITH
 
 ndt7downloads AS (
   SELECT *,
-    raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))] AS FinalSnapshot,
-#   (raw.Download.Error != "") AS IsErrored,  -- TODO ndt-server/issues/317
-    False AS IsErrored,
+
+    raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))]
+        AS FinalSnapshot,
+#   (raw.Download.Error != "") AS IsError,  -- TODO ndt-server/issues/317
+    False AS IsError,
     TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND)*1.0 AS test_duration
+
   FROM `{{.ProjectID}}.ndt.ndt7`
-    -- Limit to rows with valid S2C
+  -- Limit to rows with valid S2C
   WHERE
     raw.Download IS NOT NULL
     AND raw.Download.UUID IS NOT NULL
@@ -30,41 +33,50 @@ PreComputeNDT7 AS (
     id, date, parser, server, client, a, raw,
 
     -- Computed above, due to sequential dependencies
-    IsErrored, FinalSnapshot, test_duration,
+    IsError, FinalSnapshot, test_duration,
 
-    -- IsOAM
+    FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+
+    -- Protocol
+    CONCAT("ndt7",
+      IF(raw.ClientIP LIKE "%:%", "-IPv6", "-IPv4"),
+      CASE raw.ServerPort
+        WHEN 443 THEN "-WSS"
+        WHEN 80 THEN "-WS"
+        ELSE "-UNK" END ) AS Protocol,
+
+    -- TODO(https://github.com/m-lab/etl/issues/893) generalize IsOAM
     ( raw.ClientIP IN
-         -- TODO(m-lab/etl/issues/893): move to parser configuration.
         ( "35.193.254.117", -- script-exporter VMs in GCE, sandbox.
           "35.225.75.192", -- script-exporter VM in GCE, staging.
           "35.192.37.249", -- script-exporter VM in GCE, oti.
           "23.228.128.99", "2605:a601:f1ff:fffe::99", -- ks addresses.
           "45.56.98.222", "2600:3c03::f03c:91ff:fe33:819", -- eb addresses.
           "35.202.153.90", "35.188.150.110" -- Static IPs from GKE VMs for e2e tests.
-        ) ) AS IsOAM, -- TODO Generalize
+        ) ) AS IsOAM,
 
-     -- _IsRFC1918  XXX deprecate?
-     ( (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ClientIP),
+    -- TODO(https://github.com/m-lab/k8s-support/issues/668) deprecate? _IsRFC1918
+    ( (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ClientIP),
                 8) = NET.IP_FROM_STRING("10.0.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ClientIP),
                 12) = NET.IP_FROM_STRING("172.16.0.0"))
       OR (NET.IP_TRUNC(NET.SAFE_IP_FROM_STRING(raw.ClientIP),
-                16) = NET.IP_FROM_STRING("192.168.0.0")) ) AS _IsRFC1918, -- TODO does this matter?
+                16) = NET.IP_FROM_STRING("192.168.0.0"))
+    ) AS _IsRFC1918,
 
-    -- IsProduction TODO Check Server Metadata(?)
     REGEXP_CONTAINS(parser.ArchiveURL,
-           'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
+      'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
 
-    -- Obsolete IsCongested and IsBloated, used by IsValid2021
-    (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS IsCongested,
+    -- Obsolete _IsCongested and _IsBloated, used by IsValid2021
+    (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS _IsCongested,
     ((FinalSnapshot.TCPInfo.RTT > 2*FinalSnapshot.TCPInfo.MinRTT) AND
-       (FinalSnapshot.TCPInfo.RTT > 1000)) AS IsBloated,
+      (FinalSnapshot.TCPInfo.RTT > 1000)) AS _IsBloated,
 
   FROM
     ndt7downloads
 ),
 
--- This must exactly match the Unified Download Schema
+-- Standard cols must exactly match the Unified Download Schema
 UnifiedDownloadSchema AS (
   SELECT
     id,
@@ -80,37 +92,33 @@ UnifiedDownloadSchema AS (
     ) AS a,
 
     STRUCT (
-      'extended_ndt7_downloads' AS viewSource,
-      CONCAT("ndt7",
-            IF(raw.ClientIP LIKE "%:%", "-IPv6", "-IPv4"),
-            CASE raw.ServerPort
-                 WHEN 443 THEN "-WSS"
-                 WHEN 80 THEN "-WS"
-                 ELSE "-UNK" END ) AS NDTprotocol,
+      'extended_ndt7_downloads' AS View,
+      Protocol,
       raw.Download.ClientMetadata AS ClientMetadata,
       raw.Download.ServerMetadata AS ServerMetadata,
-      [ parser ] AS Sources -- TODO add AnnotatonParser
+      -- TODO(https://github.com/m-lab/etl-schema/issues/140) Add annotations parseinfo
+      [ parser ] AS Tables
     ) AS metadata,
 
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
-      FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+      IsComplete, -- Not Missing any key fields
       IsProduction,     -- Not mlab4, abc0t, or other pre production servers
-      IsErrored,                  -- Server reported a problem
+      IsError,                  -- Server reported a problem
       IsOAM,               -- internal testing and monitoring
       _IsRFC1918,            -- Not a real client (deprecate?)
       False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
-      NULL AS WhatPlatformAnomaly,  -- FUTURE, what happened?
-      (FinalSnapshot.TCPInfo.BytesAcked < 8192) AS IsShort, -- not enough data
-      (test_duration < 9000.0) AS IsAborted,   -- Did not run for enough time
-      (test_duration > 60000.0) AS IsHung,    -- Ran for too long
-      IsCongested AS _IsCongested, -- XXX Deprecate?
-      IsBloated AS _IsBloated -- XXX Deprecate?
+      (FinalSnapshot.TCPInfo.BytesAcked < 8192) AS IsSmall, -- not enough data
+      (test_duration < 9000.0) AS IsShort,   -- Did not run for enough time
+      (test_duration > 60000.0) AS IsLong,    -- Ran for too long
+      _IsCongested,
+      _IsBloated
     ) AS filter,
 
     STRUCT (
-      raw.ClientIP AS IP, -- TODO relocate and/or redact this field
-      raw.ClientPort AS Port, -- TODO relocate this field
+      -- TODO(https://github.com/m-lab/etl-schema/issues/141) Relocate IP and port
+      raw.ClientIP AS IP,
+      raw.ClientPort AS Port,
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
       STRUCT(
         client.Geo.ContinentCode,
@@ -135,8 +143,9 @@ UnifiedDownloadSchema AS (
     ) AS client,
 
     STRUCT (
-      raw.ServerIP AS IP, -- TODO relocate this field
-      raw.ServerPort AS Port, -- TODO relocate this field
+      -- TODO(https://github.com/m-lab/etl-schema/issues/141) Relocate IP and port
+      raw.ServerIP AS IP,
+      raw.ServerPort AS Port,
       server.Site, -- e.g. lga02
       server.Machine, -- e.g. mlab1
       -- TODO(https://github.com/m-lab/etl/issues/1069): eliminate region mask once parser does this.
@@ -162,7 +171,7 @@ UnifiedDownloadSchema AS (
       server.Network
     ) AS server,
 
-    PreComputeNDT7 AS _internal202205  -- Not stable and subject to breaking changes
+    PreComputeNDT7 AS _internal202207  -- Not stable and subject to breaking changes
 
   FROM PreComputeNDT7
 )

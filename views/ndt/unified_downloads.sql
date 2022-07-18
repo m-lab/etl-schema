@@ -1,7 +1,7 @@
--- **** This is a lightly tested prototype for new filter columns ****
--- It may have undetected bugs and is subject to updates without notification.
--- Contact mattmathis
--- ******************************************************* XXX debugging
+-- XXX **** This is a lightly tested prototype for new filter columns ****
+-- XXX It may have undetected bugs and is subject to updates without notification.
+-- XXX Contact mattmathis
+-- XXX ******************************************************* debugging to be removed
 --
 -- This view, ndt_unified_downloads, is our current best understanding
 -- of all NDT upload data across the entire platform over all time.
@@ -13,7 +13,7 @@
 -- to add columns in the future, but deleting or changing columns will
 -- go through a public review cycle.
 --
--- Views of the form ndt_unified_downloads_XXXX reflect our
+-- Views of the form ndt_unified_downloads_xxxx reflect our
 -- understanding of the data under different assumptions or at earlier
 -- dates.  These views are intended to be useful to test if our
 -- processing changed might have affected any research results.  These
@@ -23,7 +23,7 @@
 --
 -- Researchers doing studies outside the scope of the unified views
 -- are strongly encouraged to copy the Unified Extended subquery below
--- as a private subquery or save them as  private Custom Unified Views
+-- as a private subquery or save it as a private Custom Unified Views
 -- (requires a BQ account) and edit them to fill their needs.
 --
 -- Your research can be updated more easily if your queries are
@@ -47,26 +47,26 @@ UnifiedExtendedDownloads AS (
     (
       filter.IsComplete # Not missing any important fields
       AND filter.IsProduction # not a test server
-      AND NOT filter.IsErrored # Server reported an error
+      AND NOT filter.IsError # Server reported an error
       AND NOT filter.IsOAM # operations and management traffic
       AND NOT filter.IsPlatformAnomaly # overload, bad version, etc
-      AND NOT filter.IsShort # less than 8kB data
-      AND NOT filter.IsAborted # insufficient duration
-      AND NOT filter.IsHung # excessive duraton
-      AND NOT filter._IsRFC1918 # XXX Why traffic from RFC1918 addresses?
---    AND  ( filter._IsCongested OR filter._IsBloated ) Delta relative to IsValid2021
+      AND NOT filter.IsSmall # less than 8kB data
+      AND NOT filter.IsShort # insufficient duration
+      AND NOT filter.IsLong # excessive duraton
+      -- TODO(https://github.com/m-lab/k8s-support/issues/668) deprecate? _IsRFC1918
+      AND NOT filter._IsRFC1918
     ) AS IsValidBest,
 
     -- IsValid2021 was our understading prior to 2022-04-01
     (
       filter.IsComplete # Not missing any important fields
       AND filter.IsProduction # not a test server
-      AND NOT filter.IsErrored # Server reported an error
+      AND NOT filter.IsError # Server reported an error
       AND NOT filter.IsOAM # operations and management traffic
       AND NOT filter.IsPlatformAnomaly # overload, bad version, etc
-      AND NOT filter.IsShort # less than 8kB data
-      AND NOT filter.IsAborted # insufficient duration
-      AND NOT filter.IsHung # excessive duraton
+      AND NOT filter.IsSmall # less than 8kB data
+      AND NOT filter.IsShort # insufficient duration
+      AND NOT filter.IsLong # excessive duraton
       AND NOT filter._IsRFC1918 # Internal network
       AND  ( filter._IsCongested OR filter._IsBloated )
     ) AS IsValid2021,
