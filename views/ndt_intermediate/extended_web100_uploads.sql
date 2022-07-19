@@ -39,7 +39,6 @@ PreComputeWeb100 AS (
       raw.web100.snap.HCThruOctetsReceived > 1E14 -- approximately 10Gb/s for 24 hours
     ) AS IsPlatformAnomaly,
 
-    ( raw.web100.snap.Duration IS NOT NULL
     -- SYN to final snap time in mS (includes setup)
     raw.web100.snap.Duration*0.001 AS connection_duration,
     -- For upload we estimate measurement_duration XXX
