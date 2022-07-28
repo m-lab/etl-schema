@@ -47,7 +47,7 @@ PreComputeWeb100 AS (
         raw.web100.snap.Duration*0.001) AS measurement_duration, -- Time transfering data
 
     -- Modernize Client and Server Metadata
-    [ -- STRUCT('client_af', raw.connection.client_af ) -- int not supported
+    [
       STRUCT('client_application' AS Name, raw.connection.client_application AS Value),
       STRUCT('client_browser', raw.connection.client_browser),
       STRUCT('client_hostname', raw.connection.client_hostname),

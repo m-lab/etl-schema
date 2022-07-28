@@ -50,7 +50,7 @@ PreComputeWeb100 AS (
     ) AS Protocol,
 
     -- Modernize Client and Server Metadata
-    [ -- STRUCT('client_af', raw.connection.client_af ) -- int not supported
+    [
       STRUCT('client_application' AS Name, raw.connection.client_application AS Value),
       STRUCT('client_browser', raw.connection.client_browser),
       STRUCT('client_hostname', raw.connection.client_hostname),
