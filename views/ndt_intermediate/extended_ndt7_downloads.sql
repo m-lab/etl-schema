@@ -15,7 +15,7 @@ ndt7downloads AS (
 
     raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))]
         AS FinalSnapshot,
-#   (raw.Download.Error != "") AS IsError,  -- TODO ndt-server/issues/317
+--   (raw.Download.Error != "") AS IsError,  -- TODO ndt-server/issues/317
     False AS IsError,
     TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND)*1.0 AS test_duration
 
@@ -43,7 +43,7 @@ PreComputeNDT7 AS (
       CASE raw.ServerPort
         WHEN 443 THEN "-WSS"
         WHEN 80 THEN "-WS"
-        ELSE "-UNK" END ) AS Protocol,
+        ELSE "-unknown" END ) AS Protocol,
 
     -- TODO(https://github.com/m-lab/etl/issues/893) generalize IsOAM
     ( raw.ClientIP IN

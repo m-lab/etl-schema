@@ -14,7 +14,7 @@ ndt7uploads AS (
   SELECT *,
 
   raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Upload.ServerMeasurements))] AS FinalSnapshot,
-# (raw.Upload.Error != "") AS IsError,  -- TODO ndt-server/issues/317
+-- (raw.Upload.Error != "") AS IsError,  -- TODO ndt-server/issues/317
   False AS IsError,
   TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND)*1.0 AS test_duration
 
@@ -42,7 +42,7 @@ PreComputeNDT7 AS (
       CASE raw.ServerPort
         WHEN 443 THEN "-WSS"
         WHEN 80 THEN "-WS"
-        ELSE "-UNK" END ) AS Protocol,
+        ELSE "-unknown" END ) AS Protocol,
 
     -- TODO(https://github.com/m-lab/etl/issues/893) generalize IsOAM
     ( raw.ClientIP IN

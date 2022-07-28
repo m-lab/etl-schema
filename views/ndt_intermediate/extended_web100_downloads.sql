@@ -35,10 +35,10 @@ PreComputeWeb100 AS (
     ) AS IsComplete,
     False AS IsError,
 
-    raw.web100.snap.Duration/1000.0 AS connection_duration, -- SYN to final snap time (includes setup)
+    raw.web100.snap.Duration*0.001 AS connection_duration, -- SYN to final snap time (includes setup)
     (raw.web100.snap.SndLimTimeRwin +
         raw.web100.snap.SndLimTimeCwnd +
-        raw.web100.snap.SndLimTimeSnd)/1000.0 AS measurement_duration, -- Time transfering data
+        raw.web100.snap.SndLimTimeSnd)*0.001 AS measurement_duration, -- Time transfering data
 
     -- Protocol
     CONCAT(

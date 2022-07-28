@@ -14,6 +14,7 @@ web100uploads AS (
   SELECT *
   FROM `{{.ProjectID}}.ndt.web100`
   WHERE raw.connection.data_direction = 0
+  AND RAND() < 2 -- XXX DISABLE CACHING
 ),
 
 PreComputeWeb100 AS (
@@ -100,7 +101,7 @@ UnifiedUploadSchema AS (
       a.TestTime,
       'Upload' AS Direction,
       'Unknown' AS CongestionControl, -- https://github.com/m-lab/etl-schema/issues/95
-      SAFE_DIVIDE(raw.web100.snap.HCThruOctetsReceived * 0.008, measurement_duration) AS MeanThroughputMbps,
+      SAFE_DIVIDE(raw.web100.snap.HCThruOctetsReceived * 0.008, connection_duration) AS MeanThroughputMbps,
       raw.web100.snap.MinRTT * 1.0 AS MinRTT,  -- Note: download side measurement (ms)
       Null AS LossRate -- Receiver can not measure sender's loss
     ) AS a,

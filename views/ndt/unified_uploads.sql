@@ -1,7 +1,3 @@
--- XXX **** This is a lightly tested prototype for new filter columns ****
--- XXX It may have undetected bugs and is subject to updates without notification.
--- XXX Contact mattmathis
--- XXX ******************************************************* debugging to be removed
 --
 -- This view, ndt_unified_uploads, is our current best understanding
 -- of all NDT upload data across the entire platform over all time.
@@ -13,18 +9,22 @@
 -- to add columns in the future, but deleting or changing columns will
 -- go through a public review cycle.
 --
+-- See: https://www.measurementlab.net/tests/ndt/#unified-views
+--
 -- Views of the form ndt_unified_uploads_xxx reflect our
 -- understanding of the data under different assumptions or at earlier
 -- dates.  These views are intended to be useful to test if our
--- processing changed might have affected any research results.  These
+-- processing changes might have affected any research results.  These
 -- views will be supported as long as the underlying data does not
 -- change too much.  At some point they are will become unsupportable
 -- and be removed.
 --
 -- Researchers doing studies outside the scope of the unified views
--- are strongly encouraged to copy the Unified Extended subquery below
--- as a private subquery or save it as  private Custom Unified Views
--- (requires a BQ account) and edit them to fill their needs.
+-- are strongly encouraged to copy the UnifiedExtendedUploads
+-- subquery below as a private subquery and edit it to fill their
+-- needs.
+--
+-- See: https://www.measurementlab.net/tests/ndt/views/custom/
 --
 -- Your research can be updated more easily if your queries are
 -- layered: a private custom unified subquery (or a view) to preen and
@@ -45,29 +45,29 @@ UnifiedExtendedUploads AS (
     -- IsValidBest is our current understanding of best filter for
     -- Studying internet performance
     (
-      filter.IsComplete # Not missing any important fields
-      AND filter.IsProduction # not a test server
-      AND NOT filter.IsError # Server reported an error
-      AND NOT filter.IsOAM # operations and management traffic
-      AND NOT filter.IsPlatformAnomaly # overload, bad version, etc
-      AND NOT filter.IsSmall # less than 8kB data
-      AND NOT filter.IsShort # insufficient duration
-      AND NOT filter.IsLong # excessive duraton
+      filter.IsComplete -- Not missing any important fields
+      AND filter.IsProduction -- not a test server
+      AND NOT filter.IsError -- Server reported an error
+      AND NOT filter.IsOAM -- operations and management traffic
+      AND NOT filter.IsPlatformAnomaly -- overload, bad version, etc
+      AND NOT filter.IsSmall -- less than 8kB data
+      AND NOT filter.IsShort -- insufficient duration
+      AND NOT filter.IsLong -- excessive duraton
       -- TODO(https://github.com/m-lab/k8s-support/issues/668) deprecate? _IsRFC1918
       AND NOT filter._IsRFC1918
     ) AS IsValidBest,
 
     -- IsValid2021 was our understading prior to 2022-04-01
     (
-      filter.IsComplete # Not missing any important fields
-      AND filter.IsProduction # not a test server
-      AND NOT filter.IsError # Server reported an error
-      AND NOT filter.IsOAM # operations and management traffic
-      AND NOT filter.IsPlatformAnomaly # overload, bad version, etc
-      AND NOT filter.IsSmall # less than 8kB data
-      AND NOT filter.IsShort # insufficient duration
-      AND NOT filter.IsLong # excessive duraton
-      AND NOT filter._IsRFC1918 # Internal network
+      filter.IsComplete -- Not missing any important fields
+      AND filter.IsProduction -- not a test server
+      AND NOT filter.IsError -- Server reported an error
+      AND NOT filter.IsOAM -- operations and management traffic
+      AND NOT filter.IsPlatformAnomaly -- overload, bad version, etc
+      AND NOT filter.IsSmall -- less than 8kB data
+      AND NOT filter.IsShort -- insufficient duration
+      AND NOT filter.IsLong -- excessive duraton
+      AND NOT filter._IsRFC1918 -- Internal network
     ) AS IsValid2021,
   FROM (
       -- NDT7: 2020-03-12 to present
