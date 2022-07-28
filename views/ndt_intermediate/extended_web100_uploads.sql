@@ -14,7 +14,6 @@ web100uploads AS (
   SELECT *
   FROM `{{.ProjectID}}.ndt.web100`
   WHERE raw.connection.data_direction = 0
-  AND RAND() < 2 -- XXX DISABLE CACHING
 ),
 
 PreComputeWeb100 AS (
