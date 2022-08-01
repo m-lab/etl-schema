@@ -57,6 +57,7 @@ function create_view() {
   description+=$'\n'"On :"`date`
 
   # Strip filename down to view name.
+  # Note that _nofilter views are generated with .SQL~ suffix to prevent checkin 
   view="${template%%.sql}"
   view="${view%%.SQL~}"
   view="${view##*/}"
