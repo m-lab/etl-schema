@@ -57,7 +57,9 @@ function create_view() {
   description+=$'\n'"On :"`date`
 
   # Strip filename down to view name.
+  # Note that _nofilter views are generated with .SQL~ suffix to prevent checkin 
   view="${template%%.sql}"
+  view="${view%%.SQL~}"
   view="${view##*/}"
 
   echo "Creating "${dst_project}.${dataset}.${view}" using "${template}
@@ -111,8 +113,14 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt_intermediate ./ndt_intermediate/ex
 # NDT Unified
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads_20201026x.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads.sql
+# Patch to create unified_downloads_nofilter (removes 2 clauses)
+sed -e 's/EXCEPT.*//' -e 's/WHERE IsValidBest//' ./ndt/unified_downloads.sql > ./ndt/unified_downloads_nofilter.SQL~
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads_nofilter.SQL~
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_20201026x.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
+# Patch to create unified_uploads_nofilter (removes 2 clauses)
+sed -e 's/EXCEPT.*//' -e 's/WHERE IsValidBest//' ./ndt/unified_uploads.sql > ./ndt/unified_uploads_nofilter.SQL~
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_nofilter.SQL~
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
 
 # traceroute.
