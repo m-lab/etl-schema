@@ -117,7 +117,9 @@ sed -e 's/EXCEPT.*//' -e 's/WHERE IsValidBest//' ./ndt/unified_downloads.sql > .
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_downloads_nofilter.SQL~
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_20201026x.sql
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
-
+# Patch to create unified_uploads_nofilter (removes 2 clauses)
+sed -e 's/EXCEPT.*//' -e 's/WHERE IsValidBest//' ./ndt/unified_uploads.sql > ./ndt/unified_uploads_nofilter.SQL~
+create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_nofilter.SQL~
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
 
 # traceroute.
