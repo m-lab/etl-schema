@@ -15,13 +15,14 @@ language: go
 
 go:
 - 1.18
+
 go_import_path: github.com/m-lab/etl-schema
 
 before_install:
-- go get github.com/mattn/goveralls
+- go install github.com/mattn/goveralls@latest
 - echo Branch is ${TRAVIS_BRANCH} and Tag is $TRAVIS_TAG
 
 script:
 - set -e
 - go test -v -short -covermode=count -coverprofile=merge.cov github.com/m-lab/etl-schema/cmd/bq_create_view
-- goveralls -coverprofile=merge.cov -service=travis-ci
+- $HOME/gopath/bin/goveralls -coverprofile=merge.cov -service=travis-ci
