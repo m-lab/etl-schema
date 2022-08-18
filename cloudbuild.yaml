@@ -11,7 +11,7 @@ options:
 
 ############################################################################
 steps:
-- name: gcr.io/$PROJECT_ID/golang-cbif
+- name: 'gcr.io/$PROJECT_ID/golang-cbif:1.18'
   args:
   - go get -v github.com/m-lab/etl-schema/cmd/bq_create_view
   - cp /go/bin/bq_create_view ./views
