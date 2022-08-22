@@ -57,7 +57,7 @@ function create_view() {
   description+=$'\n'"On :"`date`
 
   # Strip filename down to view name.
-  # Note that _nofilter views are generated with .SQL~ suffix to prevent checkin 
+  # Note that _nofilter views are generated with .SQL~ suffix to prevent checkin
   view="${template%%.sql}"
   view="${view%%.SQL~}"
   view="${view##*/}"
@@ -121,7 +121,6 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
 # Patch to create unified_uploads_nofilter (removes 2 clauses)
 sed -e 's/EXCEPT.*//' -e 's/WHERE IsValidBest//' ./ndt/unified_uploads.sql > ./ndt/unified_uploads_nofilter.SQL~
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_nofilter.SQL~
-create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1_hopannotation1.sql
 
 # traceroute.
 create_view ${SRC_PROJECT} ${DST_PROJECT} traceroute ./traceroute/scamper1.sql
