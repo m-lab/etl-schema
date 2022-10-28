@@ -1,1 +1,1 @@
-SELECT * FROM `mlab-clouddflare.speedtest.speed1`
+SELECT * FROM `mlab-cloudflare.speedtest.speed1`
