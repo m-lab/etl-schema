@@ -135,6 +135,9 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch_legac
 # switch telemetry (v2 parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch.sql
 
+# passthrough for mlab-cloudflare tables.
+create_view ${SRC_PROJECT} ${DST_PROJECT} cloudflare ./cloudflare/speed1.sql
+
 # stats-pipeline
 create_view ${SRC_PROJECT} ${DST_PROJECT} statistics ./statistics/v0_global_asn.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} statistics ./statistics/v0_continents.sql
