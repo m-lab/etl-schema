@@ -135,15 +135,8 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch_legac
 # switch telemetry (v2 parser)
 create_view ${SRC_PROJECT} ${DST_PROJECT} utilization ./utilization/switch.sql
 
-# website examples
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_downloads_dedup_daily_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_downloads_dedup_daily_before.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_uploads_dedup_daily_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_decile_uploads_dedup_daily_before.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_downloads_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_downloads_before.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_uploads_after.sql
-create_view ${DST_PROJECT} ${DST_PROJECT} website ./website/entry07_platform_hourly_uploads_before.sql
+# passthrough for mlab-cloudflare tables.
+create_view ${SRC_PROJECT} ${DST_PROJECT} cloudflare ./cloudflare/speedtest_speed1.sql
 
 # stats-pipeline
 create_view ${SRC_PROJECT} ${DST_PROJECT} statistics ./statistics/v0_global_asn.sql
