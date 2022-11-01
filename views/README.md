@@ -42,17 +42,22 @@ Management of these permissions remains manual.
 
 ### Deployment to measurement-lab
 
-The general public accesses all M-Lab data through views published in the
-`measurement-lab` GCP Project. Not all views in this project are visible to the
-public by default. To make a `measurement-lab` dataset and views visible to the
-public, we must assign the disuss@measurementlab.net user specific roles.
+Members of the [discuss@measurementlab.net][discuss] mailing list may query all
+M-Lab data BigQuery data free of charge.
+
+All M-Lab data is accessed through views published in the `measurement-lab` GCP
+Project. Not all views in this project are visible to the public by default. To
+make a `measurement-lab` dataset and views visible to the public, we must assign
+the disuss@measurementlab.net user specific roles.
+
+[discuss]: https://groups.google.com/a/measurementlab.net/g/discuss?pli=1
 
 * `public-bigquery-user-dataset-level`
 
-  This role provides discuss@ group users with access to specific datasets in
-  the measurement-lab project. By default datasets are not visible to discuss@
-  users. Apply this role to individual BQ datasets to make them publically
-  viewable.
+  This role provides discuss@measurementlab.net group users with access to
+  specific datasets in the measurement-lab project. By default datasets are not
+  visible to discuss@ users. Apply this role to individual BQ datasets to make
+  them publicly viewable.
 
     ```txt
     bigquery.datasets.get
@@ -73,11 +78,12 @@ public, we must assign the disuss@measurementlab.net user specific roles.
 
 * `public-bigquery-user-project-level`
 
-  This role provides discuss@ group users with access to tables and views,
-  ability to select measurement-lab project, create jobs within the web console
-  & SDK, to save personal queries, and to export data. This role is assigned to
-  the discuss@ user in the project IAM settings, and automatically inhereited by
-  all BigQuery tables (no production deployment step necessary).
+  This role provides discuss@measurementlab.net group users with access to
+  tables and views, ability to select measurement-lab project, create jobs
+  within the web console & SDK, to save personal queries, and to export data.
+  This role is assigned to the discuss@ user in the project IAM settings, and
+  automatically inhereited by all BigQuery tables (no production deployment step
+  necessary).
 
   Role permissions include:
 
