@@ -16,7 +16,6 @@ steps:
   - go install -v ./cmd/bq_create_view
   - cp /go/bin/bq_create_view ./views
 
-
 # Deployments to sandbox and staging.
 - name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.0
   env:
