@@ -1,3 +1,3 @@
--- This is the raw hopannotation1 view.
+-- This is the raw hopannotation2 view.
 --
 SELECT * FROM `{{.ProjectID}}.raw_ndt.hopannotation2`
