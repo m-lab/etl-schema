@@ -90,6 +90,11 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/hopannotation2.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/scamper1.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/tcpinfo.sql
 
+# WEHE
+create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/annotation2.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/hopannotation2.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/scamper1.sql
+
 # Public pass-through views for joined tables.
 if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
     # NOTE: these steps can only be applied in the public measurement-lab
@@ -100,6 +105,9 @@ if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/tcpinfo.sql
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1.sql
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/web100.sql
+
+    # WEHE
+    create_view ${SRC_PROJECT} ${DST_PROJECT} wehe ./wehe/scamper1.sql
 fi
 
 # NDT extended (mixed parsers)
