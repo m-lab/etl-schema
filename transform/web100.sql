@@ -28,7 +28,9 @@ SELECT
 	  task_filename  AS ArchiveURL,
 	  test_id        AS Filename,
 	  0              AS Priority,
-	  ""             AS GitCommit
+	  ""             AS GitCommit,
+	  0              AS ArchiveSize,
+	  0              AS FileSize
    ) AS parser,
    STRUCT(
       connection_spec.ServerX.Site,
