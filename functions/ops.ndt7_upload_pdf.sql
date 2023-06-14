@@ -5,7 +5,7 @@ OPTIONS(location="us");
 -- Create or update the table function.
 CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_upload_pdf`(
     xmin FLOAT64, xmax FLOAT64, field STRING,
-    startDate DATE, endDate DATE, siteRegex STRING)
+    startDate DATE, endDate DATE, siteRegex STRING, mask BOOL)
 AS (
   WITH xbins AS (
 
@@ -28,6 +28,7 @@ AS (
      AND (filter.IsComplete AND filter.IsProduction AND NOT filter.IsError AND
           NOT filter.IsOAM AND NOT filter.IsPlatformAnomaly AND NOT filter.IsSmall AND
           NOT filter.IsShort AND NOT filter.IsLong AND NOT filter._IsRFC1918)
+     AND IF(mask, NOT a.MeanThroughputMbps BETWEEN 0.42 AND 0.43, TRUE)
 
   ), ndt7_cross_xbins AS (
 
