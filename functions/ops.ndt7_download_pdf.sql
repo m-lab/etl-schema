@@ -1,4 +1,4 @@
--- Create the ops dtaset if it does not exist.
+-- Create the ops dataset if it does not exist.
 CREATE SCHEMA IF NOT EXISTS ops
 OPTIONS(location="us");
 
@@ -55,7 +55,7 @@ AS (
       xright,
       site,
       bin_count,
-      -- Divide bin count by total number of samples for this site, to normalize counts all sites.
+      -- Divide bin count by total number of samples for each site, to normalize counts for all sites.
       bin_count / SUM(bin_count) OVER (partition by site) AS site_pdf,
     FROM ndt7_xbins_counts
     ORDER BY xright
