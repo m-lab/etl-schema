@@ -16,21 +16,20 @@ steps:
   - go install -v ./cmd/bq_create_view
   - cp /go/bin/bq_create_view ./views
 
-# Deployments to sandbox and staging.
+# Deployments to sandbox, staging, and oti.
 - name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.0
   env:
     # Use cbif condition: only run these steps in one of these projects.
-    - PROJECT_IN=mlab-sandbox,mlab-staging
+    - PROJECT_IN=mlab-sandbox,mlab-staging,mlab-oti
   args:
     - /workspace/transform/create_static_tables.sh $PROJECT_ID
+    - /workspace/functions/create_table_functions.sh $PROJECT_ID
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
 
-# Deployments to oti and measurement-lab.
+# Deployments to measurement-lab.
 - name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.0
   env:
     # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-oti
   args:
-    - /workspace/transform/create_static_tables.sh $PROJECT_ID
-    - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID measurement-lab
