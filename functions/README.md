@@ -8,11 +8,11 @@ and deployment automation for BigQuery table functions.
 Create an SQL file with the dataset and function definition. The function name
 must not collide with an existing table or view name.
 
-The SQL file should defines the dataset name and table function. To prevent
+The SQL file should define the dataset name and table function. To prevent
 confusion, the SQL file name should include the intended dataset and table
 function names. For example:
 
-* If the target dataset and table name is `ops.ndt7_download.pdf`, then the
+* If the target dataset and table name is `ops.ndt7_download_pdf`, then the
   configuration file should be named `ops.ndt7_download_pdf.sql`.
 
 ## Deployment
