@@ -100,6 +100,9 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} host_raw ./host_raw/nodeinfo1.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/annotation2.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/hopannotation2.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/scamper1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/clientXputs1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/decisions1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} wehe_raw ./wehe_raw/replayInfo1.sql
 
 # Public pass-through views for joined tables.
 if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
