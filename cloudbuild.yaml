@@ -13,7 +13,7 @@ options:
 steps:
 - name: gcr.io/$PROJECT_ID/golang-cbif:1.20
   args:
-  - go install -v ./cmd/bq_create_view
+  - CGO_ENABLED=0 go install -v ./cmd/bq_create_view
   - cp /go/bin/bq_create_view ./views
 
 # Deployments to sandbox, staging, and oti.
