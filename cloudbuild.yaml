@@ -13,7 +13,7 @@ options:
 steps:
 - name: gcr.io/$PROJECT_ID/golang-cbif:1.20
   args:
-  - CGO_ENABLED=0 go install -v ./cmd/bq_create_view
+  - go install -v ./cmd/bq_create_view
   - cp /go/bin/bq_create_view ./views
 
 # Deployments to sandbox, staging, and oti.
@@ -21,6 +21,7 @@ steps:
   env:
     # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-sandbox,mlab-staging,mlab-oti
+    - CGO_ENABLED=0
   args:
     - /workspace/transform/create_static_tables.sh $PROJECT_ID
     - /workspace/functions/create_table_functions.sh $PROJECT_ID
