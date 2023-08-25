@@ -12,7 +12,8 @@ options:
 ############################################################################
 steps:
 - name: gcr.io/$PROJECT_ID/golang-cbif:1.20
-  env: GCO_ENABLED=0
+  env:
+  - GCO_ENABLED=0
   args:
   - go install -v ./cmd/bq_create_view
   - cp /go/bin/bq_create_view ./views
