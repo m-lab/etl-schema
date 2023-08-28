@@ -11,13 +11,15 @@ options:
 
 ############################################################################
 steps:
-- name: gcr.io/$PROJECT_ID/golang-cbif:1.18
+- name: gcr.io/$PROJECT_ID/golang-cbif:1.20
+  env:
+  - CGO_ENABLED=0
   args:
   - go install -v ./cmd/bq_create_view
   - cp /go/bin/bq_create_view ./views
 
 # Deployments to sandbox, staging, and oti.
-- name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.0
+- name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.1
   env:
     # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-sandbox,mlab-staging,mlab-oti
@@ -27,7 +29,7 @@ steps:
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID $PROJECT_ID
 
 # Deployments to measurement-lab.
-- name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.0
+- name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.1
   env:
     # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-oti
