@@ -1,7 +1,7 @@
 --
 -- This view shows decisions1 from raw wehe for users
 -- that are not CLI (userID does not start with @)
--- and carried over mobile network
+-- and are carried over mobile network
 --
 SELECT result.* 
 FROM `{{.ProjectID}}.raw_wehe.decisions1` as result

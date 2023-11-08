@@ -1,7 +1,7 @@
 --
 -- This view shows clientXputs1 from raw wehe for users
 -- that are not CLI (userID does not start with @)
--- and carried over mobile network
+-- and are carried over mobile network
 --
 SELECT xput.* 
 FROM `{{.ProjectID}}.wehe_raw.clientXputs1` as xput
