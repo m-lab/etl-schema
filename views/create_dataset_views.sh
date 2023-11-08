@@ -118,6 +118,9 @@ if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
     # WEHE
     create_view ${SRC_PROJECT} ${DST_PROJECT} wehe ./wehe/scamper1.sql
     create_view ${SRC_PROJECT} ${DST_PROJECT} wehe ./wehe/scamper1_hopannotation2.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} wehe ./wehe/clientXputs1.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} wehe ./wehe/decisions1.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} wehe ./wehe/replayInfo1.sql
 
     # REVTR
    create_view ${SRC_PROJECT} ${DST_PROJECT} revtr_raw ./revtr_raw/ping1.sql
