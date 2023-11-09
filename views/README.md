@@ -94,5 +94,7 @@ the disuss@measurementlab.net user specific roles.
     bigquery.savedqueries.list
     bigquery.tables.export
     bigquery.tables.getData
-    resourcemanager.projects.get`
+    resourcemanager.projects.get
+    bigquery.readsessions.create
+    bigquery.readsessions.getData
     ```
