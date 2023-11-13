@@ -25,4 +25,4 @@ before_install:
 script:
 - set -e
 - go test -v -short -covermode=count -coverprofile=merge.cov github.com/m-lab/etl-schema/cmd/bq_create_view
-- $HOME/gopath/bin/goveralls -coverprofile=merge.cov -service=travis-ci
+- $HOME/gopath/bin/goveralls -coverprofile=merge.cov -service=travis-pro
