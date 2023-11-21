@@ -1,1 +1,1 @@
-SELECT * FROM `mlab-oti.statistics.continents_asn_*`
+SELECT * FROM `mlab-oti.statistics.continents_asn_2*`
