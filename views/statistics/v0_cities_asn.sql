@@ -1,1 +1,1 @@
-SELECT * FROM `mlab-oti.statistics.cities_asn_*`
+SELECT * FROM `mlab-oti.statistics.cities_asn_2*`

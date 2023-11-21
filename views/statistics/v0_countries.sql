@@ -1,1 +1,1 @@
-SELECT * FROM `mlab-oti.statistics.countries_*`
+SELECT * FROM `mlab-oti.statistics.countries_2*`
