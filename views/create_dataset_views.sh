@@ -93,6 +93,11 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} ndt_raw ./ndt_raw/tcpinfo.sql
 # MSAK raw.
 create_view ${SRC_PROJECT} ${DST_PROJECT} msak_raw ./msak_raw/throughput1.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} msak_raw ./msak_raw/latency1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} msak_raw ./msak_raw/annotation2.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} msak_raw ./msak_raw/hopannotation2.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} msak_raw ./msak_raw/pcap.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} msak_raw ./msak_raw/scamper1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} msak_raw ./msak_raw/tcpinfo.sql
 
 # HOST raw.
 create_view ${SRC_PROJECT} ${DST_PROJECT} host_raw ./host_raw/nodeinfo1.sql
