@@ -37,6 +37,8 @@ PreComputeNDT7 AS (
 
     FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
 
+    IF ("early_exit" IN (SELECT metadata.Name FROM UNNEST(raw.Download.ClientMetadata) AS metadata), True, False) AS IsEarlyExit,
+
     -- Protocol
     CONCAT("ndt7",
       IF(raw.ClientIP LIKE "%:%", "-IPv6", "-IPv4"),
@@ -109,7 +111,7 @@ UnifiedDownloadSchema AS (
       _IsRFC1918,            -- Not a real client (deprecate?)
       False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
       (FinalSnapshot.TCPInfo.BytesAcked < 8192) AS IsSmall, -- not enough data
-      (test_duration < 9000.0) AS IsShort,   -- Did not run for enough time
+      (test_duration < 9000.0 && !IsEarlyExit) AS IsShort,   -- Did not run for enough time (does not apply to early-exit tests)
       (test_duration > 60000.0) AS IsLong,    -- Ran for too long
       _IsCongested,
       _IsBloated
