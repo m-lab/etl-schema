@@ -51,11 +51,24 @@ UnifiedExtendedDownloads AS (
       AND NOT filter.IsOAM -- operations and management traffic
       AND NOT filter.IsPlatformAnomaly -- overload, bad version, etc
       AND NOT filter.IsSmall -- less than 8kB data
-      AND NOT filter.IsShort -- insufficient duration
+      AND (NOT filter.IsShort OR filter.IsEarlyExit) -- insufficient duration or early exit.
       AND NOT filter.IsLong -- excessive duraton
       -- TODO(https://github.com/m-lab/k8s-support/issues/668) deprecate? _IsRFC1918
       AND NOT filter._IsRFC1918
     ) AS IsValidBest,
+
+    -- IsValid2023 was our understanding prior to 2023-11 and addition of early exit.
+    (
+      filter.IsComplete -- Not missing any important fields
+      AND filter.IsProduction -- not a test server
+      AND NOT filter.IsError -- Server reported an error
+      AND NOT filter.IsOAM -- operations and management traffic
+      AND NOT filter.IsPlatformAnomaly -- overload, bad version, etc
+      AND NOT filter.IsSmall -- less than 8kB data
+      AND NOT filter.IsShort -- insufficient duration
+      AND NOT filter.IsLong -- excessive duraton
+      AND NOT filter._IsRFC1918
+    ) AS IsValid2023,
 
     -- IsValid2021 was our understading prior to 2022-04-01
     (
