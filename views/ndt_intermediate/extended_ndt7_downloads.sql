@@ -111,8 +111,9 @@ UnifiedDownloadSchema AS (
       _IsRFC1918,            -- Not a real client (deprecate?)
       False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
       (FinalSnapshot.TCPInfo.BytesAcked < 8192) AS IsSmall, -- not enough data
-      (test_duration < 9000.0 AND IsEarlyExit IS FALSE) AS IsShort,   -- Did not run for enough time (does not apply to early-exit tests)
+      (test_duration < 9000.0) AS IsShort,   -- Did not run for enough time
       (test_duration > 60000.0) AS IsLong,    -- Ran for too long
+      IsEarlyExit,   -- Short tests may be allowed when early-exit is true
       _IsCongested,
       _IsBloated
     ) AS filter,
@@ -173,7 +174,7 @@ UnifiedDownloadSchema AS (
       server.Network
     ) AS server,
 
-    PreComputeNDT7 AS _internal202207  -- Not stable and subject to breaking changes
+    PreComputeNDT7 AS _internal202402  -- Not stable and subject to breaking changes
 
   FROM PreComputeNDT7
 )

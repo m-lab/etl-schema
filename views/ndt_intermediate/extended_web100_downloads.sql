@@ -125,6 +125,7 @@ UnifiedDownloadSchema AS (
       raw.web100.snap.HCThruOctetsAcked < 8192 AS IsSmall,
       measurement_duration < 9000.0 AS IsShort,
       measurement_duration > 60000.0 AS IsLong,
+      False AS IsEarlyExit, -- not present in web100 data
       _IsCongested,
       _IsBloated
     ) AS filter,
@@ -185,7 +186,7 @@ UnifiedDownloadSchema AS (
       server.Network
     ) AS server,
 
-    PreComputeWeb100 AS _internal202207  -- Not stable and subject to breaking changes
+    PreComputeWeb100 AS _internal202402  -- Not stable and subject to breaking changes
 
   FROM PreComputeWeb100
 )

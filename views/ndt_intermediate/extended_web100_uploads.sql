@@ -124,6 +124,7 @@ UnifiedUploadSchema AS (
       raw.web100.snap.HCThruOctetsReceived < 8192 AS IsSmall, -- not enough data
       connection_duration < 9000.0 AS IsShort,   -- Did not run for enough time
       connection_duration > 60000.0 AS IsLong,    -- Ran for too long
+      False AS IsEarlyExit, -- not supported for upload tests
       False AS _IsCongested,
       False AS _IsBloated
     ) AS filter,
@@ -184,7 +185,7 @@ UnifiedUploadSchema AS (
       server.Network
     ) AS server,
 
-    PreComputeWeb100 AS _internal202207  -- Not stable and subject to breaking changes
+    PreComputeWeb100 AS _internal202402  -- Not stable and subject to breaking changes
 
   FROM PreComputeWeb100
 )
