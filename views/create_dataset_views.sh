@@ -133,6 +133,7 @@ if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
    create_view ${SRC_PROJECT} ${DST_PROJECT} revtr_raw ./revtr_raw/revtr1.sql
    create_view ${SRC_PROJECT} ${DST_PROJECT} revtr_raw ./revtr_raw/trace1.sql
    create_view ${SRC_PROJECT} ${DST_PROJECT} revtr_raw ./revtr_raw/traceatlas1.sql
+   create_view ${SRC_PROJECT} ${DST_PROJECT} revtr_raw ./revtr_raw/ranked_spoofers1.sql
 fi
 
 # NDT extended (mixed parsers)
