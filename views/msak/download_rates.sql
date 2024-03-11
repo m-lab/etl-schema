@@ -2,7 +2,7 @@ WITH
 time_range AS (
   SELECT raw.MeasurementID as mid, min(raw.StartTime) as start_time, min(raw.EndTime) as end_time
   FROM `mlab-oti.raw_msak.throughput1`
-  AND raw.Direction = "download"
+  WHERE raw.Direction = "download"
   GROUP BY raw.MeasurementID
 ),
 
@@ -48,7 +48,6 @@ SELECT
 FROM
   `mlab-oti.msak_raw.throughput1` t1
   JOIN max_bytes_acked_per_stream t2 ON t1.raw.MeasurementID = t2.MeasurementID
-  AND t1.raw.UUID = t2.UUID
 GROUP BY
   date,
   raw.MeasurementID
