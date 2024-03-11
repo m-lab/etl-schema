@@ -44,7 +44,7 @@ SELECT
       actual_elapsed_times
     WHERE
       mid = raw.MeasurementID
-  ) * 8 as GoodputMbps
+  ) * 8 as ThroughputMbps
 FROM
   `mlab-oti.msak_raw.throughput1` t1
   JOIN max_bytes_acked_per_stream t2 ON t1.raw.MeasurementID = t2.MeasurementID
