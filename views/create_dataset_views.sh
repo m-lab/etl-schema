@@ -174,6 +174,7 @@ create_view ${SRC_PROJECT} ${DST_PROJECT} cloudflare ./cloudflare/speedtest_spee
 
 # MSAK
 create_view ${SRC_PROJECT} ${DST_PROJECT} msak ./msak/throughput1.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} msak ./msak/download_rates.sql
 
 # stats-pipeline
 create_view ${SRC_PROJECT} ${DST_PROJECT} statistics ./statistics/v0_global_asn.sql
