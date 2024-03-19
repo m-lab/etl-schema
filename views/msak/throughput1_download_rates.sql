@@ -1,14 +1,14 @@
 WITH
 time_range AS (
   SELECT raw.MeasurementID as mid, min(raw.StartTime) as start_time, min(raw.EndTime) as end_time
-  FROM `mlab-oti.raw_msak.throughput1`
+  FROM `{{.ProjectID}}.msak.throughput1`
   WHERE raw.Direction = "download"
   GROUP BY raw.MeasurementID
 ),
 
 actual_elapsed_times AS (
   SELECT raw.MeasurementID as mid, max(sm.ElapsedTime) as elapsed
-  FROM `mlab-oti.raw_msak.throughput1` msak
+  FROM `{{.ProjectID}}.msak.throughput1` msak
     JOIN UNNEST(raw.ServerMeasurements) sm
     JOIN time_range r ON msak.raw.MeasurementID = r.mid
 
@@ -24,7 +24,7 @@ max_bytes_acked_per_stream AS (
   SELECT raw.MeasurementID,
     raw.UUID,
     max(sm.TCPInfo.BytesAcked) as max_bytes_acked
-    FROM `mlab-oti.raw_msak.throughput1` msak
+    FROM `{{.ProjectID}}.msak.throughput1` msak
       JOIN UNNEST(raw.ServerMeasurements) sm
       JOIN time_range r ON msak.raw.MeasurementID = r.mid
     -- Verify that the test's start time + the measurement's elapsed time doesn't exceed end_time.
@@ -46,7 +46,7 @@ SELECT
       mid = raw.MeasurementID
   ) * 8 as ThroughputMbps
 FROM
-  `mlab-oti.msak_raw.throughput1` t1
+  `{{.ProjectID}}.msak.throughput1` t1
   JOIN max_bytes_acked_per_stream t2 ON t1.raw.MeasurementID = t2.MeasurementID
 GROUP BY
   date,
