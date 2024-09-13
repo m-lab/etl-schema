@@ -3,7 +3,7 @@ CREATE SCHEMA IF NOT EXISTS ops
 OPTIONS(location="us");
 
 -- Create or update the table function.
-CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_download_pdf`(
+CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_download_pdf_byosraw`(
     xmin FLOAT64, xmax FLOAT64, field STRING,
     startDate DATE, endDate DATE, siteRegex STRING)
 AS (
@@ -23,13 +23,17 @@ AS (
         WHEN "LossRate" THEN a.LossRate
         ELSE 0
       END AS metric
-    FROM `measurement-lab.ndt_intermediate.extended_ndt7_downloads`
+    FROM `mlab-autojoin.autoload_v2_ndt.ndt7_union`
     WHERE date BETWEEN startDate AND endDate
      AND REGEXP_CONTAINS(server.Site, siteRegex)
-     AND (filter.IsComplete AND filter.IsProduction AND NOT filter.IsError AND
-          NOT filter.IsOAM AND NOT filter.IsPlatformAnomaly AND NOT filter.IsSmall AND
-          (filter.IsEarlyExit OR NOT filter.IsShort) AND NOT filter.IsLong AND NOT filter._IsRFC1918)
-
+     AND raw.Download IS NOT NULL
+     AND ARRAY_LENGTH(raw.Download.ServerMeasurements) > 0 -- IsComplete
+     AND NOT (raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))].TCPInfo.BytesAcked < 8192) -- IsSmall
+     AND (
+      IF("early_exit" IN (SELECT metadata.Name FROM UNNEST(raw.Download.ClientMetadata) AS metadata), True, False) OR
+      NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) < 9000 -- IsShort
+     )
+     AND NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) > 60000 -- IsLong
   ), ndt7_cross_xbins AS (
 
     SELECT
