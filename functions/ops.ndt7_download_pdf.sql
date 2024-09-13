@@ -28,7 +28,7 @@ AS (
      AND REGEXP_CONTAINS(server.Site, siteRegex)
      AND (filter.IsComplete AND filter.IsProduction AND NOT filter.IsError AND
           NOT filter.IsOAM AND NOT filter.IsPlatformAnomaly AND NOT filter.IsSmall AND
-          NOT filter.IsShort AND NOT filter.IsLong AND NOT filter._IsRFC1918)
+          (filter.IsEarlyExit OR NOT filter.IsShort) AND NOT filter.IsLong AND NOT filter._IsRFC1918)
 
   ), ndt7_cross_xbins AS (
 

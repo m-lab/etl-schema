@@ -29,7 +29,10 @@ AS (
      AND raw.Download IS NOT NULL
      AND ARRAY_LENGTH(raw.Download.ServerMeasurements) > 0 -- IsComplete
      AND NOT (raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))].TCPInfo.BytesAcked < 8192) -- IsSmall
-     AND NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) < 9000 -- IsShort
+     AND (
+      IF("early_exit" IN (SELECT metadata.Name FROM UNNEST(raw.Download.ClientMetadata) AS metadata), True, False) OR
+      NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) < 9000 -- IsShort
+     )
      AND NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) > 60000 -- IsLong
   ), ndt7_cross_xbins AS (
 
