@@ -35,3 +35,11 @@ steps:
     - PROJECT_IN=mlab-oti
   args:
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID measurement-lab
+
+# Deployments for v2 autoloader pipeline.
+- name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.1
+  env:
+    # Use cbif condition: only run these steps in one of these projects.
+    - PROJECT_IN=mlab-sandbox,mlab-staging,mlab-autojoin
+  args:
+    - /workspace/views/create_autojoin_dataset_views.sh self $PROJECT_ID
