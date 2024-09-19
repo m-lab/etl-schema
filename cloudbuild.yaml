@@ -37,9 +37,11 @@ steps:
     - /workspace/views/create_dataset_views.sh self $PROJECT_ID measurement-lab
 
 # Deployments for v2 autoloader pipeline.
+# TODO(soltesz): this remains manual and should be automatic. Remove this
+# deployment once the autoloader supports automated creation of configured
+# joins and unified views.
 - name: gcr.io/$PROJECT_ID/gcloud-jsonnet-cbif:1.1
   env:
-    # Use cbif condition: only run these steps in one of these projects.
     - PROJECT_IN=mlab-sandbox,mlab-staging,mlab-autojoin
   args:
     - /workspace/views/create_autojoin_dataset_views.sh self $PROJECT_ID
