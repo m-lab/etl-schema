@@ -29,10 +29,10 @@ WITH ndt7 AS (
             ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesRetrans / ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesSent, NULL)) AS LossRate
     ) AS a,
   *
-  FROM `mlab-autojoin.autoload_v2_{{ORG}}_ndt.ndt7_raw`
+  FROM `{{.ProjectID}}.autoload_v2_{{ORG}}_ndt.ndt7_raw`
 ), ann2 AS (
   SELECT raw.UUID AS id, *
-  FROM `mlab-autojoin.autoload_v2_{{ORG}}_ndt.annotation2_raw`
+  FROM `{{.ProjectID}}.autoload_v2_{{ORG}}_ndt.annotation2_raw`
 )
 
 SELECT
