@@ -16,17 +16,21 @@ WITH ndt7 AS (
       -- TODO(soltesz): read this from the snapshots instead. Some BYOS nodes may be misconfigured.
       "bbr" AS CongestionControl,
       8 * IF(raw.Download IS NOT NULL,
-             ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesAcked / ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.ElapsedTime,
+             ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesAcked /
+               ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.ElapsedTime,
              IF(raw.Upload IS NOT NULL,
-                ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesAcked / ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.ElapsedTime, NULL)) AS MeanThroughputMbps,
+                ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesAcked /
+                  ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.ElapsedTime, NULL)) AS MeanThroughputMbps,
       IF(raw.Download IS NOT NULL,
          ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.MinRTT,
          IF(raw.Upload IS NOT NULL,
             ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.MinRTT, NULL)) / 1000 AS MinRTT, -- unit: ms
       IF(raw.Download IS NOT NULL,
-         ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesRetrans / ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesSent,
+         ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesRetrans /
+           ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesSent,
          IF(raw.Upload IS NOT NULL,
-            ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesRetrans / ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesSent, NULL)) AS LossRate
+            ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesRetrans /
+              ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesSent, NULL)) AS LossRate
     ) AS a,
   *
   FROM `{{.ProjectID}}.autoload_v2_{{ORG}}_ndt.ndt7_raw`
