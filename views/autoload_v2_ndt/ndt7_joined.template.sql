@@ -1,3 +1,6 @@
+--
+-- ndt7_joined - joins the raw ndt7 and annotation2 autoloaded datasets with standard columns.
+--
 WITH prendt7 AS (
   SELECT
     raw.Download IS NOT NULL AS isDownload,
