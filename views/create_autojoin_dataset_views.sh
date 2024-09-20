@@ -37,7 +37,10 @@ for ds in $datasets ; do
   echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.ndt7_joined`' >> ./autoload_v2_ndt/ndt7_union.sql
 done
 
-# NOTE: Must create "ndt7_union" last because it references the views above.
-create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/ndt7_union.sql
+if grep -q SELECT ./autoload_v2_ndt/ndt7_union.sql ; then
+  # Only deploy view if it contains some queries.
+  # NOTE: Must create "ndt7_union" last because it references the views above.
+  create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/ndt7_union.sql
+fi
 
 echo "All views created successfully"
