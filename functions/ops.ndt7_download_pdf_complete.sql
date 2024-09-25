@@ -16,7 +16,7 @@ AS (
 
   ), ndt7 AS (
 
-    SELECT server,
+    SELECT server.Site as site,
       CASE field
         WHEN "MeanThroughputMbps" THEN a.MeanThroughputMbps
         WHEN "MinRTT" THEN a.MinRTT
@@ -34,9 +34,10 @@ AS (
       NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) < 9000 -- IsShort
      )
      AND NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) > 60000 -- IsLong
+     AND server.Site IS NOT NULL
 
     UNION ALL
-    SELECT server,
+    SELECT server.Site as site,
       CASE field
         WHEN "MeanThroughputMbps" THEN a.MeanThroughputMbps
         WHEN "MinRTT" THEN a.MinRTT
@@ -49,12 +50,13 @@ AS (
      AND (filter.IsComplete AND filter.IsProduction AND NOT filter.IsError AND
           NOT filter.IsOAM AND NOT filter.IsPlatformAnomaly AND NOT filter.IsSmall AND
           (filter.IsEarlyExit OR NOT filter.IsShort) AND NOT filter.IsLong AND NOT filter._IsRFC1918)
+     AND server.Site IS NOT NULL
 
   ), ndt7_cross_xbins AS (
 
     SELECT
       xright,
-      server.Site AS site,
+      site,
       IF(metric BETWEEN xleft AND xright, 1, 0) AS present,
     FROM ndt7 CROSS JOIN xbins
     WHERE metric BETWEEN xmin AND xmax
