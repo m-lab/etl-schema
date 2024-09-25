@@ -3,9 +3,9 @@ CREATE SCHEMA IF NOT EXISTS ops
 OPTIONS(location="us");
 
 -- Create or update the table function.
-CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_download_pdf_byosraw`(
+CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_upload_pdf_autonode`(
     xmin FLOAT64, xmax FLOAT64, field STRING,
-    startDate DATE, endDate DATE, siteRegex STRING)
+    startDate DATE, endDate DATE, siteRegex STRING, mask BOOL)
 AS (
   WITH xbins AS (
 
@@ -20,20 +20,19 @@ AS (
       CASE field
         WHEN "MeanThroughputMbps" THEN a.MeanThroughputMbps
         WHEN "MinRTT" THEN a.MinRTT
-        WHEN "LossRate" THEN a.LossRate
         ELSE 0
       END AS metric
     FROM `mlab-autojoin.autoload_v2_ndt.ndt7_union`
     WHERE date BETWEEN startDate AND endDate
+     AND raw.Upload IS NOT NULL
      AND REGEXP_CONTAINS(server.Site, siteRegex)
-     AND raw.Download IS NOT NULL
-     AND ARRAY_LENGTH(raw.Download.ServerMeasurements) > 0 -- IsComplete
-     AND NOT (raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))].TCPInfo.BytesAcked < 8192) -- IsSmall
-     AND (
-      IF("early_exit" IN (SELECT metadata.Name FROM UNNEST(raw.Download.ClientMetadata) AS metadata), True, False) OR
-      NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) < 9000 -- IsShort
-     )
-     AND NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) > 60000 -- IsLong
+     AND IF(mask, NOT a.MeanThroughputMbps BETWEEN 0.42 AND 0.43, TRUE)
+     AND ARRAY_LENGTH(raw.Upload.ServerMeasurements) > 0 -- IsComplete
+     AND NOT (raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Upload.ServerMeasurements))].TCPInfo.BytesReceived < 8192) -- IsSmall
+     AND NOT TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND) < 9000 -- IsShort
+     AND NOT TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND) > 60000 -- IsLong
+     AND server.Site IS NOT NULL
+
   ), ndt7_cross_xbins AS (
 
     SELECT
