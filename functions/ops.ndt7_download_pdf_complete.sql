@@ -16,7 +16,7 @@ AS (
 
   ), ndt7 AS (
 
-    SELECT *,
+    SELECT server,
       CASE field
         WHEN "MeanThroughputMbps" THEN a.MeanThroughputMbps
         WHEN "MinRTT" THEN a.MinRTT
@@ -34,6 +34,22 @@ AS (
       NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) < 9000 -- IsShort
      )
      AND NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) > 60000 -- IsLong
+
+    UNION ALL
+    SELECT server,
+      CASE field
+        WHEN "MeanThroughputMbps" THEN a.MeanThroughputMbps
+        WHEN "MinRTT" THEN a.MinRTT
+        WHEN "LossRate" THEN a.LossRate
+        ELSE 0
+      END AS metric
+    FROM `measurement-lab.ndt_intermediate.extended_ndt7_downloads`
+    WHERE date BETWEEN startDate AND endDate
+     AND REGEXP_CONTAINS(server.Site, siteRegex)
+     AND (filter.IsComplete AND filter.IsProduction AND NOT filter.IsError AND
+          NOT filter.IsOAM AND NOT filter.IsPlatformAnomaly AND NOT filter.IsSmall AND
+          (filter.IsEarlyExit OR NOT filter.IsShort) AND NOT filter.IsLong AND NOT filter._IsRFC1918)
+
   ), ndt7_cross_xbins AS (
 
     SELECT
