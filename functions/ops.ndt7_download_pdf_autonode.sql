@@ -3,7 +3,7 @@ CREATE SCHEMA IF NOT EXISTS ops
 OPTIONS(location="us");
 
 -- Create or update the table function.
-CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_download_pdf_complete`(
+CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_download_pdf_autonode`(
     xmin FLOAT64, xmax FLOAT64, field STRING,
     startDate DATE, endDate DATE, siteRegex STRING)
 AS (
