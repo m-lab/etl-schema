@@ -3,7 +3,7 @@ CREATE SCHEMA IF NOT EXISTS ops
 OPTIONS(location="us");
 
 -- Create or update the table function.
-CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_upload_pdf_managed`(
+CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_upload_pdf_autonode`(
     xmin FLOAT64, xmax FLOAT64, field STRING,
     startDate DATE, endDate DATE, siteRegex STRING, mask BOOL)
 AS (
@@ -22,13 +22,16 @@ AS (
         WHEN "MinRTT" THEN a.MinRTT
         ELSE 0
       END AS metric
-    FROM `measurement-lab.ndt_intermediate.extended_ndt7_uploads`
+    FROM `mlab-autojoin.autoload_v2_ndt.ndt7_union`
     WHERE date BETWEEN startDate AND endDate
+     AND raw.Upload IS NOT NULL
      AND REGEXP_CONTAINS(server.Site, siteRegex)
-     AND (filter.IsComplete AND filter.IsProduction AND NOT filter.IsError AND
-          NOT filter.IsOAM AND NOT filter.IsPlatformAnomaly AND NOT filter.IsSmall AND
-          NOT filter.IsShort AND NOT filter.IsLong AND NOT filter._IsRFC1918)
      AND IF(mask, NOT a.MeanThroughputMbps BETWEEN 0.42 AND 0.43, TRUE)
+     AND ARRAY_LENGTH(raw.Upload.ServerMeasurements) > 0 -- IsComplete
+     AND NOT (raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))].TCPInfo.BytesReceived < 8192) -- IsSmall
+     AND NOT TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND) < 9000 -- IsShort
+     AND NOT TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND) > 60000 -- IsLong
+     AND server.Site IS NOT NULL
 
   ), ndt7_cross_xbins AS (
 
