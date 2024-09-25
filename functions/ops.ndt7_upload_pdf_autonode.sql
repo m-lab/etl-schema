@@ -28,7 +28,7 @@ AS (
      AND REGEXP_CONTAINS(server.Site, siteRegex)
      AND IF(mask, NOT a.MeanThroughputMbps BETWEEN 0.42 AND 0.43, TRUE)
      AND ARRAY_LENGTH(raw.Upload.ServerMeasurements) > 0 -- IsComplete
-     AND NOT (raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))].TCPInfo.BytesReceived < 8192) -- IsSmall
+     AND NOT (raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Upload.ServerMeasurements))].TCPInfo.BytesReceived < 8192) -- IsSmall
      AND NOT TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND) < 9000 -- IsShort
      AND NOT TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND) > 60000 -- IsLong
      AND server.Site IS NOT NULL
