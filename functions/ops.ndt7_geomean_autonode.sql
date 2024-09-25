@@ -9,8 +9,20 @@ AS (
   SELECT
     server.Site,
     COUNT(*) AS tests,
-    AVG(a.MeanThroughputMbps) as meanRate,
-    EXP(AVG(LN(a.MeanThroughputMbps))) AS GeometricMeanRate,
+    AVG(
+      CASE field
+        WHEN "MeanThroughputMbps" THEN a.MeanThroughputMbps
+        WHEN "MinRTT" THEN a.MinRTT
+        WHEN "LossRate" THEN a.LossRate
+        ELSE 0
+      END) AS mean,
+    EXP(AVG(LN(
+      CASE field
+        WHEN "MeanThroughputMbps" THEN a.MeanThroughputMbps
+        WHEN "MinRTT" THEN a.MinRTT
+        WHEN "LossRate" THEN a.LossRate
+        ELSE 0
+      END))) AS geoMean,
   FROM `measurement-lab.ndt_intermediate.extended_ndt7_downloads`
   WHERE date BETWEEN startDate AND endDate
     AND REGEXP_CONTAINS(server.Site, siteRegex)
