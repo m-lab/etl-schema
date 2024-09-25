@@ -19,7 +19,8 @@ function create_table_function() {
     cat $query_file | bq query --project_id=$PROJECT --nouse_legacy_sql
 }
 
-for sqlfile in `ls *.sql` ; do
+# NOTE: deploy legacy names last, since they depend on the sql files with suffix.
+for sqlfile in `ls *_{autonode,managed,complete}.sql` `ls *.sql | grep -v -E 'autonode|managed|complete'` ; do
     echo "Deploying table function: $sqlfile"
     create_table_function $sqlfile
 done
