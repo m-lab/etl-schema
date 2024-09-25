@@ -7,7 +7,7 @@ CREATE OR REPLACE TABLE FUNCTION `ops.ndt7_geomean_autonode`(
     field STRING, startDate DATE, endDate DATE, siteRegex STRING)
 AS (
   SELECT
-    server.Site,
+    server.Site as site,
     COUNT(*) AS tests,
     AVG(
       CASE field
