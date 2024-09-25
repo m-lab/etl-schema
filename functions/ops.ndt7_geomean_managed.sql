@@ -29,6 +29,7 @@ AS (
     AND (filter.IsComplete AND filter.IsProduction AND NOT filter.IsError AND
           NOT filter.IsOAM AND NOT filter.IsPlatformAnomaly AND NOT filter.IsSmall AND
           (filter.IsEarlyExit OR NOT filter.IsShort) AND NOT filter.IsLong AND NOT filter._IsRFC1918)
+    AND (field != "LossRate" OR a.LossRate > 0)
     AND server.Site IS NOT NULL
   GROUP BY server.Site
 )

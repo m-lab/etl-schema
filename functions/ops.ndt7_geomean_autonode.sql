@@ -34,6 +34,7 @@ AS (
       NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) < 9000 -- IsShort
      )
      AND NOT TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND) > 60000 -- IsLong
+     AND (field != "LossRate" OR a.LossRate > 0)
      AND server.Site IS NOT NULL
   GROUP BY server.Site
 )
