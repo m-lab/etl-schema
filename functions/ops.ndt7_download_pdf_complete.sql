@@ -10,9 +10,9 @@ AS (
   SELECT xright, site_pdf, site_cdf, site
   FROM (
     SELECT xright, site_pdf, site_cdf, site,
-    FROM `ops.ndt7_download_pdf`(0.1, 3500, field, startDate, endDate, siteRegex)
+    FROM `ops.ndt7_download_pdf`(xmin, xmax, field, startDate, endDate, siteRegex)
     UNION ALL
     SELECT xright, site_pdf, site_cdf, site,
-    FROM `ops.ndt7_download_pdf_autonode`(0.1, 3500, field, startDate, endDate, siteRegex)
+    FROM `ops.ndt7_download_pdf_autonode`(xmin, xmax, field, startDate, endDate, siteRegex)
   ) ORDER BY xright, site
 );
