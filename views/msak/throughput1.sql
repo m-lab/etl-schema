@@ -17,4 +17,4 @@ SELECT
     raw
 FROM
     `{{.ProjectID}}.msak_raw.throughput1` t1
-    JOIN `{{.ProjectID}}.msak_raw.annotation2` t2 ON t1.raw.UUID = t2.id AND t1.date = t2.date
+    LEFT JOIN `{{.ProjectID}}.msak_raw.annotation2` t2 ON t1.raw.UUID = t2.id AND t1.date = t2.date
