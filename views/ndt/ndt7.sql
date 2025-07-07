@@ -1,5 +1,4 @@
 --
--- This view is a pass-through for annotated ndt7 data.  This materializes data
--- from ndt_raw.ndt7 with ndt_raw.annotation2 into a single location.
+-- This view is a pass-through for annotated ndt7 data excluding Providence information.
 --
-SELECT * FROM `{{.ProjectID}}.ndt.ndt7`
+SELECT * EXCEPT ( Parser )  FROM `{{.ProjectID}}.ndt.ndt7`

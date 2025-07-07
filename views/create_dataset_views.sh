@@ -111,8 +111,12 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
 sed -e 's/EXCEPT.*//' -e 's/WHERE IsValidBest//' ./ndt/unified_uploads.sql > ./ndt/unified_uploads_nofilter.SQL~
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_nofilter.SQL~
 
-# Autojoin NDT7 data.
+# union across autojoin orgs
 create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/ndt7_union.sql
+# union between legacy and autojoin.  These create new names
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_legacy.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_dynamic.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_union.sql
 
 # traceroute.
 create_view ${SRC_PROJECT} ${DST_PROJECT} traceroute ./traceroute/scamper1.sql
