@@ -25,10 +25,39 @@ create_view_init
 
 echo "Creating autojoin views"
 # TODO(soltesz): eliminate this in favor of automation within the autoloader.
-# Get list of orgs with ndt autoloaded data.
-datasets=$( bq ls --project_id ${SRC_PROJECT} | grep autoload | grep _ndt | grep -v autoload_v2_ndt )
-echo '-- Generated query' > ./autoload_v2_ndt/ndt7_union.sql
+# Discover autoload org datasets and their available tables using two queries:
+# 1) Project-level SCHEMATA to find all autoload datasets.
+# 2) A single UNION ALL across dataset-scoped INFORMATION_SCHEMA.TABLES.
+datasets=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv \
+  "SELECT schema_name FROM \`${SRC_PROJECT}\`.\`region-us\`.INFORMATION_SCHEMA.SCHEMATA
+   WHERE schema_name LIKE 'autoload_v2_%_ndt'
+     AND schema_name != 'autoload_v2_ndt'
+   ORDER BY schema_name" \
+  | tail -n +2 )
+
+# Build a single UNION ALL query across all dataset INFORMATION_SCHEMA.TABLES
+# to discover which tables exist in each dataset.
+tables_query=""
 for ds in $datasets ; do
+  if [[ -n "$tables_query" ]]; then
+    tables_query+=" UNION ALL "
+  fi
+  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'scamper2_raw')"
+done
+
+table_info=""
+if [[ -n "$tables_query" ]]; then
+  table_info=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv \
+    "$tables_query" | tail -n +2 )
+fi
+
+# Org datasets with ndt7 data.
+ndt7_datasets=$( echo "$table_info" | grep ndt7_raw | cut -d, -f1 )
+# Org datasets with scamper2 data (not all orgs run traceroute-caller).
+scamper2_datasets=$( echo "$table_info" | grep scamper2_raw | cut -d, -f1 )
+
+echo '-- Generated query' > ./autoload_v2_ndt/ndt7_union.sql
+for ds in $ndt7_datasets ; do
   org=$( echo $ds | tr '_' ' ' | awk '{print $3}' )
   create_org_joined_view  ${SRC_PROJECT} ${org}
   if grep -q SELECT ./autoload_v2_ndt/ndt7_union.sql ; then
@@ -44,9 +73,9 @@ if grep -q SELECT ./autoload_v2_ndt/ndt7_union.sql ; then
   create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/ndt7_union.sql
 fi
 
-# scamper2 union across autojoin orgs (no join needed, reference raw directly)
+# scamper2 union across autojoin orgs (no join needed, reference raw directly).
 echo '-- Generated query' > ./autoload_v2_ndt/scamper2_union.sql
-for ds in $datasets ; do
+for ds in $scamper2_datasets ; do
   if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
     echo 'UNION ALL' >> ./autoload_v2_ndt/scamper2_union.sql
   fi
