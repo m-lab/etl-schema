@@ -113,6 +113,7 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_nofilter.SQL
 
 # union across autojoin orgs
 create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/ndt7_union.sql
+create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/scamper2_union.sql
 # union between legacy and autojoin.  These create new names
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_legacy.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_dynamic.sql
