@@ -111,9 +111,10 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads.sql
 sed -e 's/EXCEPT.*//' -e 's/WHERE IsValidBest//' ./ndt/unified_uploads.sql > ./ndt/unified_uploads_nofilter.SQL~
 create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_nofilter.SQL~
 
-# union across autojoin orgs
-create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/ndt7_union.sql
-create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/scamper2_union.sql
+# Autojoin passthrough views. These reference views in mlab-autojoin which may
+# not exist yet (e.g. during initial bootstrapping), so allow failures.
+create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/ndt7_union.sql || echo "WARNING: failed to create autojoin_autoload_v2_ndt.ndt7_union (target may not exist yet)"
+create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/scamper2_union.sql || echo "WARNING: failed to create autojoin_autoload_v2_ndt.scamper2_union (target may not exist yet)"
 # union between legacy and autojoin.  These create new names
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_legacy.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_dynamic.sql
