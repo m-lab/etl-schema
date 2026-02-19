@@ -44,4 +44,17 @@ if grep -q SELECT ./autoload_v2_ndt/ndt7_union.sql ; then
   create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/ndt7_union.sql
 fi
 
+# scamper2 union across autojoin orgs (no join needed, reference raw directly)
+echo '-- Generated query' > ./autoload_v2_ndt/scamper2_union.sql
+for ds in $datasets ; do
+  if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
+    echo 'UNION ALL' >> ./autoload_v2_ndt/scamper2_union.sql
+  fi
+  echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.scamper2_raw`' >> ./autoload_v2_ndt/scamper2_union.sql
+done
+
+if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
+  create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/scamper2_union.sql
+fi
+
 echo "All views created successfully"
