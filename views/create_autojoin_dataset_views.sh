@@ -44,9 +44,14 @@ if grep -q SELECT ./autoload_v2_ndt/ndt7_union.sql ; then
   create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/ndt7_union.sql
 fi
 
-# scamper2 union across autojoin orgs (no join needed, reference raw directly)
+# scamper2 union across autojoin orgs (no join needed, reference raw directly).
+# Not all orgs may have traceroute-caller running yet, so check for the table first.
 echo '-- Generated query' > ./autoload_v2_ndt/scamper2_union.sql
 for ds in $datasets ; do
+  if ! bq show --project_id ${SRC_PROJECT} ${ds}.scamper2_raw > /dev/null 2>&1 ; then
+    echo "WARNING: ${ds}.scamper2_raw not found, skipping"
+    continue
+  fi
   if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
     echo 'UNION ALL' >> ./autoload_v2_ndt/scamper2_union.sql
   fi
