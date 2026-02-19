@@ -77,6 +77,7 @@ if [[ ${DST_PROJECT} = "measurement-lab" ]] ; then
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7.sql
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/tcpinfo.sql
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper1.sql
+    create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/scamper2.sql
     create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/web100.sql
 
     # WEHE
