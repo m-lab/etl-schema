@@ -73,13 +73,18 @@ if grep -q SELECT ./autoload_v2_ndt/ndt7_union.sql ; then
   create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/ndt7_union.sql
 fi
 
-# scamper2 union across autojoin orgs (no join needed, reference raw directly).
+# scamper2 union across autojoin orgs. Each org's scamper2_raw is joined to its
+# annotation2_raw (by connection UUID) to add server & client annotations before
+# the union, mirroring the ndt7_joined pattern above.
 echo '-- Generated query' > ./autoload_v2_ndt/scamper2_union.sql
 for ds in $scamper2_datasets ; do
+  org=$( echo $ds | tr '_' ' ' | awk '{print $3}' )
+  create_org_scamper2_joined_view ${SRC_PROJECT} ${org}
   if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
-    echo 'UNION ALL' >> ./autoload_v2_ndt/scamper2_union.sql
+    # If there is already a SELECT statement in the union, append a "UNION ALL" before the next.
+    echo 'UNION ALL BY NAME' >> ./autoload_v2_ndt/scamper2_union.sql
   fi
-  echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.scamper2_raw`' >> ./autoload_v2_ndt/scamper2_union.sql
+  echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.scamper2_joined`' >> ./autoload_v2_ndt/scamper2_union.sql
 done
 
 if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
