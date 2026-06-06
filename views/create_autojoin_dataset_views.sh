@@ -42,7 +42,7 @@ for ds in $datasets ; do
   if [[ -n "$tables_query" ]]; then
     tables_query+=" UNION ALL "
   fi
-  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'scamper2_raw')"
+  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'scamper2_raw', 'hopannotation2_raw')"
 done
 
 table_info=""
@@ -55,6 +55,8 @@ fi
 ndt7_datasets=$( echo "$table_info" | grep ndt7_raw | cut -d, -f1 )
 # Org datasets with scamper2 data (not all orgs run traceroute-caller).
 scamper2_datasets=$( echo "$table_info" | grep scamper2_raw | cut -d, -f1 )
+# Org datasets with hopannotation2 data.
+hopannotation2_datasets=$( echo "$table_info" | grep hopannotation2_raw | cut -d, -f1 )
 
 echo '-- Generated query' > ./autoload_v2_ndt/ndt7_union.sql
 for ds in $ndt7_datasets ; do
@@ -89,6 +91,19 @@ done
 
 if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
   create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/scamper2_union.sql
+fi
+
+# hopannotation2 union across autojoin orgs (no join needed, reference raw directly).
+echo '-- Generated query' > ./autoload_v2_ndt/hopannotation2_union.sql
+for ds in $hopannotation2_datasets ; do
+  if grep -q SELECT ./autoload_v2_ndt/hopannotation2_union.sql ; then
+    echo 'UNION ALL' >> ./autoload_v2_ndt/hopannotation2_union.sql
+  fi
+  echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.hopannotation2_raw`' >> ./autoload_v2_ndt/hopannotation2_union.sql
+done
+
+if grep -q SELECT ./autoload_v2_ndt/hopannotation2_union.sql ; then
+  create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/hopannotation2_union.sql
 fi
 
 echo "All views created successfully"
