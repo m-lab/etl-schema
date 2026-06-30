@@ -42,7 +42,7 @@ for ds in $datasets ; do
   if [[ -n "$tables_query" ]]; then
     tables_query+=" UNION ALL "
   fi
-  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'scamper2_raw')"
+  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'annotation2_raw', 'scamper2_raw')"
 done
 
 table_info=""
@@ -52,7 +52,14 @@ if [[ -n "$tables_query" ]]; then
 fi
 
 # Org datasets with ndt7 data.
-ndt7_datasets=$( echo "$table_info" | grep ndt7_raw | cut -d, -f1 )
+ndt7_raw_datasets=$( echo "$table_info" | grep ndt7_raw | cut -d, -f1 )
+# Org datasets with annotation2 data. The ndt7_joined view joins ndt7_raw with
+# annotation2_raw, so both tables must exist before the view can be created.
+annotation2_datasets=$( echo "$table_info" | grep annotation2_raw | cut -d, -f1 )
+# Only datasets with both ndt7_raw and annotation2_raw can build ndt7_joined.
+ndt7_datasets=$( comm -12 \
+  <( echo "$ndt7_raw_datasets" | sort -u ) \
+  <( echo "$annotation2_datasets" | sort -u ) )
 # Org datasets with scamper2 data (not all orgs run traceroute-caller).
 scamper2_datasets=$( echo "$table_info" | grep scamper2_raw | cut -d, -f1 )
 
