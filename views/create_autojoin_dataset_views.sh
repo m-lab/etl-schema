@@ -28,7 +28,13 @@ echo "Creating autojoin views"
 # Discover autoload org datasets and their available tables using two queries:
 # 1) Project-level SCHEMATA to find all autoload datasets.
 # 2) A single UNION ALL across dataset-scoped INFORMATION_SCHEMA.TABLES.
-datasets=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv \
+#
+# Both queries MUST pass --max_rows. `bq query` defaults to returning only 100
+# result rows, which silently truncates discovery: the tables query below emits
+# up to one row per (dataset, table), so with 3 tables per org the default cap
+# covers only ~33 orgs and the rest are dropped from ndt7_union. Set a ceiling
+# far above any realistic org/table count.
+datasets=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv --max_rows=1000000 \
   "SELECT schema_name FROM \`${SRC_PROJECT}\`.\`region-us\`.INFORMATION_SCHEMA.SCHEMATA
    WHERE schema_name LIKE 'autoload_v2_%_ndt'
      AND schema_name != 'autoload_v2_ndt'
@@ -47,7 +53,7 @@ done
 
 table_info=""
 if [[ -n "$tables_query" ]]; then
-  table_info=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv \
+  table_info=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv --max_rows=1000000 \
     "$tables_query" | tail -n +2 )
 fi
 
