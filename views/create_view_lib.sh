@@ -59,3 +59,11 @@ function create_org_joined_view() {
   sed -e 's/{{ORG}}/'${org}'/g' autoload_v2_ndt/ndt7_joined.template.sql > autoload_v2_${org}_ndt/ndt7_joined.sql
   create_view ${project} ${project} autoload_v2_${org}_ndt ./autoload_v2_${org}_ndt/ndt7_joined.sql
 }
+
+function create_org_scamper2_joined_view() {
+  local project=$1
+  local org=$2
+  mkdir -p autoload_v2_${org}_ndt
+  sed -e 's/{{ORG}}/'${org}'/g' autoload_v2_ndt/scamper2_joined.template.sql > autoload_v2_${org}_ndt/scamper2_joined.sql
+  create_view ${project} ${project} autoload_v2_${org}_ndt ./autoload_v2_${org}_ndt/scamper2_joined.sql
+}

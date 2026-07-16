@@ -28,7 +28,13 @@ echo "Creating autojoin views"
 # Discover autoload org datasets and their available tables using two queries:
 # 1) Project-level SCHEMATA to find all autoload datasets.
 # 2) A single UNION ALL across dataset-scoped INFORMATION_SCHEMA.TABLES.
-datasets=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv \
+#
+# Both queries MUST pass --max_rows. `bq query` defaults to returning only 100
+# result rows, which silently truncates discovery: the tables query below emits
+# up to one row per (dataset, table), so with 4 tables per org the default cap
+# covers only ~25 orgs and the rest are dropped from ndt7_union. Set a ceiling
+# far above any realistic org/table count.
+datasets=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv --max_rows=1000000 \
   "SELECT schema_name FROM \`${SRC_PROJECT}\`.\`region-us\`.INFORMATION_SCHEMA.SCHEMATA
    WHERE schema_name LIKE 'autoload_v2_%_ndt'
      AND schema_name != 'autoload_v2_ndt'
@@ -42,17 +48,24 @@ for ds in $datasets ; do
   if [[ -n "$tables_query" ]]; then
     tables_query+=" UNION ALL "
   fi
-  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'scamper2_raw', 'hopannotation2_raw')"
+  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'annotation2_raw', 'scamper2_raw', 'hopannotation2_raw')"
 done
 
 table_info=""
 if [[ -n "$tables_query" ]]; then
-  table_info=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv \
+  table_info=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv --max_rows=1000000 \
     "$tables_query" | tail -n +2 )
 fi
 
 # Org datasets with ndt7 data.
-ndt7_datasets=$( echo "$table_info" | grep ndt7_raw | cut -d, -f1 )
+ndt7_raw_datasets=$( echo "$table_info" | grep ndt7_raw | cut -d, -f1 )
+# Org datasets with annotation2 data. The ndt7_joined view joins ndt7_raw with
+# annotation2_raw, so both tables must exist before the view can be created.
+annotation2_datasets=$( echo "$table_info" | grep annotation2_raw | cut -d, -f1 )
+# Only datasets with both ndt7_raw and annotation2_raw can build ndt7_joined.
+ndt7_datasets=$( comm -12 \
+  <( echo "$ndt7_raw_datasets" | sort -u ) \
+  <( echo "$annotation2_datasets" | sort -u ) )
 # Org datasets with scamper2 data (not all orgs run traceroute-caller).
 scamper2_datasets=$( echo "$table_info" | grep scamper2_raw | cut -d, -f1 )
 # Org datasets with hopannotation2 data.
@@ -75,13 +88,18 @@ if grep -q SELECT ./autoload_v2_ndt/ndt7_union.sql ; then
   create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/ndt7_union.sql
 fi
 
-# scamper2 union across autojoin orgs (no join needed, reference raw directly).
+# scamper2 union across autojoin orgs. Each org's scamper2_raw is joined to its
+# annotation2_raw (by connection UUID) to add server & client annotations before
+# the union, mirroring the ndt7_joined pattern above.
 echo '-- Generated query' > ./autoload_v2_ndt/scamper2_union.sql
 for ds in $scamper2_datasets ; do
+  org=$( echo $ds | tr '_' ' ' | awk '{print $3}' )
+  create_org_scamper2_joined_view ${SRC_PROJECT} ${org}
   if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
-    echo 'UNION ALL' >> ./autoload_v2_ndt/scamper2_union.sql
+    # If there is already a SELECT statement in the union, append a "UNION ALL" before the next.
+    echo 'UNION ALL BY NAME' >> ./autoload_v2_ndt/scamper2_union.sql
   fi
-  echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.scamper2_raw`' >> ./autoload_v2_ndt/scamper2_union.sql
+  echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.scamper2_joined`' >> ./autoload_v2_ndt/scamper2_union.sql
 done
 
 if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
