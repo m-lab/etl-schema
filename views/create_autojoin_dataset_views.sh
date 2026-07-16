@@ -31,8 +31,8 @@ echo "Creating autojoin views"
 #
 # Both queries MUST pass --max_rows. `bq query` defaults to returning only 100
 # result rows, which silently truncates discovery: the tables query below emits
-# up to one row per (dataset, table), so with 3 tables per org the default cap
-# covers only ~33 orgs and the rest are dropped from ndt7_union. Set a ceiling
+# up to one row per (dataset, table), so with 4 tables per org the default cap
+# covers only ~25 orgs and the rest are dropped from ndt7_union. Set a ceiling
 # far above any realistic org/table count.
 datasets=$( bq query --project_id ${SRC_PROJECT} --nouse_legacy_sql --format=csv --max_rows=1000000 \
   "SELECT schema_name FROM \`${SRC_PROJECT}\`.\`region-us\`.INFORMATION_SCHEMA.SCHEMATA
@@ -48,7 +48,7 @@ for ds in $datasets ; do
   if [[ -n "$tables_query" ]]; then
     tables_query+=" UNION ALL "
   fi
-  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'annotation2_raw', 'scamper2_raw')"
+  tables_query+="SELECT '${ds}' AS table_schema, table_name FROM \`${ds}\`.INFORMATION_SCHEMA.TABLES WHERE table_name IN ('ndt7_raw', 'annotation2_raw', 'scamper2_raw', 'hopannotation2_raw')"
 done
 
 table_info=""
@@ -68,6 +68,8 @@ ndt7_datasets=$( comm -12 \
   <( echo "$annotation2_datasets" | sort -u ) )
 # Org datasets with scamper2 data (not all orgs run traceroute-caller).
 scamper2_datasets=$( echo "$table_info" | grep scamper2_raw | cut -d, -f1 )
+# Org datasets with hopannotation2 data.
+hopannotation2_datasets=$( echo "$table_info" | grep hopannotation2_raw | cut -d, -f1 )
 
 echo '-- Generated query' > ./autoload_v2_ndt/ndt7_union.sql
 for ds in $ndt7_datasets ; do
@@ -102,6 +104,19 @@ done
 
 if grep -q SELECT ./autoload_v2_ndt/scamper2_union.sql ; then
   create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/scamper2_union.sql
+fi
+
+# hopannotation2 union across autojoin orgs (no join needed, reference raw directly).
+echo '-- Generated query' > ./autoload_v2_ndt/hopannotation2_union.sql
+for ds in $hopannotation2_datasets ; do
+  if grep -q SELECT ./autoload_v2_ndt/hopannotation2_union.sql ; then
+    echo 'UNION ALL' >> ./autoload_v2_ndt/hopannotation2_union.sql
+  fi
+  echo 'SELECT * FROM `{{.ProjectID}}.'$ds'.hopannotation2_raw`' >> ./autoload_v2_ndt/hopannotation2_union.sql
+done
+
+if grep -q SELECT ./autoload_v2_ndt/hopannotation2_union.sql ; then
+  create_view ${SRC_PROJECT} ${SRC_PROJECT} autoload_v2_ndt ./autoload_v2_ndt/hopannotation2_union.sql
 fi
 
 echo "All views created successfully"

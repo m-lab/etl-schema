@@ -116,6 +116,7 @@ create_view ${DST_PROJECT} ${DST_PROJECT} ndt ./ndt/unified_uploads_nofilter.SQL
 # not exist yet (e.g. during initial bootstrapping), so allow failures.
 create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/ndt7_union.sql || echo "WARNING: failed to create autojoin_autoload_v2_ndt.ndt7_union (target may not exist yet)"
 create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/scamper2_union.sql || echo "WARNING: failed to create autojoin_autoload_v2_ndt.scamper2_union (target may not exist yet)"
+create_view ${SRC_PROJECT} ${DST_PROJECT} autojoin_autoload_v2_ndt ./autojoin_autoload_v2_ndt/hopannotation2_union.sql || echo "WARNING: failed to create autojoin_autoload_v2_ndt.hopannotation2_union (target may not exist yet)"
 # union between legacy and autojoin.  These create new names
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_legacy.sql
 create_view ${SRC_PROJECT} ${DST_PROJECT} ndt ./ndt/ndt7_dynamic.sql
