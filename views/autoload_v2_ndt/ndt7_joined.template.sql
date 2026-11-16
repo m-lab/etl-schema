@@ -3,17 +3,14 @@
 --
 WITH prendt7 AS (
   SELECT
-    raw.Download IS NOT NULL AS isDownload,
-    raw.Upload IS NOT NULL AS isUpload,
-    ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].BBRInfo IS NOT NULL AS isBBR,
-    ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesAcked AS downloadBytesAcked,
-    ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.ElapsedTime AS downloadElapsedTime,
-    ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.MinRTT AS downloadMinRTT,
-    ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesRetrans AS downloadBytesRetrans,
-    ARRAY_REVERSE(raw.Download.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesSent AS downloadBytesSent,
-    ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.BytesReceived AS uploadBytesReceived,
-    ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.ElapsedTime AS uploadElapsedTime,
-    ARRAY_REVERSE(raw.Upload.ServerMeasurements)[SAFE_OFFSET(0)].TCPInfo.MinRTT AS uploadMinRTT,
+    -- Test leaf fields, not whole structs, so BigQuery can prune unread columns.
+    raw.Download.UUID IS NOT NULL AS isDownload,
+    raw.Upload.UUID IS NOT NULL AS isUpload,
+    -- Last measurement of each array, selected without materializing the whole array of structs.
+    (SELECT AS STRUCT m.BBRInfo IS NOT NULL AS isBBR, m.TCPInfo.BytesAcked, m.TCPInfo.ElapsedTime, m.TCPInfo.MinRTT, m.TCPInfo.BytesRetrans, m.TCPInfo.BytesSent
+       FROM UNNEST(raw.Download.ServerMeasurements) m WITH OFFSET o ORDER BY o DESC LIMIT 1) AS dl,
+    (SELECT AS STRUCT m.TCPInfo.BytesReceived, m.TCPInfo.ElapsedTime, m.TCPInfo.MinRTT
+       FROM UNNEST(raw.Upload.ServerMeasurements) m WITH OFFSET o ORDER BY o DESC LIMIT 1) AS ul,
     *
   FROM `{{.ProjectID}}.autoload_v2_{{ORG}}_ndt.ndt7_raw`
 
@@ -25,11 +22,11 @@ WITH prendt7 AS (
     STRUCT (
       IF(isDownload, raw.Download.UUID, IF(isUpload, raw.Upload.UUID, NULL)) AS UUID,
       IF(isDownload, raw.Download.StartTime, IF(isUpload, raw.Upload.StartTime, NULL)) AS TestTime,
-      IF(isBBR, "bbr", "unknown") AS CongestionControl,
-      8 * IF(isDownload, downloadBytesAcked / downloadElapsedTime,
-             IF(isUpload,  uploadBytesReceived / uploadElapsedTime, NULL)) AS MeanThroughputMbps,
-      IF(isDownload, downloadMinRTT, IF(isUpload, uploadMinRTT, NULL)) / 1000 AS MinRTT, -- unit: ms
-      IF(isDownload, downloadBytesRetrans / downloadBytesSent, IF(isUpload, 0, NULL)) AS LossRate
+      IF(IFNULL(dl.isBBR, FALSE), "bbr", "unknown") AS CongestionControl,
+      8 * IF(isDownload, dl.BytesAcked / dl.ElapsedTime,
+             IF(isUpload,  ul.BytesReceived / ul.ElapsedTime, NULL)) AS MeanThroughputMbps,
+      IF(isDownload, dl.MinRTT, IF(isUpload, ul.MinRTT, NULL)) / 1000 AS MinRTT, -- unit: ms
+      IF(isDownload, dl.BytesRetrans / dl.BytesSent, IF(isUpload, 0, NULL)) AS LossRate
     ) AS a,
   *
   FROM prendt7
