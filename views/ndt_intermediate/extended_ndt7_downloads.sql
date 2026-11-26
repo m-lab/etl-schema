@@ -15,6 +15,13 @@ ndt7downloads AS (
 
     raw.Download.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Download.ServerMeasurements))]
         AS FinalSnapshot,
+    -- Leaf-only copy of the final snapshot fields used by the filters below.
+    -- Indexing the struct array (FinalSnapshot above) reads every field of
+    -- every sample; this reads only the named leaf columns.
+    (SELECT ANY_VALUE(STRUCT(
+        m.TCPInfo.BytesAcked, m.TCPInfo.TotalRetrans, m.TCPInfo.RTT, m.TCPInfo.MinRTT
+      ) HAVING MAX o)
+     FROM UNNEST(raw.Download.ServerMeasurements) AS m WITH OFFSET o) AS _FinalLeaves,
 --   (raw.Download.Error != "") AS IsError,  -- TODO ndt-server/issues/317
     False AS IsError,
     TIMESTAMP_DIFF(raw.Download.EndTime, raw.Download.StartTime, MILLISECOND)*1.0 AS test_duration
@@ -22,8 +29,7 @@ ndt7downloads AS (
   FROM `{{.ProjectID}}.ndt.ndt7`
   -- Limit to rows with valid S2C
   WHERE
-    raw.Download IS NOT NULL
-    AND raw.Download.UUID IS NOT NULL
+    raw.Download.UUID IS NOT NULL
     AND raw.Download.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
 ),
 
@@ -33,9 +39,9 @@ PreComputeNDT7 AS (
     id, date, parser, server, client, a, raw,
 
     -- Computed above, due to sequential dependencies
-    IsError, FinalSnapshot, test_duration,
+    IsError, FinalSnapshot, _FinalLeaves, test_duration,
 
-    FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+    _FinalLeaves IS NOT NULL AS IsComplete, -- Not Missing any key fields
 
     IF ("early_exit" IN (SELECT metadata.Name FROM UNNEST(raw.Download.ClientMetadata) AS metadata), True, False) AS IsEarlyExit,
 
@@ -70,9 +76,9 @@ PreComputeNDT7 AS (
       'mlab[1-3]-[a-z][a-z][a-z][0-9][0-9]') AS IsProduction,
 
     -- Obsolete _IsCongested and _IsBloated, used by IsValid2021
-    (FinalSnapshot.TCPInfo.TotalRetrans > 0) AS _IsCongested,
-    ((FinalSnapshot.TCPInfo.RTT > 2*FinalSnapshot.TCPInfo.MinRTT) AND
-      (FinalSnapshot.TCPInfo.RTT > 1000)) AS _IsBloated,
+    (_FinalLeaves.TotalRetrans > 0) AS _IsCongested,
+    ((_FinalLeaves.RTT > 2*_FinalLeaves.MinRTT) AND
+      (_FinalLeaves.RTT > 1000)) AS _IsBloated,
 
   FROM
     ndt7downloads
@@ -110,7 +116,7 @@ UnifiedDownloadSchema AS (
       IsOAM,               -- internal testing and monitoring
       _IsRFC1918,            -- Not a real client (deprecate?)
       False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
-      (FinalSnapshot.TCPInfo.BytesAcked < 8192) AS IsSmall, -- not enough data
+      (_FinalLeaves.BytesAcked < 8192) AS IsSmall, -- not enough data
       (test_duration < 9000.0) AS IsShort,   -- Did not run for enough time
       (test_duration > 60000.0) AS IsLong,    -- Ran for too long
       IsEarlyExit,   -- Short tests may be allowed when early-exit is true

@@ -33,7 +33,8 @@ PreComputeNDT5 AS (
     uploads.*,
     FinalSnapshot, raw.Control,
 
-    FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+    -- Check one leaf: IS NOT NULL on the whole struct reads every field of it.
+    FinalSnapshot.Timestamp IS NOT NULL AS IsComplete, -- Not Missing any key fields
 
     -- Protocol
     CONCAT ("ndt5-",

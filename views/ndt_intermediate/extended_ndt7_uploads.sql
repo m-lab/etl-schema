@@ -14,6 +14,11 @@ ndt7uploads AS (
   SELECT *,
 
   raw.Upload.ServerMeasurements[SAFE_ORDINAL(ARRAY_LENGTH(raw.Upload.ServerMeasurements))] AS FinalSnapshot,
+  -- Leaf-only copy of the final snapshot fields used by the filters below.
+  -- Indexing the struct array (FinalSnapshot above) reads every field of
+  -- every sample; this reads only the named leaf columns.
+  (SELECT ANY_VALUE(STRUCT(m.TCPInfo.BytesReceived) HAVING MAX o)
+   FROM UNNEST(raw.Upload.ServerMeasurements) AS m WITH OFFSET o) AS _FinalLeaves,
 -- (raw.Upload.Error != "") AS IsError,  -- TODO ndt-server/issues/317
   False AS IsError,
   TIMESTAMP_DIFF(raw.Upload.EndTime, raw.Upload.StartTime, MILLISECOND)*1.0 AS test_duration
@@ -21,8 +26,7 @@ ndt7uploads AS (
   FROM`{{.ProjectID}}.ndt.ndt7`
   -- Limit to rows with valid C2S
   WHERE
-  raw.Upload IS NOT NULL
-  AND raw.Upload.UUID IS NOT NULL
+  raw.Upload.UUID IS NOT NULL
   AND raw.Upload.UUID NOT IN ( '', 'ERROR_DISCOVERING_UUID' )
 ),
 
@@ -32,9 +36,9 @@ PreComputeNDT7 AS (
     id, date, parser, server, client, a, raw,
 
     -- Computed above, due to sequential dependencies
-    IsError, FinalSnapshot, test_duration,
+    IsError, FinalSnapshot, _FinalLeaves, test_duration,
 
-    FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+    _FinalLeaves IS NOT NULL AS IsComplete, -- Not Missing any key fields
 
     -- Protocol
     CONCAT("ndt7",
@@ -102,7 +106,7 @@ UnifiedUploadSchema AS (
       IsOAM,               -- internal testing and monitoring
       _IsRFC1918,            -- Not a real client (deprecate?)
       False AS IsPlatformAnomaly, -- FUTURE, No switch discards, etc
-      (FinalSnapshot.TCPInfo.BytesReceived < 8192) AS IsSmall, -- not enough data
+      (_FinalLeaves.BytesReceived < 8192) AS IsSmall, -- not enough data
       (test_duration < 9000.0) AS IsShort,   -- Did not run for enough time
       (test_duration > 60000.0) AS IsLong,    -- Ran for too long
       False AS IsEarlyExit, -- not supported for upload tests
