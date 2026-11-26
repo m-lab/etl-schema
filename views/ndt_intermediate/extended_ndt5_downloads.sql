@@ -103,7 +103,8 @@ UnifiedDownloadSchema AS (
 
     -- Struct filter has predicates for various cleaning assumptions
     STRUCT (
-      FinalSnapshot IS NOT NULL AS IsComplete, -- Not Missing any key fields
+      -- Check one leaf: IS NOT NULL on the whole struct reads every field of it.
+      FinalSnapshot.Timestamp IS NOT NULL AS IsComplete, -- Not Missing any key fields
       IsProduction,     -- Not mlab4, abc0t, or other pre production servers
       IsError,                  -- Server reported a problem
       IsOAM,               -- internal testing and monitoring
